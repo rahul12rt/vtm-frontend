@@ -1,0 +1,156 @@
+{
+  "data": [
+    {
+      "id": 2,
+      "attributes": {
+        "createdAt": "2024-08-17T08:59:23.046Z",
+        "updatedAt": "2024-08-17T08:59:23.750Z",
+        "publishedAt": "2024-08-17T08:59:23.746Z",
+        "obtained": "45",
+        "rank": "5",
+        "class": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "1",
+              "createdAt": "2024-08-17T08:57:00.406Z",
+              "updatedAt": "2024-08-17T08:57:01.482Z",
+              "publishedAt": "2024-08-17T08:57:01.479Z"
+            }
+          }
+        },
+        "subject": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "Physics",
+              "createdAt": "2024-08-17T08:57:32.793Z",
+              "updatedAt": "2024-08-17T08:57:33.401Z",
+              "publishedAt": "2024-08-17T08:57:33.398Z"
+            }
+          }
+        },
+        "topic": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "Kinamatics",
+              "createdAt": "2024-08-17T08:57:53.545Z",
+              "updatedAt": "2024-08-17T08:57:54.194Z",
+              "publishedAt": "2024-08-17T08:57:54.190Z"
+            }
+          }
+        },
+        "college": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "VTU",
+              "createdAt": "2024-08-17T08:57:06.465Z",
+              "updatedAt": "2024-08-17T08:57:15.220Z",
+              "publishedAt": "2024-08-17T08:57:07.118Z"
+            }
+          }
+        },
+        "test": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "date": "2024-08-23",
+              "createdAt": "2024-08-17T08:57:40.737Z",
+              "updatedAt": "2024-08-17T08:57:41.671Z",
+              "publishedAt": "2024-08-17T08:57:41.669Z"
+            }
+          }
+        },
+        "student": {
+          "data": null
+        }
+      }
+    },
+    {
+      "id": 1,
+      "attributes": {
+        "createdAt": "2024-08-17T08:58:17.109Z",
+        "updatedAt": "2024-08-17T09:23:23.856Z",
+        "publishedAt": "2024-08-17T08:58:17.913Z",
+        "obtained": "123",
+        "rank": "2",
+        "class": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "1",
+              "createdAt": "2024-08-17T08:57:00.406Z",
+              "updatedAt": "2024-08-17T08:57:01.482Z",
+              "publishedAt": "2024-08-17T08:57:01.479Z"
+            }
+          }
+        },
+        "subject": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "Physics",
+              "createdAt": "2024-08-17T08:57:32.793Z",
+              "updatedAt": "2024-08-17T08:57:33.401Z",
+              "publishedAt": "2024-08-17T08:57:33.398Z"
+            }
+          }
+        },
+        "topic": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "Kinamatics",
+              "createdAt": "2024-08-17T08:57:53.545Z",
+              "updatedAt": "2024-08-17T08:57:54.194Z",
+              "publishedAt": "2024-08-17T08:57:54.190Z"
+            }
+          }
+        },
+        "college": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "VTU",
+              "createdAt": "2024-08-17T08:57:06.465Z",
+              "updatedAt": "2024-08-17T08:57:15.220Z",
+              "publishedAt": "2024-08-17T08:57:07.118Z"
+            }
+          }
+        },
+        "test": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "date": "2024-08-23",
+              "createdAt": "2024-08-17T08:57:40.737Z",
+              "updatedAt": "2024-08-17T08:57:41.671Z",
+              "publishedAt": "2024-08-17T08:57:41.669Z"
+            }
+          }
+        },
+        "student": {
+          "data": {
+            "id": 1,
+            "attributes": {
+              "name": "Sathish",
+              "createdAt": "2024-08-17T08:57:21.949Z",
+              "updatedAt": "2024-08-17T08:57:22.578Z",
+              "publishedAt": "2024-08-17T08:57:22.575Z"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "pageSize": 25,
+      "pageCount": 1,
+      "total": 2
+    }
+  }
+}

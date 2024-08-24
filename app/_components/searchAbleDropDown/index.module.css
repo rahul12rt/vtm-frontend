@@ -1,0 +1,46 @@
+.dropdownContainer {
+  position: relative;
+  width: 100%;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  border-color: black; /* Border color turns black when focused */
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 102%;
+  left: 0;
+  width: 100%;
+  border: 1px solid #ccc;
+  background-color: white;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.dropdownOption {
+  padding: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dropdownOption:hover,
+.selected {
+  background-color: #f0f0f0;
+}
+
+.noOptions {
+  padding: 8px;
+  text-align: center;
+  color: #888;
+}

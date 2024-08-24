@@ -1,0 +1,17 @@
+{
+  "subject": "Physics",
+  "chapters": [
+    {
+      "name": "Units and Dimensions",
+      "marks": 40,
+      "rank": 22,
+      "classAverage": 48.97
+    },
+    {
+      "name": "Vectors & Kinematics",
+      "marks": 60,
+      "rank": 4,
+      "classAverage": 41.88
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "1",
+    "subject": "Mathematics",
+    "chapter": ["Algebra"],
+    "topic": ["Linear Equations"],
+    "class": "Class 10",
+    "academicYear": "2024-2025",
+    "question": "What is the solution to x + 2 = 4?",
+    "options": ["x = 1", "x = 2", "x = 3", "x = 4"],
+    "correctOption": "x = 2"
+  },
+  {
+    "id": "2",
+    "subject": "Physics",
+    "chapter": ["Mechanics"],
+    "topic": ["Newton's Laws"],
+    "class": "Class 11",
+    "academicYear": "2023-2024",
+    "question": "Explain Newton's First Law of Motion.",
+    "options": [
+      "An object at rest stays at rest.",
+      "An object in motion stays in motion.",
+      "Both of the above.",
+      "None of the above."
+    ],
+    "correctOption": "Both of the above."
+  },
+  {
+    "id": "3",
+    "subject": "Mathematics",
+    "chapter": ["Calculus"],
+    "topic": ["Derivatives"],
+    "class": "Class 10",
+    "academicYear": "2024-2025",
+    "question": "Differentiate the function f(x) = x^2.",
+    "options": ["f'(x) = 2x", "f'(x) = x^2", "f'(x) = 2", "f'(x) = x"],
+    "correctOption": "f'(x) = 2x"
+  },
+  {
+    "id": "4",
+    "subject": "Physics",
+    "chapter": ["Optics"],
+    "topic": ["Reflection"],
+    "class": "Class 11",
+    "academicYear": "2023-2024",
+    "question": "Describe the law of reflection.",
+    "options": [
+      "Angle of incidence = Angle of reflection",
+      "Angle of incidence > Angle of reflection",
+      "Angle of incidence < Angle of reflection",
+      "No relation"
+    ],
+    "correctOption": "Angle of incidence = Angle of reflection"
+  }
+]

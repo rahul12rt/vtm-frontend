@@ -1,0 +1,17 @@
+.wrap {
+  width: 100%;
+  background-color: #fff;
+  padding: 16px 0px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.logoWrap {
+  width: 140px;
+  height: 46px;
+}
+.logo {
+  width: 100%;
+  height: 100%;
+}

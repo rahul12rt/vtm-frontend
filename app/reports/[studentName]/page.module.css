@@ -1,0 +1,96 @@
+.studentReportContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.studentReportContainer h2,
+.studentReportContainer h3,
+.studentReportContainer h4 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  font-family: "Arial, sans-serif";
+}
+
+.studentReportContainer h2 {
+  font-size: 28px;
+  color: #4a90e2;
+}
+
+.studentReportContainer h3 {
+  font-size: 24px;
+  margin-top: 10px;
+}
+
+.studentReportContainer h4 {
+  font-size: 20px;
+  margin-top: 10px;
+}
+
+.studentReportTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.subjectSection {
+  margin-top: 50px;
+}
+
+.studentReportTable th,
+.studentReportTable td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+.studentReportTable th {
+  background-color: #f9a825;
+  color: #000;
+  font-weight: bold;
+}
+
+.studentReportTable td {
+  color: #000;
+}
+
+.studentReportTable tr:last-child td {
+  border-bottom: none;
+}
+
+.studentReportChart {
+  margin-top: 30px;
+}
+
+.studentReportChart canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.heading {
+  text-align: center;
+}
+
+.heading h2 {
+  margin: 30px 0px 20px 0px;
+}
+
+.heading p {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #d21b1b;
+  font-weight: 600;
+}
+
+.heading span {
+  font-weight: 700;
+  margin-right: 8px;
+}

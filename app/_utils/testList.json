@@ -1,0 +1,374 @@
+{
+  "colleges": [
+    {
+      "collegeName": "Sadvidya Semi Residential PU College",
+      "academicYear": "2024-25",
+      "tests": [
+        {
+          "class": "PUC-1",
+          "subject": "Chem",
+          "testTitle": "Some Basic Concepts of Chemistry",
+          "date": "2024-07-04",
+          "students": [
+            {
+              "rollNo": "101",
+              "name": "Khushi S",
+              "marks": { "obtained": 40, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "102",
+              "name": "Meghana S",
+              "marks": { "obtained": 48, "total": 120, "rank": 1 }
+            },
+            {
+              "rollNo": "103",
+              "name": "Diganth S",
+              "marks": { "obtained": 36, "total": 120, "rank": 13 }
+            },
+            {
+              "rollNo": "104",
+              "name": "Amarjith Rajesh",
+              "marks": { "obtained": 36, "total": 120, "rank": 13 }
+            },
+            {
+              "rollNo": "105",
+              "name": "Abhinav R",
+              "marks": { "obtained": 36, "total": 120, "rank": 13 }
+            },
+            {
+              "rollNo": "106",
+              "name": "Srushti B Y",
+              "marks": { "obtained": 36, "total": 120, "rank": 13 }
+            },
+            {
+              "rollNo": "107",
+              "name": "Sudarshan M",
+              "marks": { "obtained": 28, "total": 120, "rank": 21 }
+            },
+            {
+              "rollNo": "108",
+              "name": "Shrest Lokesh Soni",
+              "marks": { "obtained": 36, "total": 120, "rank": 13 }
+            },
+            {
+              "rollNo": "109",
+              "name": "Sanchita Ravi Kiran",
+              "marks": { "obtained": 40, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "110",
+              "name": "Vijeth",
+              "marks": { "obtained": 32, "total": 120, "rank": 19 }
+            },
+            {
+              "rollNo": "111",
+              "name": "Srivishnu H S",
+              "marks": { "obtained": 44, "total": 120, "rank": 4 }
+            },
+            {
+              "rollNo": "112",
+              "name": "Anwesha L",
+              "marks": { "obtained": 40, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "113",
+              "name": "Mugdha Mouktika M V",
+              "marks": { "obtained": 16, "total": 120, "rank": 23 }
+            },
+            {
+              "rollNo": "114",
+              "name": "Manoj K",
+              "marks": { "obtained": 40, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "115",
+              "name": "Shruti B Patel",
+              "marks": { "obtained": 44, "total": 120, "rank": 4 }
+            },
+            {
+              "rollNo": "116",
+              "name": "Harshitha H C",
+              "marks": { "obtained": 32, "total": 120, "rank": 19 }
+            },
+            {
+              "rollNo": "117",
+              "name": "Shreya N Yogendra",
+              "marks": { "obtained": 40, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "118",
+              "name": "Shreyash C H",
+              "marks": { "obtained": 40, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "119",
+              "name": "Prajwal R",
+              "marks": { "obtained": 48, "total": 120, "rank": 1 }
+            },
+            {
+              "rollNo": "120",
+              "name": "D S Dhanvee",
+              "marks": { "obtained": 36, "total": 120, "rank": 13 }
+            },
+            {
+              "rollNo": "121",
+              "name": "Sufiyan Pahsa",
+              "marks": { "obtained": 44, "total": 120, "rank": 4 }
+            },
+            {
+              "rollNo": "122",
+              "name": "Meghana N V",
+              "marks": { "obtained": 24, "total": 120, "rank": 22 }
+            },
+            {
+              "rollNo": "123",
+              "name": "Disha Varma J",
+              "marks": { "obtained": 48, "total": 120, "rank": 1 }
+            }
+          ]
+        },
+        {
+          "class": "PUC-1",
+          "subject": "Chem",
+          "testTitle": "Some Basic Concepts of Chemistry",
+          "date": "2024-08-01",
+          "students": [
+            {
+              "rollNo": "101",
+              "name": "Khushi S",
+              "marks": { "obtained": 28, "total": 120, "rank": 16 }
+            },
+            {
+              "rollNo": "102",
+              "name": "Meghana S",
+              "marks": { "obtained": 28, "total": 120, "rank": 16 }
+            },
+            {
+              "rollNo": "103",
+              "name": "Diganth S",
+              "marks": { "obtained": 36, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "104",
+              "name": "Amarjith Rajesh",
+              "marks": { "obtained": 24, "total": 120, "rank": 21 }
+            },
+            {
+              "rollNo": "105",
+              "name": "Abhinav R",
+              "marks": { "obtained": 28, "total": 120, "rank": 16 }
+            },
+            {
+              "rollNo": "106",
+              "name": "Srushti B Y",
+              "marks": { "obtained": 40, "total": 120, "rank": 6 }
+            },
+            {
+              "rollNo": "107",
+              "name": "Sudarshan M",
+              "marks": { "obtained": 52, "total": 120, "rank": 1 }
+            },
+            {
+              "rollNo": "108",
+              "name": "Shrest Lokesh Soni",
+              "marks": { "obtained": 32, "total": 120, "rank": 14 }
+            },
+            {
+              "rollNo": "109",
+              "name": "Sanchita Ravi Kiran",
+              "marks": { "obtained": 36, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "110",
+              "name": "Vijeth",
+              "marks": { "obtained": 24, "total": 120, "rank": 21 }
+            },
+            {
+              "rollNo": "111",
+              "name": "Srivishnu H S",
+              "marks": { "obtained": 36, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "112",
+              "name": "Anwesha L",
+              "marks": { "obtained": 44, "total": 120, "rank": 3 }
+            },
+            {
+              "rollNo": "113",
+              "name": "Mugdha Mouktika M V",
+              "marks": { "obtained": 32, "total": 120, "rank": 14 }
+            },
+            {
+              "rollNo": "114",
+              "name": "Manoj K",
+              "marks": { "obtained": 44, "total": 120, "rank": 3 }
+            },
+            {
+              "rollNo": "115",
+              "name": "Shruti B Patel",
+              "marks": { "obtained": 36, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "116",
+              "name": "Harshitha H C",
+              "marks": { "obtained": 40, "total": 120, "rank": 6 }
+            },
+            {
+              "rollNo": "117",
+              "name": "Shreya N Yogendra",
+              "marks": { "obtained": 40, "total": 120, "rank": 6 }
+            },
+            {
+              "rollNo": "118",
+              "name": "Shreyash C H",
+              "marks": { "obtained": 44, "total": 120, "rank": 3 }
+            },
+            {
+              "rollNo": "119",
+              "name": "Prajwal R",
+              "marks": { "obtained": 28, "total": 120, "rank": 16 }
+            },
+            {
+              "rollNo": "120",
+              "name": "D S Dhanvee",
+              "marks": { "obtained": 28, "total": 120, "rank": 16 }
+            },
+            {
+              "rollNo": "121",
+              "name": "Sufiyan Pahsa",
+              "marks": { "obtained": 48, "total": 120, "rank": 2 }
+            },
+            {
+              "rollNo": "122",
+              "name": "Meghana N V",
+              "marks": { "obtained": 16, "total": 120, "rank": 23 }
+            },
+            {
+              "rollNo": "123",
+              "name": "Disha Varma J",
+              "marks": { "obtained": 40, "total": 120, "rank": 6 }
+            }
+          ]
+        },
+        {
+          "class": "PUC-1",
+          "subject": "MATHS",
+          "testTitle": "SETS",
+          "date": "2024-07-13",
+          "students": [
+            {
+              "rollNo": "101",
+              "name": "Khushi S",
+              "marks": { "obtained": 76, "total": 120, "rank": 6 }
+            },
+            {
+              "rollNo": "102",
+              "name": "Meghana S",
+              "marks": { "obtained": 72, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "103",
+              "name": "Diganth S",
+              "marks": { "obtained": 60, "total": 120, "rank": 17 }
+            },
+            {
+              "rollNo": "104",
+              "name": "Amarjith Rajesh",
+              "marks": { "obtained": 56, "total": 120, "rank": 21 }
+            },
+            {
+              "rollNo": "105",
+              "name": "Abhinav R",
+              "marks": { "obtained": 56, "total": 120, "rank": 21 }
+            },
+            {
+              "rollNo": "106",
+              "name": "Srushti B Y",
+              "marks": { "obtained": 64, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "107",
+              "name": "Sudarshan M",
+              "marks": { "obtained": 84, "total": 120, "rank": 2 }
+            },
+            {
+              "rollNo": "108",
+              "name": "Shrest Lokesh Soni",
+              "marks": { "obtained": 88, "total": 120, "rank": 1 }
+            },
+            {
+              "rollNo": "109",
+              "name": "Sanchitha Ravi Kiran",
+              "marks": { "obtained": 60, "total": 120, "rank": 17 }
+            },
+            {
+              "rollNo": "110",
+              "name": "Vijeth",
+              "marks": { "obtained": 60, "total": 120, "rank": 17 }
+            },
+            {
+              "rollNo": "111",
+              "name": "Srivishnu H S",
+              "marks": { "obtained": 64, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "112",
+              "name": "Anwesha L",
+              "marks": { "obtained": 64, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "113",
+              "name": "Mugdha Mouktika M V",
+              "marks": { "obtained": 64, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "114",
+              "name": "Manoj K",
+              "marks": { "obtained": 80, "total": 120, "rank": 4 }
+            },
+            {
+              "rollNo": "115",
+              "name": "Shrusti B Patel",
+              "marks": { "obtained": 84, "total": 120, "rank": 2 }
+            },
+            {
+              "rollNo": "116",
+              "name": "Harshitha H C",
+              "marks": { "obtained": 52, "total": 120, "rank": 23 }
+            },
+            {
+              "rollNo": "117",
+              "name": "Shreya N Yogendra",
+              "marks": { "obtained": 80, "total": 120, "rank": 4 }
+            },
+            {
+              "rollNo": "118",
+              "name": "Shreyash C H",
+              "marks": { "obtained": 60, "total": 120, "rank": 17 }
+            },
+            {
+              "rollNo": "119",
+              "name": "Prajwal R",
+              "marks": { "obtained": 64, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "120",
+              "name": "D S Dhanvee",
+              "marks": { "obtained": 72, "total": 120, "rank": 7 }
+            },
+            {
+              "rollNo": "121",
+              "name": "Sufiyan Pasha",
+              "marks": { "obtained": 64, "total": 120, "rank": 10 }
+            },
+            {
+              "rollNo": "122",
+              "name": "Meghana N V",
+              "marks": { "obtained": 64, "total": 120, "rank": 10 }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

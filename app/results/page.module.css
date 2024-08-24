@@ -1,0 +1,91 @@
+.headerSection {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.filterContainer {
+  display: flex;
+  align-items: self-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  background-color: #f9a825; /* Orange background color */
+  padding: 10px;
+  border-radius: 5px;
+  color: #000;
+  font-weight: 700;
+  margin: 20px 0;
+}
+
+.collegeName {
+  background-color: #ffff00; /* Yellow background */
+  color: #d21b1b; /* Red text */
+  font-weight: bold;
+  padding: 5px 0;
+  font-size: 18px;
+}
+
+.classDetails {
+  font-size: 16px;
+  color: #1d1d1d;
+  margin: 10px 0;
+}
+
+.testDetails {
+  color: #d21b1b;
+  font-size: 14px;
+}
+
+.testDetails .testDate {
+  display: inline-block;
+  font-weight: 600;
+}
+
+.testDetails .testTitle {
+  display: inline-block;
+  margin-right: 20px;
+  font-weight: 600;
+}
+
+.resultsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.resultsTable th,
+.resultsTable td {
+  border: 1px solid #0f9dd9;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+  color: #1d1d1d;
+}
+
+.resultsTable th {
+  background-color: #e0f7ff;
+  font-weight: bold;
+}
+
+.resultsTable td {
+  background-color: #ffffff;
+}
+
+.resultsTable tr:nth-child(even) td {
+  background-color: #f2f2f2;
+}
+
+.tableContainer {
+  text-align: center;
+  font-weight: 600;
+}
+
+@media only screen and (max-width: 460px) {
+  .filterContainer {
+    flex-direction: column;
+  }
+}
