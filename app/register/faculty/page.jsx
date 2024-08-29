@@ -96,7 +96,6 @@ const Faculty = () => {
       setErrors(newErrors);
     } else {
       setErrors({});
-      console.log(formData);
     }
   };
 

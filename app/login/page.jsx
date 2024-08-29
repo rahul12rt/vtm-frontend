@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link"; // Import Link from next/link
 import styles from "./page.module.css";
 
 const Login = () => {
@@ -9,6 +11,8 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ username: "", password: "" });
+
+  const router = useRouter();
 
   const validateUsername = (username) => {
     const usernameRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,7 +43,7 @@ const Login = () => {
     setErrors(newErrors);
 
     if (valid) {
-      console.log(formData);
+      router.push("/student-portal");
     }
   };
 
@@ -91,6 +95,9 @@ const Login = () => {
         <button type="submit" className={styles["submit-button"]}>
           Login
         </button>
+        <p className={styles.forgotPassword}>
+          <Link href="/manage/password">Forgot Password?</Link>
+        </p>
         {/* <p className={styles.register}>
           Don't have an account?{" "}
           <a href="/college-register">Register for free</a>

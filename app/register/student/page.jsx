@@ -1,18 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import styles from "../../styles/register.module.css";
-
-const ClassEnum = {
-  "1 PU": "1 PU",
-  "2 PU": "2 PU",
-};
-
-const CollegeEnum = {
-  Harvard: "Harvard",
-  MIT: "MIT",
-  Stanford: "Stanford",
-  Oxford: "Oxford",
-};
 
 const AcademicYearEnum = {
   "2024-25": "2024-25",
@@ -25,8 +14,10 @@ const initialFormState = {
   username: "",
   password: "",
   rollNo: "",
-  college: CollegeEnum.Harvard,
-  class: ClassEnum["1 PU"],
+  college: "", // Store the id of the selected college
+  collegeName: "", // Display name in the dropdown
+  class: "", // This will store the id of the selected class
+  className: "", // Display name in the dropdown
   academicYear: AcademicYearEnum["2024-25"],
   contactNumber1: "",
   contactNumber2: "",
@@ -35,6 +26,8 @@ const initialFormState = {
 const StudentRegister = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
+  const [classes, setClasses] = useState([]); // State to store classes
+  const [colleges, setColleges] = useState([]); // State to store colleges
 
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,6 +48,32 @@ const StudentRegister = () => {
       ...prevErrors,
       [name]: undefined,
     }));
+  };
+
+  const handleClassChange = (e) => {
+    const selectedClassId = e.target.value;
+    const selectedClass = classes.find(
+      (classItem) => classItem.id === selectedClassId
+    );
+
+    setFormData({
+      ...formData,
+      class: selectedClassId ? Number(selectedClassId) : "", // Convert to number
+      className: selectedClass ? selectedClass.attributes.name : "", // Display the name in the dropdown
+    });
+  };
+
+  const handleCollegeChange = (e) => {
+    const selectedCollegeId = e.target.value;
+    const selectedCollege = colleges.find(
+      (college) => college.id === selectedCollegeId
+    );
+
+    setFormData({
+      ...formData,
+      college: selectedCollegeId ? Number(selectedCollegeId) : "", // Convert to number
+      collegeName: selectedCollege ? selectedCollege.attributes.name : "", // Display the name in the dropdown
+    });
   };
 
   const handleSubmit = (e) => {
@@ -81,9 +100,69 @@ const StudentRegister = () => {
       setErrors(newErrors);
     } else {
       setErrors({});
-      console.log(formData);
+
+      // Prepare the payload
+      const payload = {
+        data: {
+          name: formData.name,
+          roll_number: formData.rollNo,
+          email: formData.email,
+          user_name: formData.username,
+          password: formData.password,
+          college: Number(formData.college), // Ensure college is a number
+          class: Number(formData.class), // Ensure class is a number
+          academic_year: formData.academicYear,
+          contact_number: formData.contactNumber1,
+          secoundary_number: formData.contactNumber2 || "", // Default to 0 if not provided
+        },
+      };
+
+      // Make the POST request
+      fetch("/api/student-register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Response from server:", data);
+        })
+        .catch((error) => {
+          console.error("Error submitting form:", error);
+        });
     }
   };
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [classResult, collegeResult] = await Promise.all([
+          axios.get("/api/get-class", { cache: "no-store" }),
+          axios.get("/api/get-colleges", { cache: "no-store" }),
+        ]);
+
+        // Remove duplicate colleges based on the name
+        const uniqueColleges = Array.from(
+          new Set(
+            collegeResult.data.data.map((college) => college.attributes.name)
+          )
+        ).map((name) =>
+          collegeResult.data.data.find(
+            (college) => college.attributes.name === name
+          )
+        );
+
+        setClasses(classResult.data.data); // Set the fetched classes
+        setColleges(uniqueColleges); // Set the unique colleges
+      } catch (error) {
+        console.log("Error fetching data:", error.message);
+      }
+    }
+
+    fetchData();
+  }, []); // Fetch classes and colleges only on component mount
 
   return (
     <div className="container">
@@ -176,15 +255,17 @@ const StudentRegister = () => {
           <select
             id="college"
             name="college"
-            value={formData.college}
-            onChange={handleChange}
+            value={formData.college} // Stores the ID
+            onChange={handleCollegeChange}
             onFocus={handleFocus}
             className={errors.college ? "errorInput" : ""}
           >
-            <option value={CollegeEnum.Harvard}>Harvard</option>
-            <option value={CollegeEnum.MIT}>MIT</option>
-            <option value={CollegeEnum.Stanford}>Stanford</option>
-            <option value={CollegeEnum.Oxford}>Oxford</option>
+            <option value="">Select College</option>
+            {colleges.map((college) => (
+              <option key={college.id} value={college.id}>
+                {college.attributes.name}
+              </option>
+            ))}
           </select>
           {errors.college && <p className="errorText">{errors.college}</p>}
         </div>
@@ -195,13 +276,17 @@ const StudentRegister = () => {
           <select
             id="class"
             name="class"
-            value={formData.class}
-            onChange={handleChange}
+            value={formData.class} // Stores the ID
+            onChange={handleClassChange}
             onFocus={handleFocus}
             className={errors.class ? "errorInput" : ""}
           >
-            <option value={ClassEnum["1 PU"]}>1 PU</option>
-            <option value={ClassEnum["2 PU"]}>2 PU</option>
+            <option value="">Select Class</option>
+            {classes.map((classItem) => (
+              <option key={classItem.id} value={classItem.id}>
+                {classItem.attributes.name}
+              </option>
+            ))}
           </select>
           {errors.class && <p className="errorText">{errors.class}</p>}
         </div>
@@ -217,8 +302,11 @@ const StudentRegister = () => {
             onFocus={handleFocus}
             className={errors.academicYear ? "errorInput" : ""}
           >
-            <option value={AcademicYearEnum["2024-25"]}>2024-25</option>
-            <option value={AcademicYearEnum["2025-26"]}>2025-26</option>
+            {Object.entries(AcademicYearEnum).map(([key, value]) => (
+              <option key={key} value={value}>
+                {value}
+              </option>
+            ))}
           </select>
           {errors.academicYear && (
             <p className="errorText">{errors.academicYear}</p>
@@ -226,7 +314,7 @@ const StudentRegister = () => {
         </div>
         <div className="formGroup">
           <label htmlFor="contactNumber1">
-            Contact Number1<span className={styles.required}>*</span>
+            Contact Number 1<span className={styles.required}>*</span>
           </label>
           <input
             type="text"
@@ -235,7 +323,7 @@ const StudentRegister = () => {
             value={formData.contactNumber1}
             onChange={handleChange}
             onFocus={handleFocus}
-            placeholder="Enter contact number"
+            placeholder="Enter your contact number 1"
             className={errors.contactNumber1 ? "errorInput" : ""}
           />
           {errors.contactNumber1 && (
@@ -243,7 +331,7 @@ const StudentRegister = () => {
           )}
         </div>
         <div className="formGroup">
-          <label htmlFor="contactNumber2">Contact Number2</label>
+          <label htmlFor="contactNumber2">Contact Number 2</label>
           <input
             type="text"
             id="contactNumber2"
@@ -251,17 +339,17 @@ const StudentRegister = () => {
             value={formData.contactNumber2}
             onChange={handleChange}
             onFocus={handleFocus}
-            placeholder="Enter secondary contact number"
+            placeholder="Enter your contact number 2 (optional)"
           />
         </div>
+        <button
+          type="submit"
+          onClick={handleSubmit}
+          className={styles.submitBtn}
+        >
+          Register
+        </button>
       </form>
-      <button
-        className="submitButton"
-        onClick={handleSubmit}
-        style={{ marginTop: "20px" }}
-      >
-        Submit
-      </button>
     </div>
   );
 };

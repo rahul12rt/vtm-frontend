@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./index.module.css";
+import Image from "next/image";
 
 const Header = () => {
   const router = useRouter();
@@ -17,7 +18,13 @@ const Header = () => {
     <div className="container">
       <div className={styles.wrap}>
         <div className={styles.logoWrap}>
-          <img src="/images/Logo.jpg" className={styles.logo} alt="logo" />
+          <Image
+            src="/images/Logo.jpg"
+            className={styles.logo}
+            alt="logo"
+            width={100}
+            height={100}
+          />
         </div>
         <select
           value={selectedPage}

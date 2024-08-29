@@ -1,5 +1,7 @@
+// SearchableSingleSelect.js
+"use client";
 import React, { useState, useEffect, useRef } from "react";
-import styles from "./index.module.css";
+import styles from "./index.module.css"; // Adjust the path as needed
 
 const SearchableSingleSelect = ({
   options,
@@ -29,7 +31,7 @@ const SearchableSingleSelect = ({
 
   useEffect(() => {
     setFilteredOptions(
-      options?.filter((option) =>
+      options.filter((option) =>
         option.name
           ? option.name.toLowerCase().includes(searchTerm.toLowerCase())
           : false
@@ -44,7 +46,7 @@ const SearchableSingleSelect = ({
   };
 
   const handleOptionClick = (option) => {
-    onChange(option.name);
+    onChange(option); // Pass the entire option object
     setSearchTerm(option.name); // Update input field with selected value
     setIsDropdownOpen(false); // Close dropdown after selection
     setIsInitial(false); // Set initial to false after selection

@@ -70,7 +70,6 @@ const College = () => {
       setErrors(newErrors);
     } else {
       setErrors({});
-      console.log(formData);
     }
   };
 

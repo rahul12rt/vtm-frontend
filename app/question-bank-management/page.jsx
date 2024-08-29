@@ -146,7 +146,6 @@ const QuestionBankManagement = () => {
   }, [formData]);
 
   const handleUpdateQuestion = useCallback(() => {
-    console.log("Updating question with id:", formData.id); // Debug log
     setQuestions((prevQuestions) =>
       prevQuestions.map((q) => (q.id === formData.id ? { ...formData } : q))
     );

@@ -38,7 +38,8 @@
   font-size: 14px;
 }
 
-.form-group input {
+.form-group input,
+.otpWrapper input {
   width: -webkit-fill-available;
   padding: 10px;
   border: 1px solid #ccc;
@@ -71,6 +72,13 @@
   margin-top: 5px;
 }
 
+.otpWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
 .submit-button {
   justify-content: center;
   padding: 10px 15px;
@@ -99,6 +107,11 @@
 
 .register a:hover {
   text-decoration: underline;
+}
+
+.forgotPassword {
+  text-align: center;
+  font-size: 18px;
 }
 
 @media only screen and (max-width: 460px) {
