@@ -1,18 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import styles from "../../styles/register.module.css";
-
-const SubjectEnum = {
-  Math: "Math",
-  Science: "Science",
-  History: "History",
-};
-
-const QualificationEnum = {
-  Bachelors: 1,
-  Masters: 2,
-  PhD: 3,
-};
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 
 const initialFormState = {
   name: "",
@@ -20,9 +9,9 @@ const initialFormState = {
   email: "",
   password: "",
   contactNumber: "",
-  subjects: SubjectEnum["Math"],
+  subjects: "", // Initialize as an empty string
   cv: null,
-  qualification: 1,
+  qualification: "", // Initialize as an empty string
   aadhar: "",
   pan: "",
   bankAccount: "",
@@ -32,7 +21,12 @@ const initialFormState = {
 const Faculty = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
+  const [qualifications, setQualifications] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [loadingQualifications, setLoadingQualifications] = useState(true);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, type, value, files } = e.target;
 
@@ -58,6 +52,7 @@ const Faculty = () => {
     }
   };
 
+  // Handle input focus
   const handleFocus = (e) => {
     const { name } = e.target;
     setErrors((prevErrors) => ({
@@ -66,6 +61,29 @@ const Faculty = () => {
     }));
   };
 
+  // Fetch qualifications and subjects
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [qualificationsResponse, subjectsResponse] = await Promise.all([
+          axios.get("/api/qualification", { cache: "no-store" }),
+          axios.get("/api/subjects", { cache: "no-store" }),
+        ]);
+
+        setQualifications(qualificationsResponse.data.data);
+        setSubjects(subjectsResponse.data.data);
+      } catch (error) {
+        console.log("Error fetching data:", error.message);
+      } finally {
+        setLoadingQualifications(false);
+        setLoadingSubjects(false);
+      }
+    }
+
+    fetchData();
+  }, []); // Fetch qualifications and subjects only on component mount
+
+  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -81,7 +99,7 @@ const Faculty = () => {
     else if (formData.contactNumber.length !== 10)
       newErrors.contactNumber = "Contact Number must be 10 digits";
     if (!formData.subjects) newErrors.subjects = "Subject is required";
-    if (!formData.cv) newErrors.cv = "CV is required";
+    // if (!formData.cv) newErrors.cv = "CV is required";
     if (!formData.qualification)
       newErrors.qualification = "Qualification is required";
     if (!formData.aadhar) newErrors.aadhar = "Aadhar Number is required";
@@ -96,9 +114,57 @@ const Faculty = () => {
       setErrors(newErrors);
     } else {
       setErrors({});
+
+      const payload = {
+        data: {
+          name: formData.name,
+          user_name: formData.username,
+          email: formData.email,
+          password: formData.password,
+          contact_number: formData.contactNumber,
+          subject: parseInt(formData.subjects),
+          qualification: parseInt(formData.qualification),
+          aadhar_number: formData.aadhar,
+          pan_number: formData.pan,
+          bank_account: formData.bankAccount,
+          ifsc_code: formData.ifsc,
+        },
+      };
+      toast.promise(
+        fetch("/api/register/faculty", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }).then((response) => {
+          if (!response.ok) {
+            return response.json().then((data) => {
+              throw new Error(data.error || "An error occurred");
+            });
+          }
+          return response.json();
+        }),
+        {
+          loading: "Saving...",
+          success: async () => {
+            setFormData(initialFormState);
+            return <b>Faculty registered successfully!</b>;
+          },
+          error: <b>Could not save. Please try again.</b>,
+        },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
     }
   };
 
+  // Validate email
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
@@ -204,11 +270,18 @@ const Faculty = () => {
             onFocus={handleFocus}
             className={errors.subjects ? "errorInput" : ""}
           >
-            {Object.values(SubjectEnum).map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
-              </option>
-            ))}
+            {loadingSubjects ? (
+              <option>Loading...</option> // Show loading text inside the dropdown
+            ) : (
+              <>
+                <option value="">Select a subject</option>
+                {subjects.map((subject) => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.attributes.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
           {errors.subjects && <p className="errorText">{errors.subjects}</p>}
         </div>
@@ -221,7 +294,6 @@ const Faculty = () => {
             id="cv"
             name="cv"
             onChange={handleChange}
-            onFocus={handleFocus}
             className={errors.cv ? "errorInput" : ""}
           />
           {errors.cv && <p className="errorText">{errors.cv}</p>}
@@ -238,11 +310,18 @@ const Faculty = () => {
             onFocus={handleFocus}
             className={errors.qualification ? "errorInput" : ""}
           >
-            {Object.entries(QualificationEnum).map(([qual, id]) => (
-              <option key={id} value={id}>
-                {qual}
-              </option>
-            ))}
+            {loadingQualifications ? (
+              <option>Loading...</option> // Show loading text inside the dropdown
+            ) : (
+              <>
+                <option value="">Select qualification</option>
+                {qualifications.map((qualification) => (
+                  <option key={qualification.id} value={qualification.id}>
+                    {qualification.attributes.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
           {errors.qualification && (
             <p className="errorText">{errors.qualification}</p>
@@ -259,10 +338,10 @@ const Faculty = () => {
             value={formData.aadhar}
             onChange={handleChange}
             onFocus={handleFocus}
-            placeholder="Enter your Aadhar Number"
+            placeholder="Enter your Aadhar number"
             maxLength={12}
             pattern="\d*"
-            className={errors.aadhar ? styles.errorInput : ""}
+            className={errors.aadhar ? "errorInput" : ""}
           />
           {errors.aadhar && <p className="errorText">{errors.aadhar}</p>}
         </div>
@@ -277,8 +356,8 @@ const Faculty = () => {
             value={formData.pan}
             onChange={handleChange}
             onFocus={handleFocus}
-            placeholder="Enter your PAN Number"
-            className={errors.pan ? styles.errorInput : ""}
+            placeholder="Enter your PAN number"
+            className={errors.pan ? "errorInput" : ""}
           />
           {errors.pan && <p className="errorText">{errors.pan}</p>}
         </div>
@@ -293,7 +372,8 @@ const Faculty = () => {
             value={formData.bankAccount}
             onChange={handleChange}
             onFocus={handleFocus}
-            placeholder="Enter your Bank Account Number"
+            placeholder="Enter your bank account number"
+            maxLength={16}
             pattern="\d*"
             className={errors.bankAccount ? "errorInput" : ""}
           />
@@ -312,15 +392,21 @@ const Faculty = () => {
             value={formData.ifsc}
             onChange={handleChange}
             onFocus={handleFocus}
-            placeholder="Enter your IFSC Code"
+            placeholder="Enter your IFSC code"
             className={errors.ifsc ? "errorInput" : ""}
           />
           {errors.ifsc && <p className="errorText">{errors.ifsc}</p>}
         </div>
-        <button type="submit" onClick={handleSubmit} className="submitButton">
-          Submit
-        </button>
       </form>
+      <button
+        type="submit"
+        className="submitButton"
+        style={{ marginTop: 20 }}
+        onClick={handleSubmit}
+      >
+        Submit
+      </button>
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

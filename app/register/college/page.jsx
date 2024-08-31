@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../../styles/register.module.css";
+import toast, { Toaster } from "react-hot-toast";
 
 const initialFormState = {
   name: "",
@@ -15,11 +16,28 @@ const initialFormState = {
   password: "",
 };
 
-const cities = ["Bangalore", "Mumbai", "Delhi", "Chennai", "Kolkata"];
-
 const College = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
+  const [cities, setCities] = useState([]);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch("/api/cities");
+        if (response.ok) {
+          const data = await response.json();
+          setCities(data.data);
+        } else {
+          console.error("Failed to fetch cities");
+        }
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      }
+    };
+
+    fetchCities();
+  }, []);
 
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,6 +88,54 @@ const College = () => {
       setErrors(newErrors);
     } else {
       setErrors({});
+
+      // Creating the payload
+      const payload = {
+        data: {
+          name: formData.name,
+          address: formData.address,
+          pincode: parseInt(formData.pincode, 10),
+          contact_person: formData.contactPerson,
+          contact_number: formData.contactNumber1,
+          secoundary_number: formData.contactNumber2,
+          email: formData.email,
+          user_name: formData.username,
+          password: formData.password,
+          city: Number(formData.city),
+        },
+      };
+
+      toast.promise(
+        fetch("/api/register/college", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }).then((response) => {
+          if (!response.ok) {
+            return response.json().then((data) => {
+              throw new Error(data.error || "An error occurred");
+            });
+          }
+          return response.json();
+        }),
+        {
+          loading: "Saving...",
+          success: async () => {
+            setFormData(initialFormState);
+            return <b>College registered successfully!</b>;
+          },
+          error: <b>Could not save. Please try again.</b>,
+        },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
     }
   };
 
@@ -122,9 +188,9 @@ const College = () => {
             className={errors.city ? "errorInput" : ""}
           >
             <option value="">Select the city</option>
-            {cities.map((city) => (
-              <option key={city} value={city}>
-                {city}
+            {cities?.map((city, id) => (
+              <option key={id} value={city.id}>
+                {city.attributes.name}
               </option>
             ))}
           </select>
@@ -248,13 +314,14 @@ const College = () => {
         </div>
       </form>
       <button
-        type="button"
+        type="submit"
         onClick={handleSubmit}
         className="submitButton"
         style={{ marginTop: 20 }}
       >
         Submit
       </button>
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

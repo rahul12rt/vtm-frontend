@@ -120,7 +120,7 @@ const StudentRegister = () => {
 
       // Use toast.promise to handle the API request and show different toast notifications
       toast.promise(
-        fetch("/api/student-register", {
+        fetch("/api/register/student", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -157,8 +157,8 @@ const StudentRegister = () => {
     async function fetchData() {
       try {
         const [classResult, collegeResult] = await Promise.all([
-          axios.get("/api/get-class", { cache: "no-store" }),
-          axios.get("/api/get-colleges", { cache: "no-store" }),
+          axios.get("/api/class", { cache: "no-store" }),
+          axios.get("/api/colleges", { cache: "no-store" }),
         ]);
 
         // Remove duplicate colleges based on the name

@@ -10,7 +10,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/subjects`;
+    const strapiEndpoint = `${strapiApiUrl}/api/cities`;
     const response = await fetch(`${strapiEndpoint}`, {
       headers: {
         "Content-Type": "application/json",

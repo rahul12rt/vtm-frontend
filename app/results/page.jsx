@@ -35,7 +35,7 @@ const Results = () => {
   useEffect(() => {
     async function fetchData() {
       try {
-        const result = await axios.get("/api/get-test-results", {
+        const result = await axios.get("/api/test-results", {
           cache: "no-store",
         });
         setData((prevState) => ({
@@ -61,11 +61,11 @@ const Results = () => {
       try {
         const [collegesRes, classesRes, subjectsRes, topicsRes, datesRes] =
           await Promise.all([
-            axios.get("/api/get-colleges"),
-            axios.get("/api/get-class"),
-            axios.get("/api/get-subjects"),
-            axios.get("/api/get-topics"),
-            axios.get("/api/get-dates"),
+            axios.get("/api/colleges"),
+            axios.get("/api/class"),
+            axios.get("/api/subjects"),
+            axios.get("/api/topics"),
+            axios.get("/api/dates"),
           ]);
 
         const formatOptions = (response, type) => {

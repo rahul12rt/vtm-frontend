@@ -2,65 +2,233 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaEdit, FaTrash, FaPlus, FaSyncAlt } from "react-icons/fa";
 import Pagination from "../../_components/pagination";
-import styles from "../../styles/manage.module.css";
+import toast, { Toaster } from "react-hot-toast";
 
 const Subject = () => {
-  const [todos, setTodos] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
   const inputRef = useRef(null);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [itemsPerPage]);
 
-  const handleAddTodo = () => {
-    if (inputValue.trim()) {
-      if (editIndex !== null) {
-        const updatedTodos = todos.map((todo, index) =>
-          index === editIndex ? inputValue : todo
-        );
-        setTodos(updatedTodos);
-        setEditIndex(null);
-      } else {
-        setTodos([...todos, inputValue]);
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const fetchSubjects = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/subjects", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch subjects");
       }
-      setInputValue("");
-      if (inputRef.current) {
-        inputRef.current.focus();
+
+      const data = await response.json();
+      setSubjects(data.data || []);
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+      toast.error("Failed to load subjects. Please try again later.", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddOrUpdateSubject = async () => {
+    if (inputValue.trim()) {
+      const newSubject = { name: inputValue };
+
+      if (editIndex !== null) {
+        // Handle Update
+        const subjectId = subjects[editIndex]?.id;
+
+        if (!subjectId) {
+          toast.error("Subject ID not found", {
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+          return;
+        }
+
+        toast.promise(
+          fetch("/api/subjects", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ subjectId, name: inputValue }), // Payload for updating
+          }).then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(data.error || "An error occurred");
+              });
+            }
+            return response.json();
+          }),
+          {
+            loading: "Updating...",
+            success: async () => {
+              const updatedSubjects = subjects.map((subject, index) =>
+                index === editIndex
+                  ? {
+                      ...subject,
+                      attributes: { ...subject.attributes, name: inputValue },
+                    }
+                  : subject
+              );
+              setSubjects(updatedSubjects);
+              setEditIndex(null);
+              setInputValue("");
+              fetchSubjects();
+              if (inputRef.current) {
+                inputRef.current.focus();
+              }
+              return <b>Subject updated successfully!</b>;
+            },
+            error: <b>Could not update. Please try again.</b>,
+          },
+          {
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          }
+        );
+      } else {
+        // Handle Add
+        toast.promise(
+          fetch("/api/subjects", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ data: newSubject }),
+          }).then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(data.error || "An error occurred");
+              });
+            }
+            return response.json();
+          }),
+          {
+            loading: "Saving...",
+            success: async () => {
+              setSubjects([...subjects, newSubject]);
+              setInputValue("");
+              fetchSubjects();
+              if (inputRef.current) {
+                inputRef.current.focus();
+              }
+              return <b>Subject added successfully!</b>;
+            },
+            error: <b>Could not save. Please try again.</b>,
+          },
+          {
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          }
+        );
       }
     }
   };
 
-  const handleEditTodo = (index) => {
+  const handleEditSubject = (index) => {
     setEditIndex(index);
-    setInputValue(todos[index]);
+    setInputValue(subjects[index].attributes.name);
     if (inputRef.current) {
       inputRef.current.focus();
     }
   };
 
-  const handleDeleteTodo = (index) => {
-    const updatedTodos = todos.filter((_, i) => i !== index);
-    setTodos(updatedTodos);
-    const totalItems = updatedTodos.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+  const handleDeleteSubject = async (index) => {
+    const subjectId = subjects[index]?.id;
+
+    if (!subjectId) {
+      toast.error("Subject ID not found", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/subjects`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ subjectId }), // Send subjectId in the request body
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete subject");
+      }
+
+      const updatedSubjects = subjects.filter((_, i) => i !== index);
+      setSubjects(updatedSubjects);
+      const totalItems = updatedSubjects.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      if (currentPage > totalPages) {
+        setCurrentPage(totalPages);
+      }
+
+      toast.success("Subject deleted successfully!", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
+    } catch (error) {
+      console.error("Error deleting subject:", error);
+      toast.error("Failed to delete subject. Please try again later.", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
-      handleAddTodo();
+      handleAddOrUpdateSubject();
     }
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, todos.length);
-  const displayedTodos = todos.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + itemsPerPage, subjects.length);
+  const displayedSubjects = subjects.slice(startIndex, endIndex);
 
   return (
     <div className="container">
@@ -75,45 +243,51 @@ const Subject = () => {
           ref={inputRef}
         />
         <button
-          onClick={handleAddTodo}
+          onClick={handleAddOrUpdateSubject}
           className={editIndex !== null ? "addButton" : "addButton"}
         >
           {editIndex !== null ? <FaSyncAlt /> : <FaPlus />}
           {editIndex !== null ? "Update" : "Add"}
         </button>
       </div>
-      <ul className="todoList">
-        {displayedTodos.map((todo, index) => (
-          <li key={index} className="todoItem">
-            <span>
-              {startIndex + index + 1}. {todo}
-            </span>
-            <div className="buttonContainer">
-              <button
-                onClick={() => handleEditTodo(startIndex + index)}
-                className="editButton"
-              >
-                <FaEdit />
-                Edit
-              </button>
-              <button
-                onClick={() => handleDeleteTodo(startIndex + index)}
-                className="deleteButton"
-              >
-                <FaTrash />
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <Pagination
-        totalItems={todos.length}
-        itemsPerPage={itemsPerPage}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        onItemsPerPageChange={setItemsPerPage}
-      />
+
+      {loading ? (
+        <div className="loader">Loading...</div>
+      ) : (
+        <>
+          <ul className="todoList">
+            {displayedSubjects.map((subject, index) => (
+              <li key={subject.id || index} className="todoItem">
+                <span>
+                  {startIndex + index + 1}. {subject?.attributes?.name}
+                </span>
+                <div className="buttonContainer">
+                  <button
+                    onClick={() => handleEditSubject(index)}
+                    className="editButton"
+                  >
+                    <FaEdit /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteSubject(index)}
+                    className="deleteButton"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <Pagination
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={subjects.length}
+            setCurrentPage={setCurrentPage}
+            setItemsPerPage={setItemsPerPage}
+          />
+        </>
+      )}
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };
