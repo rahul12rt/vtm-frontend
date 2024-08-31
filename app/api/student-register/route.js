@@ -19,11 +19,20 @@ export async function POST(request) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(formData), // Convert the payload to JSON string
+      body: JSON.stringify(formData),
     });
 
     if (!response.ok) {
-      throw new Error(`Error sending data to Strapi: ${response.statusText}`);
+      const errorData = await response.json();
+      // Check if the response indicates the student is already registered
+      if (response.status === 400) {
+        return NextResponse.json(
+          { error: "Student is already registered" },
+          { status: 400 }
+        );
+      } else {
+        throw new Error(`Error sending data to Strapi: ${errorData.message}`);
+      }
     }
 
     const data = await response.json();

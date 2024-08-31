@@ -3,6 +3,9 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import SearchableDropdown from "../_components/searchAbleDropDown";
 import Pagination from "../_components/pagination";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { FaExternalLinkAlt } from "react-icons/fa";
 import styles from "./page.module.css";
 
 const Results = () => {
@@ -184,6 +187,66 @@ const Results = () => {
     }));
   };
 
+  const exportToPDF = (groupIndex) => {
+    const titleElement = document.getElementById(`title-${groupIndex}`);
+    const tableElement = document.getElementById(`table-${groupIndex}`);
+
+    Promise.all([html2canvas(titleElement), html2canvas(tableElement)]).then(
+      ([titleCanvas, tableCanvas]) => {
+        const titleImgData = titleCanvas.toDataURL("image/png");
+        const tableImgData = tableCanvas.toDataURL("image/png");
+        const pdf = new jsPDF();
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 295; // A4 height in mm
+        const titleImgHeight =
+          (titleCanvas.height * imgWidth) / titleCanvas.width;
+        const tableImgHeight =
+          (tableCanvas.height * imgWidth) / tableCanvas.width;
+        let heightLeft = titleImgHeight + tableImgHeight;
+        let position = 0;
+
+        // Add title to PDF
+        pdf.addImage(
+          titleImgData,
+          "PNG",
+          0,
+          position,
+          imgWidth,
+          titleImgHeight
+        );
+        position += titleImgHeight;
+
+        // Add table to PDF
+        pdf.addImage(
+          tableImgData,
+          "PNG",
+          0,
+          position,
+          imgWidth,
+          tableImgHeight
+        );
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - tableImgHeight;
+          pdf.addPage();
+          pdf.addImage(titleImgData, "PNG", 0, 0, imgWidth, titleImgHeight);
+          pdf.addImage(
+            tableImgData,
+            "PNG",
+            0,
+            titleImgHeight,
+            imgWidth,
+            tableImgHeight
+          );
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save(`test-results-${groupIndex}.pdf`);
+      }
+    );
+  };
+
   return (
     <div className="container">
       <h2 className="sectionHeader">Filter Test Results</h2>
@@ -252,7 +315,6 @@ const Results = () => {
               }
               placeholder="Select Topic"
             />
-
             <SearchableDropdown
               options={data.options.dates}
               selectedValue={data.selectedFilters.date}
@@ -268,91 +330,88 @@ const Results = () => {
               placeholder="Select Date"
             />
           </div>
-
-          {data.filteredData.length === 0 ? (
-            <p>No results found for the selected filters.</p>
-          ) : (
-            groupData(data.filteredData).map((group, groupIndex) => {
-              const totalItems = group.students.length;
-              const itemsPerPage =
-                data.pagination[groupIndex]?.itemsPerPage || 10;
-              const currentPage = data.pagination[groupIndex]?.currentPage || 1;
-              const paginatedStudents = group.students.slice(
-                (currentPage - 1) * itemsPerPage,
-                currentPage * itemsPerPage
-              );
-
-              return (
-                <div key={groupIndex} className={styles.testSection}>
-                  <div className={styles.headerSection}>
-                    <div className={styles.sectionHeader}>
-                      College Name - {group.collegeName}
-                    </div>
-                  </div>
-                  <div className={styles.tableContainer}>
-                    <div className={styles.classDetails}>
-                      {group.className} Section
-                    </div>
-                    <div className={styles.testDetails}>
-                      <div className={styles.testTitle}>
-                        Test Title - {group.subjectName}
-                      </div>
-                      <div className={styles.testTitle}>
-                        Topic - {group.topicName}
-                      </div>
-                      <div className={styles.testDate}>
-                        Test Date: {group.testDate}
-                      </div>
-                    </div>
-                    <table className={styles.resultsTable}>
-                      <thead>
-                        <tr>
-                          <th>Roll Number</th>
-                          <th>Name</th>
-                          <th>Marks Obtained</th>
-                          <th>Total Marks</th>
-                          <th>Rank</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedStudents.map((student, index) => (
-                          <tr key={index}>
-                            <td>
-                              {
-                                student.attributes.student?.data?.attributes
-                                  ?.roll_number
-                              }
-                            </td>
-                            <td>
-                              {
-                                student.attributes.student?.data?.attributes
-                                  ?.name
-                              }
-                            </td>
-                            <td>{student.attributes.obtained}</td>
-                            <td>{student.attributes.total_marks}</td>
-                            <td>{student.attributes.rank}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    <Pagination
-                      totalItems={totalItems}
-                      itemsPerPage={itemsPerPage}
-                      currentPage={currentPage}
-                      onPageChange={(page) =>
-                        handlePageChange(groupIndex, page)
-                      }
-                      onItemsPerPageChange={(value) =>
-                        handleItemsPerPageChange(groupIndex, value)
-                      }
-                    />
+          {groupData(data.filteredData).map((group, index) => (
+            <div key={index}>
+              <div id={`title-${index}`} className={styles.titleContainer}>
+                <div className={styles.headerSection}>
+                  <div className={styles.sectionHeader}>
+                    College Name - {group.collegeName}
                   </div>
                 </div>
-              );
-            })
-          )}
+                <div className={styles.tableContainer}>
+                  <div className={styles.classDetails}>
+                    {group.className} Section
+                  </div>
+                  <div
+                    className={styles.testDetails}
+                    style={{ marginBottom: 10 }}
+                  >
+                    <div className={styles.testTitle}>
+                      Test Title - {group.subjectName}
+                    </div>
+                    <div className={styles.testTitle}>
+                      Topic - {group.topicName}
+                    </div>
+                    <div className={styles.testDate}>
+                      Test Date: {group.testDate}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => exportToPDF(index)}
+                className="submitButton"
+                style={{ float: "right", margin: "20px 0px" }}
+              >
+                Export to PDF <FaExternalLinkAlt />
+              </button>
+              <table id={`table-${index}`} className={styles.resultsTable}>
+                <thead>
+                  <tr>
+                    <th>Roll No</th>
+                    <th>Name</th>
+                    <th>Marks Obtained</th>
+                    <th>Total Marks</th>
+                    <th>Rank</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.students
+                    .slice(
+                      (data.pagination[index]?.currentPage - 1 || 0) *
+                        (data.pagination[index]?.itemsPerPage || 10),
+                      (data.pagination[index]?.currentPage || 1) *
+                        (data.pagination[index]?.itemsPerPage || 10)
+                    )
+                    .map((student, studentIndex) => (
+                      <tr key={studentIndex}>
+                        <td>
+                          {
+                            student.attributes.student?.data?.attributes
+                              ?.roll_number
+                          }
+                        </td>
+                        <td>
+                          {student.attributes.student?.data?.attributes?.name}
+                        </td>
+                        <td>{student.attributes?.obtained}</td>
+                        <td>{student.attributes?.total_marks}</td>
+                        <td>{student.attributes.rank}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              <Pagination
+                totalItems={group.students.length}
+                itemsPerPage={data.pagination[index]?.itemsPerPage || 10}
+                currentPage={data.pagination[index]?.currentPage || 1}
+                onPageChange={(page) => handlePageChange(index, page)}
+                onItemsPerPageChange={(itemsPerPage) =>
+                  handleItemsPerPageChange(index, itemsPerPage)
+                }
+              />
+            </div>
+          ))}
         </>
       )}
     </div>

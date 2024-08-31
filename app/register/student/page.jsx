@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styles from "../../styles/register.module.css";
+import toast, { Toaster } from "react-hot-toast";
 
 const AcademicYearEnum = {
   "2024-25": "2024-25",
@@ -76,7 +77,7 @@ const StudentRegister = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
@@ -117,21 +118,38 @@ const StudentRegister = () => {
         },
       };
 
-      // Make the POST request
-      fetch("/api/student-register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      // Use toast.promise to handle the API request and show different toast notifications
+      toast.promise(
+        fetch("/api/student-register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }).then((response) => {
+          if (!response.ok) {
+            return response.json().then((data) => {
+              throw new Error(data.error || "An error occurred");
+            });
+          }
+          return response.json();
+        }),
+        {
+          loading: "Saving...",
+          success: async () => {
+            setFormData(initialFormState);
+            return <b>Student registered successfully!</b>;
+          },
+          error: <b>Could not save. Please try again.</b>,
         },
-        body: JSON.stringify(payload),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Response from server:", data);
-        })
-        .catch((error) => {
-          console.error("Error submitting form:", error);
-        });
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
     }
   };
 
@@ -168,6 +186,7 @@ const StudentRegister = () => {
     <div className="container">
       <div className="sectionHeader">Student Registration</div>
       <form className="form">
+        {/* Form Fields */}
         <div className="formGroup">
           <label htmlFor="name">
             Name<span className={styles.required}>*</span>
@@ -255,7 +274,7 @@ const StudentRegister = () => {
           <select
             id="college"
             name="college"
-            value={formData.college} // Stores the ID
+            value={formData.college}
             onChange={handleCollegeChange}
             onFocus={handleFocus}
             className={errors.college ? "errorInput" : ""}
@@ -276,7 +295,7 @@ const StudentRegister = () => {
           <select
             id="class"
             name="class"
-            value={formData.class} // Stores the ID
+            value={formData.class}
             onChange={handleClassChange}
             onFocus={handleFocus}
             className={errors.class ? "errorInput" : ""}
@@ -342,14 +361,16 @@ const StudentRegister = () => {
             placeholder="Enter your contact number 2 (optional)"
           />
         </div>
-        <button
-          type="submit"
-          onClick={handleSubmit}
-          className={styles.submitBtn}
-        >
-          Register
-        </button>
       </form>
+      <button
+        type="submit"
+        onClick={handleSubmit}
+        className="submitButton"
+        style={{ marginTop: 20 }}
+      >
+        Register
+      </button>
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };
