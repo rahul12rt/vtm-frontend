@@ -18,13 +18,14 @@ const Header = () => {
     <div className="container">
       <div className={styles.wrap}>
         <div className={styles.logoWrap}>
-          <Image
-            src="/images/logo.jpg"
+          {/* <img
+            src="/images/log.jpg"
             className={styles.logo}
-            alt="logo"
+            alt="VidVat"
             width={100}
             height={100}
-          />
+          /> */}
+          <h5 style={{ fontSize: 32, margin: 0 }}>VidVat</h5>
         </div>
         <select
           value={selectedPage}
