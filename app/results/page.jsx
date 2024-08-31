@@ -35,7 +35,6 @@ const Results = () => {
         const result = await axios.get("/api/get-test-results", {
           cache: "no-store",
         });
-        console.log(result);
         setData((prevState) => ({
           ...prevState,
           response: result.data.data || [],
@@ -81,8 +80,6 @@ const Results = () => {
           topics: formatOptions(topicsRes, "default"),
           dates: formatOptions(datesRes, "dates"),
         };
-
-        console.log("Formatted Options:", formattedOptions);
 
         setData((prevState) => ({
           ...prevState,
@@ -147,6 +144,15 @@ const Results = () => {
       acc[key].students.push(item);
       return acc;
     }, {});
+
+    // Sort the groups based on roll number
+    Object.keys(groups).forEach((key) => {
+      groups[key].students.sort((a, b) => {
+        const rollA = a.attributes.student?.data?.attributes?.roll_number || "";
+        const rollB = b.attributes.student?.data?.attributes?.roll_number || "";
+        return rollA.localeCompare(rollB); // Change this to `rollB.localeCompare(rollA)` for descending order
+      });
+    });
 
     return Object.values(groups);
   };
@@ -295,10 +301,9 @@ const Results = () => {
                         Topic - {group.topicName}
                       </div>
                       <div className={styles.testDate}>
-                        Conducted On - {group.testDate}
+                        Test Date: {group.testDate}
                       </div>
                     </div>
-
                     <table className={styles.resultsTable}>
                       <thead>
                         <tr>
@@ -310,23 +315,28 @@ const Results = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {paginatedStudents.map((student) => (
-                          <tr key={student.id}>
+                        {paginatedStudents.map((student, index) => (
+                          <tr key={index}>
                             <td>
-                              {student.attributes.student?.data?.attributes
-                                ?.roll_number || "N/A"}
+                              {
+                                student.attributes.student?.data?.attributes
+                                  ?.roll_number
+                              }
                             </td>
                             <td>
-                              {student.attributes.student?.data?.attributes
-                                ?.name || "N/A"}
+                              {
+                                student.attributes.student?.data?.attributes
+                                  ?.name
+                              }
                             </td>
-                            <td>{student.attributes?.obtained || "N/A"}</td>
-                            <td>{student.attributes?.total_marks || "N/A"}</td>
-                            <td>{student.attributes?.rank || "N/A"}</td>
+                            <td>{student.attributes.obtained}</td>
+                            <td>{student.attributes.total_marks}</td>
+                            <td>{student.attributes.rank}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+
                     <Pagination
                       totalItems={totalItems}
                       itemsPerPage={itemsPerPage}
@@ -334,8 +344,8 @@ const Results = () => {
                       onPageChange={(page) =>
                         handlePageChange(groupIndex, page)
                       }
-                      onItemsPerPageChange={(items) =>
-                        handleItemsPerPageChange(groupIndex, items)
+                      onItemsPerPageChange={(value) =>
+                        handleItemsPerPageChange(groupIndex, value)
                       }
                     />
                   </div>
