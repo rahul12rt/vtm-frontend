@@ -1,5 +1,3 @@
-import { prototype } from "events";
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
