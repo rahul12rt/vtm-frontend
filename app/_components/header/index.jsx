@@ -19,7 +19,7 @@ const Header = () => {
       <div className={styles.wrap}>
         <div className={styles.logoWrap}>
           <Image
-            src="/images/Logo.jpg"
+            src="/images/logo.jpg"
             className={styles.logo}
             alt="logo"
             width={100}
