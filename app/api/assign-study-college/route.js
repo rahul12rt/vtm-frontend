@@ -11,7 +11,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate=subject`;
+    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges?populate[self_studies]=*&populate[college]=*`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",
@@ -32,7 +32,6 @@ export async function GET() {
   }
 }
 
-// POST request handler
 export async function POST(request) {
   try {
     const strapiApiUrl = process.env.STRAPI_API_URL;
@@ -45,7 +44,7 @@ export async function POST(request) {
 
     const payload = await request.json();
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters`;
+    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges?populate[self_study]=*&populate[college]=*`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
       headers: {
@@ -76,15 +75,13 @@ export async function DELETE(request) {
       );
     }
 
-    const { chapterId } = await request.json();
-    if (!chapterId) {
-      return NextResponse.json(
-        { error: "Subject ID is required" },
-        { status: 400 }
-      );
+    const { materialId } = await request.json();
+    if (!materialId) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters/${chapterId}`;
+    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges/${materialId}?populate[self_study]=*&populate[college]=*`;
+    http: console.log(strapiEndpoint);
     const response = await fetch(strapiEndpoint, {
       method: "DELETE",
       headers: {
@@ -96,49 +93,7 @@ export async function DELETE(request) {
       throw new Error(`Error deleting subject: ${response.statusText}`);
     }
 
-    return NextResponse.json({ message: "Subject deleted successfully" });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-// PUT request handler
-export async function PUT(request) {
-  try {
-    const strapiApiUrl = process.env.STRAPI_API_URL;
-    if (!strapiApiUrl) {
-      return NextResponse.json(
-        { error: "STRAPI_API_URL is not defined in environment variables" },
-        { status: 500 }
-      );
-    }
-
-    const { chapterId, name, subject } = await request.json();
-
-    if (!chapterId || !name) {
-      return NextResponse.json(
-        { error: "Chapter ID and name are required" },
-        { status: 400 }
-      );
-    }
-
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters/${chapterId}`;
-    const response = await fetch(strapiEndpoint, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: { name, subject }, // Adjust the payload to match Strapi's expected format
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error updating chapter: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({ message: "Deleted successfully" });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

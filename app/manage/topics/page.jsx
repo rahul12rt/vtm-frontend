@@ -1,278 +1,309 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
-import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
-import Pagination from "../../_components/pagination";
-
-const subjects = ["Math", "Science", "English", "History"];
-const chapters = {
-  Math: ["Algebra", "Geometry", "Calculus"],
-  Science: ["Physics", "Chemistry", "Biology"],
-  English: ["Literature", "Grammar", "Writing"],
-  History: ["Ancient", "Medieval", "Modern"],
-};
+import React, { useState, useEffect } from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import toast, { Toaster } from "react-hot-toast";
 
 const ManageTopic = () => {
   const [topics, setTopics] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [chapters, setChapters] = useState({});
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedChapterId, setSelectedChapterId] = useState("");
   const [inputValue, setInputValue] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState(subjects[0]);
-  const [selectedChapter, setSelectedChapter] = useState(
-    chapters[subjects[0]][0]
-  );
-  const [editIndex, setEditIndex] = useState(null);
-  const [filterSubject, setFilterSubject] = useState("");
-  const [filterChapter, setFilterChapter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const inputRef = useRef(null);
+  const [editingTopic, setEditingTopic] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [itemsPerPage, filterSubject, filterChapter]);
+    fetchChapters();
+    fetchTopics();
+  }, []);
 
-  const handleAddTopic = () => {
-    if (inputValue.trim()) {
-      if (editIndex !== null) {
-        const updatedTopics = topics.map((topic, index) =>
-          index === editIndex
+  const fetchChapters = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/chapter");
+      if (!response.ok) {
+        throw new Error("Failed to fetch chapters");
+      }
+      const data = await response.json();
+      const subjectsSet = new Set();
+      const chaptersMap = {};
+
+      data.data.forEach((item) => {
+        const subjectName = item.attributes.subject.data.attributes.name;
+        const chapterId = item.id;
+        const chapterName = item.attributes.name;
+
+        subjectsSet.add(subjectName);
+
+        if (!chaptersMap[subjectName]) {
+          chaptersMap[subjectName] = [];
+        }
+
+        chaptersMap[subjectName].push({ id: chapterId, name: chapterName });
+      });
+
+      setSubjects(Array.from(subjectsSet));
+      setChapters(chaptersMap);
+
+      const firstSubject = Array.from(subjectsSet)[0];
+      setSelectedSubject(firstSubject);
+      setSelectedChapterId(chaptersMap[firstSubject][0]?.id || "");
+    } catch (error) {
+      console.error("Error fetching chapters:", error);
+      toast.error("Failed to fetch chapters.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTopics = async () => {
+    try {
+      const response = await fetch("/api/topics");
+      if (!response.ok) {
+        throw new Error("Failed to fetch topics");
+      }
+      const data = await response.json();
+      const formattedTopics = data.data.map((item) => {
+        const chapter = item.attributes.chapter.data;
+        const subject = chapter.attributes.subject.data.attributes.name;
+        const chapterName = chapter.attributes.name;
+        const topicName = item.attributes.name;
+        const topicId = item.id;
+
+        return {
+          id: topicId,
+          subject,
+          chapter: chapterName,
+          topic: topicName,
+        };
+      });
+      setTopics(formattedTopics);
+    } catch (error) {
+      console.error("Error fetching topics:", error);
+      toast.error("Failed to fetch topics.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditTopic = (topic) => {
+    setEditingTopic(topic);
+    setInputValue(topic.topic);
+    setSelectedSubject(topic.subject);
+    const chapterId = Object.keys(chapters).find((subject) =>
+      chapters[subject].some((chap) => chap.name === topic.chapter)
+    );
+    setSelectedChapterId(
+      chapters[chapterId]?.find((chap) => chap.name === topic.chapter)?.id || ""
+    );
+  };
+
+  const handleDeleteTopic = async (id) => {
+    try {
+      const response = await fetch("/api/topics", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ topicsId: id }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete topic");
+      }
+      setTopics((prevTopics) => prevTopics.filter((topic) => topic.id !== id));
+      toast.success("Topic deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting topic:", error);
+      toast.error("Failed to delete topic.");
+    }
+  };
+
+  const handleAddTopic = async () => {
+    try {
+      const response = await fetch("/api/topics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: {
+            name: inputValue,
+            chapter: selectedChapterId,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add topic");
+      }
+
+      const newTopic = await response.json();
+      setTopics((prevTopics) => [
+        ...prevTopics,
+        {
+          id: newTopic.data.id,
+          subject: selectedSubject,
+          chapter:
+            chapters[selectedSubject]?.find(
+              (chap) => chap.id === selectedChapterId
+            )?.name || "",
+          topic: inputValue,
+        },
+      ]);
+      setInputValue("");
+      toast.success("Topic added successfully.");
+    } catch (error) {
+      console.error("Error adding topic:", error);
+      toast.error("Failed to add topic.");
+    }
+  };
+
+  const handleUpdateTopic = async () => {
+    if (!editingTopic) return;
+
+    try {
+      const response = await fetch("/api/topics", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: editingTopic.id,
+          name: inputValue,
+          chapter: selectedChapterId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update topic");
+      }
+
+      const updatedTopic = await response.json();
+      setTopics((prevTopics) =>
+        prevTopics.map((topic) =>
+          topic.id === editingTopic.id
             ? {
-                subject: selectedSubject,
-                chapter: selectedChapter,
+                ...topic,
                 topic: inputValue,
+                chapter:
+                  chapters[selectedSubject]?.find(
+                    (chap) => chap.id === selectedChapterId
+                  )?.name || "",
               }
             : topic
-        );
-        setTopics(updatedTopics);
-        setEditIndex(null);
-        setInputValue("");
-      } else {
-        setTopics([
-          ...topics,
-          {
-            subject: selectedSubject,
-            chapter: selectedChapter,
-            topic: inputValue,
-          },
-        ]);
-        setInputValue("");
-      }
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+        )
+      );
+      setInputValue("");
+      setEditingTopic(null);
+      toast.success("Topic updated successfully.");
+    } catch (error) {
+      console.error("Error updating topic:", error);
+      toast.error("Failed to update topic.");
     }
   };
-
-  const handleEditTopic = (index) => {
-    const actualIndex = filteredTopics[index]
-      ? topics.indexOf(filteredTopics[index])
-      : -1;
-    if (actualIndex !== -1) {
-      setEditIndex(actualIndex);
-      setInputValue(filteredTopics[index].topic);
-      setSelectedSubject(filteredTopics[index].subject);
-      setSelectedChapter(filteredTopics[index].chapter);
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }
-  };
-
-  const handleDeleteTopic = (index) => {
-    const actualIndex = filteredTopics[index]
-      ? topics.indexOf(filteredTopics[index])
-      : -1;
-    if (actualIndex !== -1) {
-      const updatedTopics = topics.filter((_, i) => i !== actualIndex);
-      setTopics(updatedTopics);
-
-      const maxPage = Math.ceil(updatedTopics.length / itemsPerPage);
-      if (currentPage > maxPage) {
-        setCurrentPage(maxPage);
-      }
-
-      if (editIndex !== null && editIndex === actualIndex) {
-        setEditIndex(null);
-        setInputValue("");
-      }
-    }
-  };
-
-  const handleSubjectChange = (e) => {
-    const newSubject = e.target.value;
-    setSelectedSubject(newSubject);
-    setSelectedChapter(chapters[newSubject][0]); // Reset chapter to the first chapter of the new subject
-  };
-
-  const handleFilterSubjectChange = (e) => {
-    setFilterSubject(e.target.value);
-    setFilterChapter("");
-  };
-
-  const handleFilterChapterChange = (e) => {
-    setFilterChapter(e.target.value);
-  };
-
-  const filteredTopics = topics.filter((topic) => {
-    const subjectMatch = filterSubject ? topic.subject === filterSubject : true;
-    const chapterMatch = filterChapter ? topic.chapter === filterChapter : true;
-    return subjectMatch && chapterMatch;
-  });
-
-  const uniqueSubjects = Array.from(
-    new Set(topics.map((topic) => topic.subject))
-  );
-  const uniqueChapters = Array.from(
-    new Set(topics.map((topic) => topic.chapter))
-  );
-
-  const showFilterOptions =
-    uniqueSubjects.length > 1 || uniqueChapters.length > 1;
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, filteredTopics.length);
-  const displayedTopics = filteredTopics.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    if (filteredTopics.length === 0 && (filterSubject || filterChapter)) {
-      setFilterSubject("");
-      setFilterChapter("");
-    }
-  }, [filteredTopics.length, filterSubject, filterChapter]);
 
   return (
     <div className="container">
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="sectionHeader">Manage Topics</div>
       <div className="inputContainer">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Enter a new topic"
-          ref={inputRef}
-        />
-        <div className="formGroup" style={{ width: "100%" }}>
+        <div className="formGroup">
+          <label htmlFor="inputField">Information</label>
+          <input
+            type="text"
+            id="inputField"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Enter some information"
+          />
+        </div>
+        <div className="formGroup">
+          <label htmlFor="subjects">Subject</label>
           <select
             id="subjects"
             value={selectedSubject}
-            onChange={handleSubjectChange}
+            onChange={(e) => {
+              const subject = e.target.value;
+              setSelectedSubject(subject);
+              setSelectedChapterId(chapters[subject]?.[0]?.id || "");
+            }}
             className="selectTopics"
           >
-            {subjects.map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
-              </option>
-            ))}
+            {loading ? (
+              <option>Loading...</option>
+            ) : (
+              subjects.map((subject) => (
+                <option key={subject} value={subject}>
+                  {subject}
+                </option>
+              ))
+            )}
           </select>
         </div>
-        <div className="formGroup" style={{ width: "100%" }}>
+        <div className="formGroup">
+          <label htmlFor="chapters">Chapter</label>
           <select
             id="chapters"
-            value={selectedChapter}
-            onChange={(e) => setSelectedChapter(e.target.value)}
+            value={selectedChapterId}
+            onChange={(e) => setSelectedChapterId(e.target.value)}
             className="selectTopics"
           >
-            {chapters[selectedSubject].map((chapter) => (
-              <option key={chapter} value={chapter}>
-                {chapter}
-              </option>
-            ))}
+            {loading ? (
+              <option>Loading...</option>
+            ) : (
+              chapters[selectedSubject]?.map((chapter) => (
+                <option key={chapter.id} value={chapter.id}>
+                  {chapter.name}
+                </option>
+              ))
+            )}
           </select>
         </div>
-        <button
-          onClick={handleAddTopic}
-          className={editIndex !== null ? "updateButton" : "addButton"}
-        >
-          {editIndex !== null ? <FaEdit /> : <FaPlus />}
-          {editIndex !== null ? "Update" : "Add"}
-        </button>
+        {editingTopic ? (
+          <button onClick={handleUpdateTopic} className="updateButton">
+            Update Topic
+          </button>
+        ) : (
+          <button onClick={handleAddTopic} className="addButton">
+            Add Topic
+          </button>
+        )}
       </div>
-      {showFilterOptions && (
-        <div className="filterContainer">
-          <div className="firstContainer">
-            {uniqueSubjects.length > 1 && (
-              <div className="formGroup">
-                <label htmlFor="filter">Filter by Subject:</label>
-                <select
-                  id="filter"
-                  value={filterSubject}
-                  onChange={handleFilterSubjectChange}
-                  className="filterSelect"
-                  style={{ marginTop: 4 }}
-                >
-                  <option value="">All</option>
-                  {uniqueSubjects.map((subject) => (
-                    <option key={subject} value={subject}>
-                      {subject}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-          <div>
-            {uniqueChapters.length > 1 && (
-              <div className="formGroup">
-                <label htmlFor="filter" className="chapterContainer">
-                  Filter by Chapter:
-                </label>
-                <select
-                  id="filter"
-                  value={filterChapter}
-                  onChange={handleFilterChapterChange}
-                  className="filterSelect"
-                >
-                  <option value="">All</option>
-                  {(filterSubject
-                    ? chapters[filterSubject]
-                    : uniqueChapters
-                  ).map((chapter) => (
-                    <option key={chapter} value={chapter}>
-                      {chapter}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <ul className="todoList">
-        {filteredTopics.length === 0 && (filterSubject || filterChapter) ? (
+      <div className="listContainer">
+        {loading ? (
+          <div>Loading...</div>
+        ) : topics.length === 0 ? (
           <div className="noDataMessage">No data found</div>
         ) : (
-          displayedTopics.map((topic, index) => (
-            <li key={index} className="todoItem">
-              <span>
-                {startIndex + index + 1}.{" "}
-                <span className="highlight">{topic.chapter}</span> -{" "}
-                <span className="highlight">{topic.subject}</span> :{" "}
-                {topic.topic}
-              </span>
-              <div className="buttonContainer">
-                <button
-                  onClick={() => handleEditTopic(index)}
-                  className="editButton"
-                >
-                  <FaEdit /> Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteTopic(index)}
-                  className="deleteButton"
-                >
-                  <FaTrash /> Delete
-                </button>
-              </div>
-            </li>
-          ))
+          <ul className="todoList">
+            {topics.map((topic) => (
+              <li key={topic.id} className="todoItem">
+                <span>
+                  <span className="highlight">{topic.chapter}</span> -{" "}
+                  <span className="highlight">{topic.subject}</span> :{" "}
+                  {topic.topic}
+                </span>
+                <div className="buttonContainer">
+                  <button
+                    onClick={() => handleEditTopic(topic)}
+                    className="editButton"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTopic(topic.id)}
+                    className="deleteButton"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
-      </ul>
-      <Pagination
-        totalItems={filteredTopics.length}
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-        onItemsPerPageChange={setItemsPerPage}
-      />
+      </div>
     </div>
   );
 };

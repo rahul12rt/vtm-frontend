@@ -1,177 +1,288 @@
 "use client";
-import React, { useState } from "react";
-import SearchableSingleSelect from "../../_components/searchAbleDropDown";
-import MultiSelectDropDown from "../../_components/multiSelectDropDown";
-import { FaEdit, FaPlus, FaSyncAlt, FaTrash } from "react-icons/fa";
-import Pagination from "../../_components/pagination";
+import React, { useState, useEffect } from "react";
+import { FaEdit, FaTrash, FaPlus, FaSyncAlt } from "react-icons/fa";
+import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
+import toast, { Toaster } from "react-hot-toast";
 
-const colleges = [
-  { id: "1", name: "Harvard" },
-  { id: "2", name: "MIT" },
-  { id: "3", name: "Stanford" },
-  { id: "4", name: "Oxford" },
-]; // Example colleges
-
-const facultyOptions = [
-  { id: "1", name: "Dr. Smith" },
-  { id: "2", name: "Prof. Johnson" },
-  { id: "3", name: "Ms. Davis" },
-  { id: "4", name: "Mr. Brown" },
-]; // Example faculty
-
-const FacultyToColleges = () => {
+const FacultyToCollege = () => {
   const [selectedFaculty, setSelectedFaculty] = useState("");
   const [selectedColleges, setSelectedColleges] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [facultyOptions, setFacultyOptions] = useState([]);
+  const [collegeOptions, setCollegeOptions] = useState([]);
+  const [mappingOptions, setMappingOptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
-  const handleFacultyChange = (value) => {
-    setSelectedFaculty(value);
+  const handleFacultyChange = (event) => {
+    setSelectedFaculty(event.target.value);
   };
 
   const handleCollegesChange = (values) => {
     setSelectedColleges(values);
   };
 
-  const handleSubmit = () => {
-    if (selectedFaculty && selectedColleges.length > 0) {
-      if (editingIndex !== null) {
-        const updatedAssignments = [...assignments];
-        updatedAssignments[editingIndex] = {
-          facultyName: selectedFaculty,
-          colleges: selectedColleges,
-        };
-        setAssignments(updatedAssignments);
-        setEditingIndex(null);
-      } else {
-        setAssignments((prevAssignments) => [
-          ...prevAssignments,
-          { facultyName: selectedFaculty, colleges: selectedColleges },
-        ]);
+  const handleAddMapping = async () => {
+    if (!selectedFaculty || selectedColleges.length === 0) {
+      toast.error("Please select a faculty and at least one college.");
+      return;
+    }
+
+    const payload = {
+      data: {
+        faculty: selectedFaculty,
+        colleges: selectedColleges,
+      },
+    };
+
+    try {
+      const response = await fetch("/api/map-faculty-college", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error Data:", errorData);
+        toast.error("Could not save. Please try again.");
+        return;
       }
+
+      const data = await response.json();
+
+      const newMapping = {
+        id: data.data.id,
+        name: data.data.attributes.faculty.data.attributes.name,
+        colleges: data.data.attributes.colleges.data.map((college) => ({
+          id: college.id,
+          attributes: {
+            name: college.attributes.name,
+          },
+        })),
+      };
+
+      setMappingOptions((prev) => [...prev, newMapping]);
       setSelectedFaculty("");
       setSelectedColleges([]);
+      toast.success("Mapping added successfully!");
+    } catch (error) {
+      console.error("Error saving data:", error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
-  const handleEditAssignment = (index) => {
-    const assignment = assignments[index];
-    setSelectedFaculty(assignment.facultyName);
-    setSelectedColleges(assignment.colleges);
-    setEditingIndex(index);
-  };
+  const handleDeleteMapping = async (index) => {
+    const mappingId = mappingOptions[index].id;
 
-  const handleDeleteAssignment = (index) => {
-    const actualIndex = index;
-    setAssignments((prevAssignments) => {
-      const newAssignments = prevAssignments.filter(
-        (_, i) => i !== actualIndex
-      );
-      const totalPages = Math.ceil(newAssignments.length / itemsPerPage);
-      if (currentPage > totalPages && totalPages > 0) {
-        setCurrentPage(totalPages); // Adjust current page if needed
+    if (!mappingId) {
+      toast.error("Invalid mapping ID.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/map-faculty-college`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: mappingId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error Data:", errorData);
+        toast.error("Could not delete. Please try again.");
+        return;
       }
-      return newAssignments;
-    });
+
+      setMappingOptions((prev) => prev.filter((_, i) => i !== index));
+      toast.success("Mapping deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting data:", error);
+      toast.error("An error occurred. Please try again.");
+    }
   };
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [facultyResponse, collegeResponse, mappingResponse] =
+          await Promise.all([
+            fetch("/api/register/faculty"),
+            fetch("/api/colleges"),
+            fetch("/api/map-faculty-college"),
+          ]);
+
+        const facultyData = await facultyResponse.json();
+        const collegeData = await collegeResponse.json();
+        const mappingData = await mappingResponse.json();
+
+        setFacultyOptions(
+          facultyData.data.map((faculty) => ({
+            id: faculty.id,
+            name: faculty.attributes.name,
+          }))
+        );
+
+        setCollegeOptions(
+          collegeData.data.map((college) => ({
+            id: college.id,
+            name: college.attributes.name,
+          }))
+        );
+
+        setMappingOptions(
+          mappingData.data.map((mapping) => ({
+            id: mapping.id,
+            name: mapping.attributes.faculty.data.attributes.name,
+            colleges: mapping.attributes.colleges.data,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleEditMapping = (index) => {
+    const selectedMapping = mappingOptions[index];
+    console.log("Selected Mapping:", selectedMapping);
+    setSelectedFaculty(selectedMapping.id);
+    setSelectedColleges(selectedMapping.colleges.map((college) => college.id));
+    setIsEditing(true);
+    setEditIndex(index);
   };
 
-  const filteredAssignments = assignments.filter((assignment) =>
-    assignment.facultyName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Add handleSaveEdit function
+  const handleSaveEdit = async () => {
+    if (!selectedFaculty || selectedColleges.length === 0) {
+      toast.error("Please select a faculty and at least one college.");
+      return;
+    }
 
-  // Pagination logic
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(
-    startIndex + itemsPerPage,
-    filteredAssignments.length
-  );
-  const displayedAssignments = filteredAssignments.slice(startIndex, endIndex);
+    const mappingId = mappingOptions[editIndex].id;
+
+    const payload = {
+      id: mappingId,
+      data: {
+        faculty: Number(selectedFaculty),
+        colleges: selectedColleges,
+      },
+    };
+
+    try {
+      const response = await fetch(`/api/map-faculty-college`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      const updatedMapping = {
+        id: data.data.id,
+        name: data.data.attributes.faculty.data.attributes.name,
+        colleges: data.data.attributes.colleges.data.map((college) => ({
+          id: college.id,
+          attributes: {
+            name: college.attributes.name,
+          },
+        })),
+      };
+
+      setMappingOptions((prev) =>
+        prev.map((item, i) => (i === editIndex ? updatedMapping : item))
+      );
+      setSelectedFaculty("");
+      setSelectedColleges([]);
+      setIsEditing(false);
+      toast.success("Mapping updated successfully!");
+    } catch (error) {
+      console.error("Error updating data:", error);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
 
   return (
     <div className="container">
       <div className="sectionHeader">Faculty to College Mapping</div>
-      <div className="inputContainer">
-        <SearchableSingleSelect
-          options={facultyOptions}
-          selectedValue={selectedFaculty}
-          onChange={handleFacultyChange}
-          placeholder="Select faculty"
-        />
-        <MultiSelectDropDown
-          options={colleges}
-          selectedValues={selectedColleges}
-          onChange={handleCollegesChange}
-          placeholder="Select colleges"
-        />
-        <button onClick={handleSubmit} className="addButton">
-          {editingIndex !== null ? <FaSyncAlt /> : <FaPlus />}
-          {editingIndex !== null ? "Update" : "Add"}
-        </button>
-      </div>
-      <div className="inputContainer">
-        {assignments.length > 1 && (
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Search faculty"
-            className="searchBar"
-          />
-        )}
-      </div>
-      <ul className="todoList">
-        {filteredAssignments.length === 0 ? (
-          searchTerm ? (
-            <div className="noDataMessage">No data found</div>
-          ) : null
-        ) : (
-          displayedAssignments.map((assignment, index) => (
-            <li key={startIndex + index} className="todoItem">
-              <span>
-                {startIndex + index + 1}. <span>{assignment.facultyName}</span>{" "}
-                -{" "}
-                <span className="highlight">
-                  {assignment.colleges.join(", ")}
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          <div className="inputContainer">
+            <select
+              value={selectedFaculty}
+              onChange={handleFacultyChange}
+              className="selectDropdown"
+            >
+              <option value="" disabled>
+                Select faculty
+              </option>
+              {facultyOptions.map((faculty) => (
+                <option key={faculty.id} value={faculty.id}>
+                  {faculty.name}
+                </option>
+              ))}
+            </select>
+            <MultiSelectDropDown
+              options={collegeOptions}
+              selectedValues={selectedColleges}
+              onChange={handleCollegesChange}
+              placeholder="Select colleges"
+            />
+            <button
+              onClick={isEditing ? handleSaveEdit : handleAddMapping}
+              className="addButton"
+            >
+              {isEditing ? <FaSyncAlt /> : <FaPlus />}{" "}
+              {isEditing ? "Save" : "Add"}
+            </button>
+          </div>
+          <ul className="todoList">
+            {mappingOptions.map((mapping, index) => (
+              <li key={mapping.id || index} className="todoItem">
+                <span>
+                  {index + 1}. {mapping?.name} -{" "}
+                  <span className="highlight">
+                    {mapping.colleges
+                      .map((res) => res?.attributes?.name)
+                      .join(", ")}
+                  </span>
                 </span>
-              </span>
-              <div className="buttonContainer">
-                <button
-                  onClick={() => handleEditAssignment(startIndex + index)}
-                  className="editButton"
-                >
-                  <FaEdit /> {/* Edit icon */}
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteAssignment(startIndex + index)}
-                  className="deleteButton"
-                >
-                  <FaTrash /> {/* Delete icon */}
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))
-        )}
-      </ul>
-      {filteredAssignments.length > itemsPerPage && (
-        <Pagination
-          totalItems={filteredAssignments.length}
-          itemsPerPage={itemsPerPage}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-        />
+
+                <div className="buttonContainer">
+                  <button
+                    onClick={() => handleEditMapping(index)}
+                    className="editButton"
+                  >
+                    <FaEdit /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMapping(index)}
+                    className="deleteButton"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };
 
-export default FacultyToColleges;
+export default FacultyToCollege;

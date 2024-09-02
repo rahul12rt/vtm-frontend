@@ -1,0 +1,68 @@
+.dropdownContainer {
+  position: relative;
+  width: 100%;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #fff;
+  transition: border-color 0.3s ease;
+}
+
+.searchInput:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  padding: 4px 0;
+}
+
+.dropdownOption {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.dropdownOption:hover,
+.dropdownOption.selected {
+  background-color: #e9ecef;
+}
+
+.checkbox {
+  width: 16px !important;
+  height: 16px;
+  margin-right: 8px;
+  cursor: pointer;
+  flex: none;
+}
+
+.noOptions {
+  padding: 8px;
+  color: #888;
+  text-align: center;
+  font-size: 14px;
+}
+
+.searchInput::placeholder {
+  color: #888;
+}

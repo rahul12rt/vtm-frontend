@@ -1,7 +1,5 @@
-// SearchableSingleSelect.js
-"use client";
 import React, { useState, useEffect, useRef } from "react";
-import styles from "./index.module.css"; // Adjust the path as needed
+import styles from "./index.module.css";
 
 const SearchableSingleSelect = ({
   options,
@@ -31,7 +29,7 @@ const SearchableSingleSelect = ({
 
   useEffect(() => {
     setFilteredOptions(
-      options.filter((option) =>
+      options?.filter((option) =>
         option.name
           ? option.name.toLowerCase().includes(searchTerm.toLowerCase())
           : false
@@ -46,7 +44,7 @@ const SearchableSingleSelect = ({
   };
 
   const handleOptionClick = (option) => {
-    onChange(option); // Pass the entire option object
+    onChange(option.id); // Pass ID to parent
     setSearchTerm(option.name); // Update input field with selected value
     setIsDropdownOpen(false); // Close dropdown after selection
     setIsInitial(false); // Set initial to false after selection
@@ -61,8 +59,10 @@ const SearchableSingleSelect = ({
   };
 
   useEffect(() => {
-    setSearchTerm(selectedValue); // Ensure the search term matches the selected value
-  }, [selectedValue]);
+    setSearchTerm(
+      options.find((option) => option.id === selectedValue)?.name || ""
+    ); // Ensure the search term matches the selected value
+  }, [selectedValue, options]);
 
   return (
     <div className={styles.dropdownContainer} ref={dropdownRef}>

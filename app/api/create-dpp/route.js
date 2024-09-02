@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-// GET request handler
 export async function GET() {
   try {
     const strapiApiUrl = process.env.STRAPI_API_URL;
@@ -11,8 +10,8 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate=subject`;
-    const response = await fetch(strapiEndpoint, {
+    const strapiEndpoint = `${strapiApiUrl}/api/creat-dpps?populate[class]=*&populate[subject]=*&populate[chapters]=*&populate[topics]=*`;
+    const response = await fetch(`${strapiEndpoint}`, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -32,7 +31,6 @@ export async function GET() {
   }
 }
 
-// POST request handler
 export async function POST(request) {
   try {
     const strapiApiUrl = process.env.STRAPI_API_URL;
@@ -43,19 +41,28 @@ export async function POST(request) {
       );
     }
 
-    const payload = await request.json();
+    const formData = await request.json();
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters`;
+    const strapiEndpoint = `${strapiApiUrl}/api/creat-dpps?populate[class]=*&populate[subject]=*&populate[chapters]=*&populate[topics]=*`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(formData),
     });
 
     if (!response.ok) {
-      throw new Error(`Error posting data to Strapi: ${response.statusText}`);
+      const errorData = await response.json();
+      ed;
+      if (response.status === 400) {
+        return NextResponse.json(
+          { error: "Self Study exists" },
+          { status: 400 }
+        );
+      } else {
+        throw new Error(`Error sending data to Strapi: ${errorData.message}`);
+      }
     }
 
     const data = await response.json();
@@ -65,7 +72,6 @@ export async function POST(request) {
   }
 }
 
-// DELETE request handler
 export async function DELETE(request) {
   try {
     const strapiApiUrl = process.env.STRAPI_API_URL;
@@ -76,15 +82,16 @@ export async function DELETE(request) {
       );
     }
 
-    const { chapterId } = await request.json();
-    if (!chapterId) {
+    const { studyId } = await request.json();
+    if (!studyId) {
       return NextResponse.json(
-        { error: "Subject ID is required" },
+        { error: "DPP material ID is required" },
         { status: 400 }
       );
     }
+    console.log(studyId);
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters/${chapterId}`;
+    const strapiEndpoint = `${strapiApiUrl}/api/creat-dpps/${studyId}`;
     const response = await fetch(strapiEndpoint, {
       method: "DELETE",
       headers: {
@@ -93,52 +100,12 @@ export async function DELETE(request) {
     });
 
     if (!response.ok) {
-      throw new Error(`Error deleting subject: ${response.statusText}`);
+      throw new Error(`Error deleting DPP material: ${response.statusText}`);
     }
 
-    return NextResponse.json({ message: "Subject deleted successfully" });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-// PUT request handler
-export async function PUT(request) {
-  try {
-    const strapiApiUrl = process.env.STRAPI_API_URL;
-    if (!strapiApiUrl) {
-      return NextResponse.json(
-        { error: "STRAPI_API_URL is not defined in environment variables" },
-        { status: 500 }
-      );
-    }
-
-    const { chapterId, name, subject } = await request.json();
-
-    if (!chapterId || !name) {
-      return NextResponse.json(
-        { error: "Chapter ID and name are required" },
-        { status: 400 }
-      );
-    }
-
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters/${chapterId}`;
-    const response = await fetch(strapiEndpoint, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: { name, subject }, // Adjust the payload to match Strapi's expected format
-      }),
+    return NextResponse.json({
+      message: "DPP material deleted successfully",
     });
-
-    if (!response.ok) {
-      throw new Error(`Error updating chapter: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

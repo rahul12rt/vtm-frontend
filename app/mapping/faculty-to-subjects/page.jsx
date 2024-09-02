@@ -1,176 +1,286 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { FaEdit, FaPlus, FaSyncAlt, FaTrash } from "react-icons/fa";
-import Pagination from "../../_components/pagination";
-import SearchableSingleSelect from "../../_components/searchAbleDropDown";
-import MultiSelectDropDown from "../../_components/multiSelectDropDown";
-
-const subjects = [
-  { id: "1", name: "Math" },
-  { id: "2", name: "Science" },
-  { id: "3", name: "English" },
-  { id: "4", name: "History" },
-]; // Example subjects
-
-const facultyOptions = [
-  { id: "1", name: "Dr. Smith" },
-  { id: "2", name: "Prof. Johnson" },
-  { id: "3", name: "Ms. Davis" },
-  { id: "4", name: "Mr. Brown" },
-]; // Example faculty
+import { FaEdit, FaTrash, FaPlus, FaSyncAlt } from "react-icons/fa";
+import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
+import toast, { Toaster } from "react-hot-toast";
 
 const FacultyToSubject = () => {
   const [selectedFaculty, setSelectedFaculty] = useState("");
   const [selectedSubjects, setSelectedSubjects] = useState([]);
-  const [mappings, setMappings] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isSearchPerformed, setIsSearchPerformed] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [facultyOptions, setFacultyOptions] = useState([]);
+  const [subjectOptions, setSubjectOptions] = useState([]);
+  const [mappingOptions, setMappingOptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
-  const handleFacultyChange = (value) => {
-    setSelectedFaculty(value);
+  const handleFacultyChange = (event) => {
+    setSelectedFaculty(event.target.value);
   };
 
   const handleSubjectsChange = (values) => {
     setSelectedSubjects(values);
   };
 
-  const handleSubmit = () => {
-    if (selectedFaculty && selectedSubjects.length > 0) {
-      if (editingIndex !== null) {
-        const updatedMappings = [...mappings];
-        updatedMappings[editingIndex] = {
-          facultyName: selectedFaculty,
-          subjects: selectedSubjects,
-        };
-        setMappings(updatedMappings);
-        setEditingIndex(null);
-      } else {
-        setMappings((prevMappings) => [
-          ...prevMappings,
-          {
-            facultyName: selectedFaculty,
-            subjects: selectedSubjects,
-          },
-        ]);
+  const handleAddMapping = async () => {
+    if (!selectedFaculty || selectedSubjects.length === 0) {
+      toast.error("Please select a faculty and at least one subject.");
+      return;
+    }
+
+    const payload = {
+      data: {
+        faculty: selectedFaculty,
+        subjects: selectedSubjects,
+      },
+    };
+
+    try {
+      const response = await fetch("/api/map-faculty-subject", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error Data:", errorData);
+        toast.error("Could not save. Please try again.");
+        return;
       }
+
+      const data = await response.json();
+
+      const newMapping = {
+        id: data.data.id,
+        name: data.data.attributes.faculty.data.attributes.name,
+        subjects: data.data.attributes.subjects.data.map((subject) => ({
+          id: subject.id,
+          attributes: {
+            name: subject.attributes.name,
+          },
+        })),
+      };
+
+      setMappingOptions((prev) => [...prev, newMapping]);
       setSelectedFaculty("");
       setSelectedSubjects([]);
+      toast.success("Mapping added successfully!");
+    } catch (error) {
+      console.error("Error saving data:", error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
-  const handleEditMapping = (index) => {
-    const mapping = mappings[index];
-    setSelectedFaculty(mapping.facultyName);
-    setSelectedSubjects(mapping.subjects);
-    setEditingIndex(index);
-  };
+  const handleDeleteSubject = async (index) => {
+    const mappingId = mappingOptions[index].id;
 
-  const handleDeleteMapping = (index) => {
-    const actualIndex = index;
-    const updatedMappings = mappings.filter((_, i) => i !== actualIndex);
-    setMappings(updatedMappings);
+    if (!mappingId) {
+      toast.error("Invalid mapping ID.");
+      return;
+    }
 
-    // Pagination adjustment
-    const maxPage = Math.ceil(updatedMappings.length / itemsPerPage);
-    if (currentPage > maxPage) {
-      setCurrentPage(maxPage);
+    try {
+      const response = await fetch(`/api/map-faculty-subject`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: mappingId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error Data:", errorData);
+        toast.error("Could not delete. Please try again.");
+        return;
+      }
+
+      setMappingOptions((prev) => prev.filter((_, i) => i !== index));
+      toast.success("Mapping deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting data:", error);
+      toast.error("An error occurred. Please try again.");
     }
   };
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setIsSearchPerformed(true); // Set search performed to true on input change
-  };
-
-  const filteredMappings = mappings.filter((mapping) =>
-    mapping.facultyName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Pagination logic
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, filteredMappings.length);
-  const displayedMappings = filteredMappings.slice(startIndex, endIndex);
 
   useEffect(() => {
-    if (filteredMappings.length === 0 && isSearchPerformed) {
-      setSearchTerm("");
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [facultyResponse, subjectResponse, mappingResponse] =
+          await Promise.all([
+            fetch("/api/register/faculty"),
+            fetch("/api/subjects"),
+            fetch("/api/map-faculty-subject"),
+          ]);
+
+        const facultyData = await facultyResponse.json();
+        const subjectData = await subjectResponse.json();
+        const mappingData = await mappingResponse.json();
+
+        setFacultyOptions(
+          facultyData.data.map((faculty) => ({
+            id: faculty.id,
+            name: faculty.attributes.name,
+          }))
+        );
+
+        setSubjectOptions(
+          subjectData.data.map((subject) => ({
+            id: subject.id,
+            name: subject.attributes.name,
+          }))
+        );
+
+        setMappingOptions(
+          mappingData.data.map((mapping) => ({
+            id: mapping.id,
+            name: mapping.attributes.faculty.data.attributes.name,
+            subjects: mapping.attributes.subjects.data,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleEditSubject = (index) => {
+    const selectedMapping = mappingOptions[index];
+    console.log("Selected Mapping:", selectedMapping);
+    setSelectedFaculty(selectedMapping.id);
+    setSelectedSubjects(selectedMapping.subjects.map((subject) => subject.id));
+    setIsEditing(true);
+    setEditIndex(index);
+  };
+
+  // Add handleSaveEdit function
+  const handleSaveEdit = async () => {
+    if (!selectedFaculty || selectedSubjects.length === 0) {
+      toast.error("Please select a faculty and at least one subject.");
+      return;
     }
-  }, [filteredMappings.length, isSearchPerformed]);
+
+    const mappingId = mappingOptions[editIndex].id;
+
+    const payload = {
+      id: mappingId,
+      data: {
+        faculty: Number(selectedFaculty),
+        subjects: selectedSubjects,
+      },
+    };
+
+    try {
+      const response = await fetch(`/api/map-faculty-subject`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      const updatedMapping = {
+        id: data.data.id,
+        name: data.data.attributes.faculty.data.attributes.name,
+        subjects: data.data.attributes.subjects.data.map((subject) => ({
+          id: subject.id,
+          attributes: {
+            name: subject.attributes.name,
+          },
+        })),
+      };
+
+      setMappingOptions((prev) =>
+        prev.map((item, i) => (i === editIndex ? updatedMapping : item))
+      );
+      setSelectedFaculty("");
+      setSelectedSubjects([]);
+      setIsEditing(false);
+      toast.success("Mapping updated successfully!");
+    } catch (error) {
+      console.error("Error updating data:", error);
+      toast.error("An error occurred. Please try again.");
+    }
+  };
 
   return (
     <div className="container">
       <div className="sectionHeader">Faculty to Subject Mapping</div>
-      <div className="inputContainer">
-        <SearchableSingleSelect
-          options={facultyOptions}
-          selectedValue={selectedFaculty}
-          onChange={handleFacultyChange}
-          placeholder="Select faculty"
-        />
-        <MultiSelectDropDown
-          options={subjects}
-          selectedValues={selectedSubjects}
-          onChange={handleSubjectsChange}
-          placeholder="Select subjects"
-        />
-        <button onClick={handleSubmit} className="addButton">
-          {editingIndex !== null ? <FaSyncAlt /> : <FaPlus />}
-          {editingIndex !== null ? "Update" : "Add"}
-        </button>
-      </div>
-      <div className="inputContainer">
-        {mappings.length > 1 && (
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Search faculty"
-            className="search-bar"
-          />
-        )}
-      </div>
-      <ul className="todoList">
-        {filteredMappings.length === 0 && isSearchPerformed ? (
-          <div className="no-data-message">No data found</div>
-        ) : (
-          displayedMappings.map((mapping, index) => (
-            <li key={startIndex + index} className="todoItem">
-              <span>
-                {startIndex + index + 1}. <span>{mapping.facultyName}</span> -{" "}
-                <span className="highlight">{mapping.subjects.join(", ")}</span>
-              </span>
-              <div className="buttonContainer">
-                <button
-                  onClick={() => handleEditMapping(startIndex + index)}
-                  className="editButton"
-                >
-                  <FaEdit /> {/* Edit icon */}
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteMapping(startIndex + index)}
-                  className="deleteButton"
-                >
-                  <FaTrash /> {/* Delete icon */}
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))
-        )}
-      </ul>
-      {filteredMappings.length > itemsPerPage && (
-        <Pagination
-          totalItems={filteredMappings.length}
-          itemsPerPage={itemsPerPage}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-        />
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          <div className="inputContainer">
+            <select
+              value={selectedFaculty}
+              onChange={handleFacultyChange}
+              className="selectInput"
+            >
+              <option value="" disabled>
+                Select faculty
+              </option>
+              {facultyOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+            <MultiSelectDropDown
+              options={subjectOptions}
+              selectedValues={selectedSubjects}
+              onChange={handleSubjectsChange}
+              placeholder="Select subjects"
+            />
+            <button
+              onClick={isEditing ? handleSaveEdit : handleAddMapping}
+              className="addButton"
+            >
+              {isEditing ? <FaSyncAlt /> : <FaPlus />}{" "}
+              {isEditing ? "Save" : "Add"}
+            </button>
+          </div>
+          <ul className="todoList">
+            {mappingOptions.map((subject, index) => (
+              <li key={subject.id || index} className="todoItem">
+                <span>
+                  {index + 1}. {subject?.name} -{" "}
+                  <span className="highlight">
+                    {subject.subjects
+                      .map((res) => res?.attributes?.name)
+                      .join(", ")}
+                  </span>
+                </span>
+
+                <div className="buttonContainer">
+                  <button
+                    onClick={() => handleEditSubject(index)}
+                    className="editButton"
+                  >
+                    <FaEdit /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteSubject(index)}
+                    className="deleteButton"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };
