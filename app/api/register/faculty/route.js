@@ -10,7 +10,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/faculties`;
+    const strapiEndpoint = `${strapiApiUrl}/api/faculties?populate=*`;
     const response = await fetch(strapiEndpoint, {
       method: "GET",
       headers: {

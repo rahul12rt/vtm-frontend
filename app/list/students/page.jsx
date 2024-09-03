@@ -1,100 +1,57 @@
 "use client";
-import { useState } from "react";
-
-const studentData = [
-  {
-    number: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    username: "johndoe",
-    college: "Harvard",
-    class: "1 PUC",
-    year: "2024-25",
-  },
-  {
-    number: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    username: "janesmith",
-    college: "MIT",
-    class: "2 PUC",
-    year: "2023-24",
-  },
-  {
-    number: 3,
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    username: "alicejohnson",
-    college: "Stanford",
-    class: "10th",
-    year: "2024-25",
-  },
-  {
-    number: 4,
-    name: "Bob Brown",
-    email: "bob@example.com",
-    username: "bobbrown",
-    college: "Oxford",
-    class: "9th",
-    year: "2023-24",
-  },
-  {
-    number: 5,
-    name: "Charlie Davis",
-    email: "charlie@example.com",
-    username: "charliedavis",
-    college: "Harvard",
-    class: "1 PUC",
-    year: "2024-25",
-  },
-  {
-    number: 6,
-    name: "Daisy Wilson",
-    email: "daisy@example.com",
-    username: "daisywilson",
-    college: "MIT",
-    class: "2 PUC",
-    year: "2023-24",
-  },
-  {
-    number: 7,
-    name: "Edward Thomas",
-    email: "edward@example.com",
-    username: "edwardthomas",
-    college: "Stanford",
-    class: "10th",
-    year: "2024-25",
-  },
-  {
-    number: 8,
-    name: "Fiona Lee",
-    email: "fiona@example.com",
-    username: "fionalee",
-    college: "Oxford",
-    class: "9th",
-    year: "2023-24",
-  },
-  {
-    number: 9,
-    name: "George Harris",
-    email: "george@example.com",
-    username: "georgeharris",
-    college: "Harvard",
-    class: "1 PUC",
-    year: "2024-25",
-  },
-];
-
-const classes = ["1 PUC", "2 PUC", "10th", "9th"];
-const years = ["2024-25", "2023-24"];
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const ListOfStudent = () => {
+  const [students, setStudents] = useState([]);
   const [nameFilter, setNameFilter] = useState("");
   const [collegeFilter, setCollegeFilter] = useState("");
   const [classFilter, setClassFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState([]);
+  const [years, setYears] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await axios.get("/api/register/student");
+        const data = response.data.data;
+
+        // Map the API response to the required format
+        const mappedStudents = data.map((item, index) => ({
+          roll_number: item.attributes.roll_number, // Updated to use roll_number
+          name: item.attributes.name,
+          email: item.attributes.email,
+          username: item.attributes.user_name,
+          college: item.attributes.college.data.attributes.name,
+          class: item.attributes.class.data.attributes.name,
+          year: item.attributes.academic_year,
+        }));
+
+        setStudents(mappedStudents);
+
+        // Extract unique classes and years for dropdown filters
+        const uniqueClasses = [
+          ...new Set(mappedStudents.map((student) => student.class)),
+        ];
+        const uniqueYears = [
+          ...new Set(mappedStudents.map((student) => student.year)),
+        ];
+
+        setClasses(uniqueClasses);
+        setYears(uniqueYears);
+      } catch (error) {
+        console.error("Error fetching student data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -110,7 +67,7 @@ const ListOfStudent = () => {
     setYearFilter(e.target.value);
   };
 
-  const filteredData = studentData.filter(
+  const filteredData = students.filter(
     (student) =>
       student.name.toLowerCase().includes(nameFilter.toLowerCase()) &&
       student.college.toLowerCase().includes(collegeFilter.toLowerCase()) &&
@@ -127,6 +84,14 @@ const ListOfStudent = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="loader">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -176,7 +141,7 @@ const ListOfStudent = () => {
       <table className="table">
         <thead>
           <tr>
-            <th>Number</th>
+            <th>Roll Number</th> {/* Updated header */}
             <th>Name</th>
             <th>Email</th>
             <th>Username</th>
@@ -194,8 +159,9 @@ const ListOfStudent = () => {
             </tr>
           ) : (
             displayedData.map((student) => (
-              <tr key={student.number}>
-                <td>{student.number}</td>
+              <tr key={student.roll_number}>
+                <td>{student.roll_number}</td>{" "}
+                {/* Updated to display roll_number */}
                 <td>{student.name}</td>
                 <td>{student.email}</td>
                 <td>{student.username}</td>

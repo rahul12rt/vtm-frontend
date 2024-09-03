@@ -59,64 +59,73 @@ const Qualification = () => {
 
       try {
         let response;
-        if (editIndex !== null) {
-          // Update existing qualification
-          const qualificationId = qualifications[editIndex]?.id;
-          console.log(qualificationId);
 
-          if (!qualificationId) {
-            throw new Error("Qualification ID not found");
-          }
+        const action = toast.promise(
+          (async () => {
+            if (editIndex !== null) {
+              // Update existing qualification
+              const qualificationId = qualifications[editIndex]?.id;
+              if (!qualificationId) {
+                throw new Error("Qualification ID not found");
+              }
 
-          response = await fetch("/api/qualification", {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ qualificationId, name: inputValue }),
-          });
+              response = await fetch("/api/qualification", {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ qualificationId, name: inputValue }),
+              });
 
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || "An error occurred");
-          }
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "An error occurred");
+              }
 
-          const updatedQualifications = qualifications.map(
-            (qualification, index) =>
-              index === editIndex
-                ? { ...qualification, name: inputValue }
-                : qualification
-          );
-          setQualifications(updatedQualifications);
-          setEditIndex(null);
-        } else {
-          // Add new qualification
-          response = await fetch("/api/qualification", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ data: newQualification }), // Send newQualification directly
-          });
+              const updatedQualifications = qualifications.map(
+                (qualification, index) =>
+                  index === editIndex
+                    ? { ...qualification, name: inputValue }
+                    : qualification
+              );
+              setQualifications(updatedQualifications);
+              setEditIndex(null);
+            } else {
+              // Add new qualification
+              response = await fetch("/api/qualification", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ data: newQualification }), // Send newQualification directly
+              });
 
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || "An error occurred");
-          }
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "An error occurred");
+              }
 
-          const newQualificationData = await response.json();
-          setQualifications([...qualifications, newQualificationData]);
-        }
+              const newQualificationData = await response.json();
+              setQualifications([...qualifications, newQualificationData]);
+            }
 
-        setInputValue("");
-        fetchQualifications();
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-        toast.success(
-          `Qualification ${
-            editIndex !== null ? "updated" : "added"
-          } successfully!`,
+            setInputValue("");
+            fetchQualifications();
+            if (inputRef.current) {
+              inputRef.current.focus();
+            }
+          })(),
+          {
+            loading: `${
+              editIndex !== null ? "Updating" : "Adding"
+            } qualification...`,
+            success: `Qualification ${
+              editIndex !== null ? "updated" : "added"
+            } successfully!`,
+            error: `Could not ${
+              editIndex !== null ? "update" : "save"
+            }. Please try again.`,
+          },
           {
             style: {
               borderRadius: "10px",
@@ -125,20 +134,10 @@ const Qualification = () => {
             },
           }
         );
+
+        await action;
       } catch (error) {
         console.error("Error handling qualification:", error);
-        toast.error(
-          `Could not ${
-            editIndex !== null ? "update" : "save"
-          }. Please try again.`,
-          {
-            style: {
-              borderRadius: "10px",
-              background: "#333",
-              color: "#fff",
-            },
-          }
-        );
       }
     }
   };

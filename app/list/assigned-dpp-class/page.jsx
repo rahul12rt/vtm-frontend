@@ -1,43 +1,40 @@
 "use client";
-import React, { useState } from "react";
-
-// Dummy data
-const data = [
-  {
-    id: 1,
-    dppName: "Algebra Basics",
-    className: "1 PUC",
-    college: "College A",
-  },
-  {
-    id: 2,
-    dppName: "Physics Mechanics",
-    className: "2 PUC",
-    college: "College B",
-  },
-  {
-    id: 3,
-    dppName: "Organic Chemistry",
-    className: "10th",
-    college: "College C",
-  },
-  {
-    id: 4,
-    dppName: "Calculus Fundamentals",
-    className: "11th",
-    college: "College A",
-  },
-];
+import React, { useState, useEffect } from "react";
 
 const AssignedDPPList = () => {
+  const [data, setData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true); // Loading state
+
+  useEffect(() => {
+    // Fetch data from the API
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/assign-dpp-college");
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const result = await response.json();
+        console.log("Fetched Data:", result); // Console the response data
+        setData(result.data); // Update the state with fetched data
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false); // Stop loading once data is fetched
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value.toLowerCase());
   };
 
   const filteredData = data.filter((item) =>
-    item.dppName.toLowerCase().includes(searchTerm)
+    item.attributes.creat_dpps.data.some((dpp) =>
+      dpp.attributes.name.toLowerCase().includes(searchTerm)
+    )
   );
 
   return (
@@ -55,24 +52,36 @@ const AssignedDPPList = () => {
         />
       </div>
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th className="dppNameColumn">DPP Name</th>
-            <th className="classColumn">Class</th>
-            <th className="collegeColumn">College</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredData.map((item) => (
-            <tr key={item.id}>
-              <td>{item.dppName}</td>
-              <td>{item.className}</td>
-              <td>{item.college}</td>
+      {loading ? (
+        <div className="loading">Loading...</div> // Loading indicator
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th className="dppNameColumn">DPP Name</th>
+              <th className="classColumn">Class</th>
+              <th className="collegeColumn">College</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredData.length > 0 ? (
+              filteredData.map((item) =>
+                item.attributes.creat_dpps.data.map((dpp) => (
+                  <tr key={dpp.id}>
+                    <td>{dpp.attributes.name}</td>
+                    <td>{dpp.attributes.class.data.attributes.name}</td>
+                    <td>{item.attributes.college.data.attributes.name}</td>
+                  </tr>
+                ))
+              )
+            ) : (
+              <tr>
+                <td colSpan="3">No DPPs found</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };

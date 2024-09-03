@@ -1,24 +1,39 @@
 "use client";
 import { useState, useEffect } from "react";
-
-const collegeData = [
-  { number: 1, name: "Harvard University" },
-  { number: 2, name: "Massachusetts Institute of Technology (MIT)" },
-  { number: 3, name: "Stanford University" },
-  { number: 4, name: "University of Oxford" },
-  { number: 5, name: "University of Cambridge" },
-  { number: 6, name: "California Institute of Technology (Caltech)" },
-  { number: 7, name: "University of Chicago" },
-  { number: 8, name: "Imperial College London" },
-  { number: 9, name: "ETH Zurich" },
-];
+import axios from "axios";
 
 const CollegeList = () => {
+  const [colleges, setColleges] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 10;
 
-  const filteredColleges = collegeData.filter((college) =>
+  useEffect(() => {
+    const fetchColleges = async () => {
+      try {
+        const response = await axios.get("/api/colleges");
+        const data = response.data.data;
+
+        console.log;
+        // Map the API response to the structure needed for the component
+        const mappedColleges = data.map((college, index) => ({
+          number: index + 1,
+          name: college.attributes.name,
+        }));
+
+        setColleges(mappedColleges);
+      } catch (error) {
+        console.error("Error fetching college data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchColleges();
+  }, []);
+
+  const filteredColleges = colleges.filter((college) =>
     college.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -42,6 +57,14 @@ const CollegeList = () => {
       setCurrentPage(page);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="loader">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -77,6 +100,35 @@ const CollegeList = () => {
           )}
         </tbody>
       </table>
+      <div className="paginationContainer">
+        {totalPages > 1 && (
+          <>
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="paginationButton"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => handlePageChange(i + 1)}
+                className={i + 1 === currentPage ? "activePage" : ""}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="paginationButton"
+            >
+              Next
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 };

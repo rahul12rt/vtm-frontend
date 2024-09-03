@@ -30,6 +30,7 @@ const AssignSelfStudy = () => {
         selfStudies: selectedSelfStudies,
       };
 
+      // Update or add the assignment locally
       if (editIndex !== null) {
         const updatedMaterials = [...assignedMaterials];
         updatedMaterials[editIndex] = newAssignment;
@@ -39,38 +40,57 @@ const AssignSelfStudy = () => {
         setAssignedMaterials([...assignedMaterials, newAssignment]);
       }
 
-      // Create the payload in the required format
+      // Create the payload
       const payload = {
         data: {
-          self_studies: selectedSelfStudies, // Assuming multiple select for self-study
-          college: selectedCollege, // Assuming single select for college
+          self_studies: selectedSelfStudies, // Multiple select for self-study
+          college: selectedCollege, // Single select for college
         },
       };
 
       try {
-        const response = await fetch("/api/assign-study-college", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        // Use toast.promise for user feedback during the operation
+        await toast.promise(
+          (async () => {
+            const response = await fetch("/api/assign-study-college", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            });
 
-        if (response.ok) {
-          const result = await response.json();
-          toast.success("Successfully assigned");
-        } else {
-          console.error("Failed to assign self-study materials.");
-          toast.error("Failed to assign self-study materials.");
-        }
+            if (!response.ok) {
+              throw new Error("Failed to assign self-study materials.");
+            }
+
+            await response.json(); // Ensure to await the response to handle possible errors
+          })(),
+          {
+            loading: "Assigning self-study materials...",
+            success: "Successfully assigned self-study materials.",
+            error: "Failed to assign self-study materials. Please try again.",
+          },
+          {
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          }
+        );
+
+        // Reset the form
+        setSelectedSelfStudies([]);
+        setSelectedCollege("");
       } catch (error) {
         console.error("Error submitting data:", error);
-        toast.error("Error submitting data:");
+        toast.error("Error submitting data. Please try again.");
       }
-
-      // Reset the form
-      setSelectedSelfStudies([]);
-      setSelectedCollege("");
+    } else {
+      toast.error(
+        "Please select at least one self-study material and a college."
+      );
     }
   };
 
@@ -82,29 +102,40 @@ const AssignSelfStudy = () => {
   };
 
   const handleDelete = async (id) => {
-    try {
-      const response = await fetch(`/api/assign-study-college`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ materialId: id }),
-      });
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch(`/api/assign-study-college`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ materialId: id }),
+        });
 
-      if (response.ok) {
+        if (!response.ok) {
+          throw new Error("Failed to delete the assignment.");
+        }
+
         const updatedMaterials = assignedMaterials.filter(
           (material) => material.id !== id
         );
         setAssignedMaterials(updatedMaterials);
-        toast.success("Successfully deleted assignment.");
-      } else {
-        console.error("Failed to delete the assignment.");
-        toast.error("Failed to delete the assignment.");
+      })(),
+      {
+        loading: "Deleting assignment...",
+        success: "Successfully deleted assignment.",
+        error: "Failed to delete assignment. Please try again.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
       }
-    } catch (error) {
-      console.error("Error deleting data:", error);
-      toast.error("Error deleting data.");
-    }
+    );
+
+    await action;
   };
 
   useEffect(() => {

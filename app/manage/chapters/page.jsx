@@ -225,43 +225,42 @@ const Chapters = () => {
       return;
     }
 
-    try {
-      await fetch(`/api/chapter`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ chapterId }), // Send chapterId in the request body
-      });
+    toast
+      .promise(
+        fetch(`/api/chapter`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ chapterId }), // Send chapterId in the request body
+        }).then(() => {
+          // Update the UI
+          const updatedTodos = todos.filter((_, i) => i !== index);
+          setTodos(updatedTodos);
 
-      // Update the UI
-      const updatedTodos = todos.filter((_, i) => i !== index);
-      setTodos(updatedTodos);
-
-      // Adjust pagination if needed
-      const totalItems = updatedTodos.length;
-      const totalPages = Math.ceil(totalItems / itemsPerPage);
-      if (currentPage > totalPages) {
-        setCurrentPage(totalPages);
-      }
-
-      toast.success("Chapter deleted successfully!", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
+          // Adjust pagination if needed
+          const totalItems = updatedTodos.length;
+          const totalPages = Math.ceil(totalItems / itemsPerPage);
+          if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+          }
+        }),
+        {
+          loading: "Deleting chapter...",
+          success: "Chapter deleted successfully!",
+          error: "Failed to delete chapter. Please try again later.",
         },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      )
+      .catch((error) => {
+        console.error("Error deleting chapter:", error);
       });
-    } catch (error) {
-      console.error("Error deleting chapter:", error);
-      toast.error("Failed to delete chapter. Please try again later.", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
-    }
   };
 
   const handleKeyDown = (e) => {

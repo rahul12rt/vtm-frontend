@@ -1,23 +1,36 @@
 "use client";
-import React, { useState, ChangeEvent } from "react";
-
-const facultyData = [
-  { number: 1, name: "Dr. Smith", subjects: ["Math", "Science"] },
-  { number: 2, name: "Prof. Johnson", subjects: ["English"] },
-  { number: 3, name: "Ms. Davis", subjects: ["History", "Geography"] },
-  { number: 4, name: "Mr. Brown", subjects: ["Math"] },
-  { number: 5, name: "Dr. White", subjects: ["Biology", "Chemistry"] },
-  { number: 6, name: "Prof. Black", subjects: ["Physics", "Math"] },
-  { number: 7, name: "Ms. Green", subjects: ["English", "History"] },
-  { number: 8, name: "Mr. Blue", subjects: ["Geography", "Math"] },
-  { number: 9, name: "Dr. Gray", subjects: ["Science", "Biology"] },
-];
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const ListOfFaculty = () => {
+  const [facultyData, setFacultyData] = useState([]);
   const [facultySearchTerm, setFacultySearchTerm] = useState("");
   const [subjectSearchTerm, setSubjectSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [loading, setLoading] = useState(true); // Loading state
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get("/api/register/faculty");
+        const fetchedData = response.data.data.map((faculty) => ({
+          number: faculty.id,
+          name: faculty.attributes.name,
+          subjects: [faculty.attributes.subject.data.attributes.name],
+        }));
+        setFacultyData(fetchedData);
+      } catch (error) {
+        console.error("Error fetching faculty data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleFacultySearchChange = (e) => {
     setFacultySearchTerm(e.target.value);
@@ -50,7 +63,7 @@ const ListOfFaculty = () => {
 
   return (
     <div className="container">
-      <div className="sectionHeader">List of Facultys</div>
+      <div className="sectionHeader">List of Faculty</div>
       <div className="inputContainer">
         <input
           type="text"
@@ -67,32 +80,36 @@ const ListOfFaculty = () => {
           className="searchInput"
         />
       </div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Number</th>
-            <th>Faculty Name</th>
-            <th>Subjects</th>
-          </tr>
-        </thead>
-        <tbody>
-          {displayedFaculty.length === 0 ? (
+      {loading ? (
+        <div className="loadingMessage">Loading...</div>
+      ) : (
+        <table className="table">
+          <thead>
             <tr>
-              <td colSpan={3} className="noDataMessage">
-                No data found
-              </td>
+              <th>Number</th>
+              <th>Faculty Name</th>
+              <th>Subjects</th>
             </tr>
-          ) : (
-            displayedFaculty.map((faculty) => (
-              <tr key={faculty.number}>
-                <td>{faculty.number}</td>
-                <td>{faculty.name}</td>
-                <td>{faculty.subjects.join(", ")}</td>
+          </thead>
+          <tbody>
+            {displayedFaculty.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="noDataMessage">
+                  No data found
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              displayedFaculty.map((faculty, id) => (
+                <tr key={id}>
+                  <td>{id + 1}</td>
+                  <td>{faculty.name}</td>
+                  <td>{faculty.subjects.join(", ")}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      )}
       {totalItems > itemsPerPage && (
         <div className="paginationContainer">
           <button

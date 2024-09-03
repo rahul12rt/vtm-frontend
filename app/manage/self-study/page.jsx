@@ -138,59 +138,73 @@ const SelfStudy = () => {
       selectedTopics.length
     ) {
       const payload = createPayload();
-      try {
-        const response = await fetch("/api/self-study", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+
+      const action = toast.promise(
+        (async () => {
+          const response = await fetch("/api/self-study", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          console.log("Server Response:", result);
+
+          const materialData = result.data;
+          const newMaterial = {
+            id: materialData.id,
+            name: materialData.attributes.name,
+            subjectName: materialData.attributes.subject.data.attributes.name,
+            className: materialData.attributes.class.data.attributes.name,
+            chapterNames: materialData.attributes.chapters.data.map(
+              (chapter) => chapter.attributes.name
+            ),
+            topicNames: materialData.attributes.topics.data.map(
+              (topic) => topic.attributes.name
+            ),
+          };
+
+          if (editIndex === null) {
+            setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
+          } else {
+            setMaterials((prevMaterials) =>
+              prevMaterials.map((material, index) =>
+                index === editIndex ? newMaterial : material
+              )
+            );
+          }
+
+          // Reset the form
+          setName("");
+          setSelectedSubject("");
+          setSelectedClass("");
+          setSelectedChapters([]);
+          setSelectedTopics([]);
+          setFile(null);
+        })(),
+        {
+          loading: "Submitting study material...",
+          success: "Study material added successfully.",
+          error: "Failed to add study material. Please try again.",
+        },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
           },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
         }
+      );
 
-        const result = await response.json();
-        console.log("Server Response:", result);
-
-        const materialData = result.data;
-        const newMaterial = {
-          id: materialData.id,
-          name: materialData.attributes.name,
-          subjectName: materialData.attributes.subject.data.attributes.name,
-          className: materialData.attributes.class.data.attributes.name,
-          chapterNames: materialData.attributes.chapters.data.map(
-            (chapter) => chapter.attributes.name
-          ),
-          topicNames: materialData.attributes.topics.data.map(
-            (topic) => topic.attributes.name
-          ),
-        };
-
-        if (editIndex === null) {
-          setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
-        } else {
-          setMaterials((prevMaterials) =>
-            prevMaterials.map((material, index) =>
-              index === editIndex ? newMaterial : material
-            )
-          );
-        }
-        toast.success("Study material added successfully.");
-        // Reset the form
-        setName("");
-        setSelectedSubject("");
-        setSelectedClass("");
-        setSelectedChapters([]);
-        setSelectedTopics([]);
-        setFile(null);
-      } catch (error) {
-        console.error("Failed to submit data", error);
-        toast.error(
-          "Unable to deleted study material, Please try after sometime."
-        );
-      }
+      await action;
+    } else {
+      toast.error("Please fill out all fields before submitting.");
     }
   };
 
@@ -207,27 +221,42 @@ const SelfStudy = () => {
 
   const handleDelete = async (id) => {
     console.log(id);
-    try {
-      const response = await fetch("/api/self-study", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ studyId: id }),
-      });
 
-      if (!response.ok) {
-        throw new Error("Failed to study material topic");
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch("/api/self-study", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ studyId: id }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete study material.");
+        }
+
+        setMaterials((prevTopics) =>
+          prevTopics.filter((topic) => topic.id !== id)
+        );
+      })(),
+      {
+        loading: "Deleting study material...",
+        success: "Study material deleted successfully.",
+        error: "Failed to delete study material.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
       }
-      setMaterials((prevTopics) =>
-        prevTopics.filter((topic) => topic.id !== id)
-      );
-      toast.success("study material deleted successfully.");
-    } catch (error) {
-      console.error("Error deleting study material:", error);
-      toast.error("Failed to delete study material.");
-    }
+    );
+
+    await action;
   };
+
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0]);

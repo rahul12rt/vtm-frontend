@@ -138,59 +138,77 @@ const CreatDPP = () => {
       selectedTopics.length
     ) {
       const payload = createPayload();
-      try {
-        const response = await fetch("/api/create-dpp", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+
+      toast
+        .promise(
+          fetch("/api/create-dpp", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(`Error: ${response.statusText}`);
+              }
+              return response.json();
+            })
+            .then((result) => {
+              console.log("Server Response:", result);
+
+              const materialData = result.data;
+              const newMaterial = {
+                id: materialData.id,
+                name: materialData.attributes.name,
+                subjectName:
+                  materialData.attributes.subject.data.attributes.name,
+                className: materialData.attributes.class.data.attributes.name,
+                chapterNames: materialData.attributes.chapters.data.map(
+                  (chapter) => chapter.attributes.name
+                ),
+                topicNames: materialData.attributes.topics.data.map(
+                  (topic) => topic.attributes.name
+                ),
+              };
+
+              if (editIndex === null) {
+                setMaterials((prevMaterials) => [
+                  ...prevMaterials,
+                  newMaterial,
+                ]);
+              } else {
+                setMaterials((prevMaterials) =>
+                  prevMaterials.map((material, index) =>
+                    index === editIndex ? newMaterial : material
+                  )
+                );
+              }
+
+              // Reset the form
+              setName("");
+              setSelectedSubject("");
+              setSelectedClass("");
+              setSelectedChapters([]);
+              setSelectedTopics([]);
+              setFile(null);
+            }),
+          {
+            loading: "Submitting DPP material...",
+            success: "DPP material added successfully.",
+            error: "Failed to submit DPP material. Please try again.",
           },
-          body: JSON.stringify(payload),
+          {
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          }
+        )
+        .catch((error) => {
+          console.error("Failed to submit data", error);
         });
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        console.log("Server Response:", result);
-
-        const materialData = result.data;
-        const newMaterial = {
-          id: materialData.id,
-          name: materialData.attributes.name,
-          subjectName: materialData.attributes.subject.data.attributes.name,
-          className: materialData.attributes.class.data.attributes.name,
-          chapterNames: materialData.attributes.chapters.data.map(
-            (chapter) => chapter.attributes.name
-          ),
-          topicNames: materialData.attributes.topics.data.map(
-            (topic) => topic.attributes.name
-          ),
-        };
-
-        if (editIndex === null) {
-          setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
-        } else {
-          setMaterials((prevMaterials) =>
-            prevMaterials.map((material, index) =>
-              index === editIndex ? newMaterial : material
-            )
-          );
-        }
-        toast.success("DPP material added successfully.");
-        // Reset the form
-        setName("");
-        setSelectedSubject("");
-        setSelectedClass("");
-        setSelectedChapters([]);
-        setSelectedTopics([]);
-        setFile(null);
-      } catch (error) {
-        console.error("Failed to submit data", error);
-        toast.error(
-          "Unable to deleted DPP material, Please try after sometime."
-        );
-      }
     }
   };
 
@@ -206,28 +224,43 @@ const CreatDPP = () => {
   };
 
   const handleDelete = async (id) => {
-    console.log(id);
-    try {
-      const response = await fetch("/api/create-dpp", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ studyId: id }),
-      });
+    toast.promise(
+      (async () => {
+        const response = await fetch("/api/create-dpp", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ studyId: id }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to DPP material topic");
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to delete DPP material.");
+        }
+
+        // Update state to remove the deleted item
+        setMaterials((prevTopics) =>
+          prevTopics.filter((topic) => topic.id !== id)
+        );
+
+        return response.json(); // Return the response if needed for further processing
+      })(),
+      {
+        loading: "Deleting DPP material...",
+        success: <b>DPP material deleted successfully!</b>,
+        error: <b>Failed to delete DPP material. Please try again.</b>,
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
       }
-      setMaterials((prevTopics) =>
-        prevTopics.filter((topic) => topic.id !== id)
-      );
-      toast.success("DPP material deleted successfully.");
-    } catch (error) {
-      console.error("Error deleting DPP material:", error);
-      toast.error("Failed to delete DPP material.");
-    }
+    );
   };
+
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0]);

@@ -60,10 +60,12 @@ const ManageTopic = () => {
   const fetchTopics = async () => {
     try {
       const response = await fetch("/api/topics");
+
       if (!response.ok) {
         throw new Error("Failed to fetch topics");
       }
       const data = await response.json();
+      console.log(data);
       const formattedTopics = data.data.map((item) => {
         const chapter = item.attributes.chapter.data;
         const subject = chapter.attributes.subject.data.attributes.name;
@@ -100,108 +102,149 @@ const ManageTopic = () => {
   };
 
   const handleDeleteTopic = async (id) => {
-    try {
-      const response = await fetch("/api/topics", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ topicsId: id }),
-      });
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch("/api/topics", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ topicsId: id }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete topic");
+        if (!response.ok) {
+          throw new Error("Failed to delete topic");
+        }
+
+        setTopics((prevTopics) =>
+          prevTopics.filter((topic) => topic.id !== id)
+        );
+      })(),
+      {
+        loading: "Deleting topic...",
+        success: "Topic deleted successfully.",
+        error: "Failed to delete topic.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
       }
-      setTopics((prevTopics) => prevTopics.filter((topic) => topic.id !== id));
-      toast.success("Topic deleted successfully.");
-    } catch (error) {
-      console.error("Error deleting topic:", error);
-      toast.error("Failed to delete topic.");
-    }
+    );
+
+    await action;
   };
 
   const handleAddTopic = async () => {
-    try {
-      const response = await fetch("/api/topics", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: {
-            name: inputValue,
-            chapter: selectedChapterId,
+    if (!inputValue || !selectedChapterId) return;
+
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch("/api/topics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            data: {
+              name: inputValue,
+              chapter: selectedChapterId,
+            },
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to add topic");
-      }
+        if (!response.ok) {
+          throw new Error("Failed to add topic");
+        }
 
-      const newTopic = await response.json();
-      setTopics((prevTopics) => [
-        ...prevTopics,
-        {
-          id: newTopic.data.id,
-          subject: selectedSubject,
-          chapter:
-            chapters[selectedSubject]?.find(
-              (chap) => chap.id === selectedChapterId
-            )?.name || "",
-          topic: inputValue,
+        const newTopic = await response.json();
+        setTopics((prevTopics) => [
+          ...prevTopics,
+          {
+            id: newTopic.data.id,
+            subject: selectedSubject,
+            chapter:
+              chapters[selectedSubject]?.find(
+                (chap) => chap.id === selectedChapterId
+              )?.name || "",
+            topic: inputValue,
+          },
+        ]);
+        setInputValue("");
+      })(),
+      {
+        loading: "Adding topic...",
+        success: "Topic added successfully.",
+        error: "Failed to add topic.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
         },
-      ]);
-      setInputValue("");
-      toast.success("Topic added successfully.");
-    } catch (error) {
-      console.error("Error adding topic:", error);
-      toast.error("Failed to add topic.");
-    }
+      }
+    );
+
+    await action;
   };
 
   const handleUpdateTopic = async () => {
-    if (!editingTopic) return;
+    if (!editingTopic || !inputValue || !selectedChapterId) return;
 
-    try {
-      const response = await fetch("/api/topics", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch("/api/topics", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: editingTopic.id,
+            name: inputValue,
+            chapter: selectedChapterId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update topic");
+        }
+
+        const updatedTopic = await response.json();
+        setTopics((prevTopics) =>
+          prevTopics.map((topic) =>
+            topic.id === editingTopic.id
+              ? {
+                  ...topic,
+                  topic: inputValue,
+                  chapter:
+                    chapters[selectedSubject]?.find(
+                      (chap) => chap.id === selectedChapterId
+                    )?.name || "",
+                }
+              : topic
+          )
+        );
+        setInputValue("");
+        setEditingTopic(null);
+      })(),
+      {
+        loading: "Updating topic...",
+        success: "Topic updated successfully.",
+        error: "Failed to update topic.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
         },
-        body: JSON.stringify({
-          id: editingTopic.id,
-          name: inputValue,
-          chapter: selectedChapterId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update topic");
       }
+    );
 
-      const updatedTopic = await response.json();
-      setTopics((prevTopics) =>
-        prevTopics.map((topic) =>
-          topic.id === editingTopic.id
-            ? {
-                ...topic,
-                topic: inputValue,
-                chapter:
-                  chapters[selectedSubject]?.find(
-                    (chap) => chap.id === selectedChapterId
-                  )?.name || "",
-              }
-            : topic
-        )
-      );
-      setInputValue("");
-      setEditingTopic(null);
-      toast.success("Topic updated successfully.");
-    } catch (error) {
-      console.error("Error updating topic:", error);
-      toast.error("Failed to update topic.");
-    }
+    await action;
   };
 
   return (

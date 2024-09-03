@@ -1,31 +1,20 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import MultiSelectDropDown from "../../_components/multiSelectDropDown";
-import SearchableSingleSelect from "../../_components/searchAbleDropDown";
-
-// Dummy data
-const data = {
-  dpps: [
-    { id: 1, name: "Algebra Basics" },
-    { id: 2, name: "Physics Mechanics" },
-    { id: 3, name: "Organic Chemistry" },
-    { id: 4, name: "Calculus Fundamentals" },
-  ],
-  classes: ["1 PUC", "2 PUC", "10th", "11th"],
-  colleges: [
-    { id: 1, name: "College A" },
-    { id: 2, name: "College B" },
-    { id: 3, name: "College C" },
-  ],
-};
+import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
+import SearchableSingleSelect from "../../_components/searchAbleDropDownv2";
+import toast, { Toaster } from "react-hot-toast";
 
 const AssignDPPToClass = () => {
+  const [dpps, setDPPs] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [colleges, setColleges] = useState([]);
   const [selectedDPPs, setSelectedDPPs] = useState([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedCollege, setSelectedCollege] = useState("");
   const [assignedDPPs, setAssignedDPPs] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const handleDPPChange = (selectedOptions) => {
     setSelectedDPPs(selectedOptions);
@@ -38,29 +27,67 @@ const AssignDPPToClass = () => {
   const handleCollegeChange = (value) => {
     setSelectedCollege(value);
   };
-
-  const handleSubmit = () => {
-    if (selectedDPPs.length > 0 && selectedClass && selectedCollege) {
-      const newAssignment = {
-        id: assignedDPPs.length + 1,
-        dppNames: selectedDPPs,
-        className: selectedClass,
-        college: selectedCollege,
+  const handleSubmit = async () => {
+    if (selectedDPPs.length > 0 && selectedCollege) {
+      // Create payload for POST request
+      const payload = {
+        data: {
+          creat_dpps: selectedDPPs.map((dpp) => dpp.id || dpp),
+          college: selectedCollege.id || selectedCollege,
+        },
       };
 
-      if (editIndex !== null) {
-        const updatedAssignments = [...assignedDPPs];
-        updatedAssignments[editIndex] = newAssignment;
-        setAssignedDPPs(updatedAssignments);
-        setEditIndex(null);
-      } else {
-        setAssignedDPPs([...assignedDPPs, newAssignment]);
-      }
+      console.log(payload);
+      toast.promise(
+        fetch(`/api/assign-dpp-college`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(
+                  data.error || "An error occurred while assigning DPPs"
+                );
+              });
+            }
+            return response.json();
+          })
+          .then((responseData) => {
+            const newAssignment = {
+              id: responseData.data.id,
+              dppNames: responseData.data.attributes.creat_dpps.data.map(
+                (dpp) => dpp.attributes.name
+              ),
+              college:
+                responseData.data.attributes.college.data.attributes.name,
+            };
 
-      // Reset the form
-      setSelectedDPPs([]);
-      setSelectedClass("");
-      setSelectedCollege("");
+            setAssignedDPPs((prevAssignments) => [
+              ...prevAssignments,
+              newAssignment,
+            ]);
+
+            setSelectedDPPs([]);
+            setSelectedClass(""); // If class is used, reset it as well
+            setSelectedCollege("");
+          }),
+        {
+          loading: "Assigning DPPs...",
+          success: <b>DPPs assigned successfully!</b>,
+          error: <b>Failed to assign DPPs. Please try again.</b>,
+        },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
     }
   };
 
@@ -72,73 +99,185 @@ const AssignDPPToClass = () => {
     setEditIndex(index);
   };
 
-  const handleDelete = (index) => {
-    const updatedAssignments = assignedDPPs.filter((_, i) => i !== index);
-    setAssignedDPPs(updatedAssignments);
+  const handleDelete = async (id) => {
+    toast.promise(
+      (async () => {
+        const response = await fetch(`/api/assign-dpp-college`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ materialId: id }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error ||
+              "An error occurred while deleting the assignment."
+          );
+        }
+
+        return response.json();
+      })().then(() => {
+        const updatedAssignments = assignedDPPs.filter(
+          (material) => material.id !== id
+        );
+        setAssignedDPPs(updatedAssignments);
+      }),
+      {
+        loading: "Deleting assignment...",
+        success: <b>Assignment deleted successfully!</b>,
+        error: <b>Failed to delete assignment. Please try again.</b>,
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      toast
+        .promise(
+          Promise.all([
+            fetch("/api/create-dpp"),
+            fetch("/api/colleges"),
+            fetch("/api/assign-dpp-college"),
+          ]).then(async ([dppResponse, collegeResponse, assignDppResponse]) => {
+            if (
+              !dppResponse.ok ||
+              !collegeResponse.ok ||
+              !assignDppResponse.ok
+            ) {
+              throw new Error("Failed to fetch data");
+            }
+
+            const dppResults = await dppResponse.json();
+            const collegeResults = await collegeResponse.json();
+            const assignDppResults = await assignDppResponse.json();
+
+            // Map DPPs and Classes
+            const dppOptions = dppResults.data.map((dpp) => ({
+              id: dpp.id.toString(),
+              name: dpp.attributes.name,
+            }));
+            const classOptions = dppResults.data.map((dpp) => ({
+              id: dpp.attributes.class.data.id.toString(),
+              name: dpp.attributes.class.data.attributes.name,
+            }));
+
+            // Map Colleges
+            const collegeOptions = collegeResults.data.map((college) => ({
+              id: college.id.toString(),
+              name: college.attributes.name,
+            }));
+
+            // Remove duplicates from classOptions
+            const uniqueClassOptions = Array.from(
+              new Map(classOptions.map((item) => [item.id, item])).values()
+            );
+
+            const mappedAssignments = assignDppResults.data.map(
+              (assignment) => ({
+                id: assignment.id,
+                dppNames: assignment.attributes.creat_dpps.data.map(
+                  (dpp) => dpp.attributes.name
+                ),
+                college: assignment.attributes.college.data.attributes.name,
+              })
+            );
+
+            // Update state
+            setDPPs(dppOptions);
+            setClasses(uniqueClassOptions);
+            setColleges(collegeOptions);
+            setAssignedDPPs(mappedAssignments);
+            setLoading(false);
+
+            return "Data fetched successfully!";
+          }),
+          {
+            loading: "Fetching data...",
+            success: <b>Data fetched successfully!</b>,
+            error: <b>Failed to fetch data. Please try again.</b>,
+          },
+          {
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          }
+        )
+        .catch((error) => {
+          console.error("Failed to fetch data", error);
+          setLoading(false);
+        });
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="container">
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="sectionHeader">Assign DPPs to Class and College</div>
 
-      <div className="inputContainer">
-        <MultiSelectDropDown
-          options={data.dpps.map((dpp) => ({
-            id: dpp.id.toString(),
-            name: dpp.name,
-          }))}
-          selectedValues={selectedDPPs}
-          onChange={handleDPPChange}
-          placeholder="Select DPPs"
-        />
+      {loading ? (
+        <div className="loader">Loading...</div> // Loader component or message
+      ) : (
+        <>
+          <div className="inputContainer">
+            <MultiSelectDropDown
+              options={dpps}
+              selectedValues={selectedDPPs}
+              onChange={handleDPPChange}
+              placeholder="Select DPPs"
+            />
+            <SearchableSingleSelect
+              options={colleges}
+              selectedValue={selectedCollege}
+              onChange={handleCollegeChange}
+              placeholder="Select College"
+            />
 
-        <SearchableSingleSelect
-          options={data.classes.map((className) => ({
-            id: className,
-            name: className,
-          }))}
-          selectedValue={selectedClass}
-          onChange={handleClassChange}
-          placeholder="Select Class"
-        />
+            <button onClick={handleSubmit} className="addButton">
+              {editIndex !== null ? "Update" : "Assign"}
+            </button>
+          </div>
 
-        <SearchableSingleSelect
-          options={data.colleges.map((college) => ({
-            id: college.id.toString(),
-            name: college.name,
-          }))}
-          selectedValue={selectedCollege}
-          onChange={handleCollegeChange}
-          placeholder="Select College"
-        />
-
-        <button onClick={handleSubmit} className="addButton">
-          {editIndex !== null ? "Update" : "Assign"}
-        </button>
-      </div>
-
-      <ul className="todoList">
-        {assignedDPPs.map((assignment, index) => (
-          <li key={assignment.id} className="todoItem">
-            <span>
-              {index + 1}: <strong>Class:</strong> {assignment.className} -{" "}
-              <strong>College:</strong> {assignment.college} -{" "}
-              <strong>DPPs:</strong> {assignment.dppNames.join(", ")}
-            </span>
-            <div className="buttonContainer">
-              <button onClick={() => handleEdit(index)} className="editButton">
-                <FaEdit /> Edit
-              </button>
-              <button
-                onClick={() => handleDelete(index)}
-                className="deleteButton"
-              >
-                <FaTrash /> Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+          <ul className="todoList">
+            {assignedDPPs.map((assignment, index) => (
+              <li key={assignment.id} className="todoItem">
+                <span>
+                  {index + 1}: <strong>College:</strong> {assignment.college} -{" "}
+                  <strong>DPPs:</strong> {assignment.dppNames.join(", ")}
+                </span>
+                <div className="buttonContainer">
+                  <button
+                    onClick={() => handleEdit(index)}
+                    className="editButton"
+                  >
+                    <FaEdit /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(assignment.id)}
+                    className="deleteButton"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 };

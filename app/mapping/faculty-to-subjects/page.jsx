@@ -35,43 +35,54 @@ const FacultyToSubject = () => {
       },
     };
 
-    try {
-      const response = await fetch("/api/map-faculty-subject", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error Data:", errorData);
-        toast.error("Could not save. Please try again.");
-        return;
-      }
-
-      const data = await response.json();
-
-      const newMapping = {
-        id: data.data.id,
-        name: data.data.attributes.faculty.data.attributes.name,
-        subjects: data.data.attributes.subjects.data.map((subject) => ({
-          id: subject.id,
-          attributes: {
-            name: subject.attributes.name,
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch("/api/map-faculty-subject", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        })),
-      };
+          body: JSON.stringify(payload),
+        });
 
-      setMappingOptions((prev) => [...prev, newMapping]);
-      setSelectedFaculty("");
-      setSelectedSubjects([]);
-      toast.success("Mapping added successfully!");
-    } catch (error) {
-      console.error("Error saving data:", error);
-      toast.error("An error occurred. Please try again.");
-    }
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error Data:", errorData);
+          throw new Error("Could not save. Please try again.");
+        }
+
+        const data = await response.json();
+
+        const newMapping = {
+          id: data.data.id,
+          name: data.data.attributes.faculty.data.attributes.name,
+          subjects: data.data.attributes.subjects.data.map((subject) => ({
+            id: subject.id,
+            attributes: {
+              name: subject.attributes.name,
+            },
+          })),
+        };
+
+        setMappingOptions((prev) => [...prev, newMapping]);
+        setSelectedFaculty("");
+        setSelectedSubjects([]);
+      })(),
+      {
+        loading: "Adding mapping...",
+        success: "Mapping added successfully!",
+        error: "Could not save. Please try again.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
+
+    await action;
   };
 
   const handleDeleteSubject = async (index) => {
@@ -82,28 +93,39 @@ const FacultyToSubject = () => {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/map-faculty-subject`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch(`/api/map-faculty-subject`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ id: mappingId }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error Data:", errorData);
+          throw new Error("Could not delete. Please try again.");
+        }
+
+        setMappingOptions((prev) => prev.filter((_, i) => i !== index));
+      })(),
+      {
+        loading: "Deleting mapping...",
+        success: "Mapping deleted successfully!",
+        error: "Could not delete. Please try again.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
         },
-        body: JSON.stringify({ id: mappingId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error Data:", errorData);
-        toast.error("Could not delete. Please try again.");
-        return;
       }
+    );
 
-      setMappingOptions((prev) => prev.filter((_, i) => i !== index));
-      toast.success("Mapping deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting data:", error);
-      toast.error("An error occurred. Please try again.");
-    }
+    await action;
   };
 
   useEffect(() => {
@@ -178,39 +200,57 @@ const FacultyToSubject = () => {
       },
     };
 
-    try {
-      const response = await fetch(`/api/map-faculty-subject`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      const updatedMapping = {
-        id: data.data.id,
-        name: data.data.attributes.faculty.data.attributes.name,
-        subjects: data.data.attributes.subjects.data.map((subject) => ({
-          id: subject.id,
-          attributes: {
-            name: subject.attributes.name,
+    const action = toast.promise(
+      (async () => {
+        const response = await fetch(`/api/map-faculty-subject`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
           },
-        })),
-      };
+          body: JSON.stringify(payload),
+        });
 
-      setMappingOptions((prev) =>
-        prev.map((item, i) => (i === editIndex ? updatedMapping : item))
-      );
-      setSelectedFaculty("");
-      setSelectedSubjects([]);
-      setIsEditing(false);
-      toast.success("Mapping updated successfully!");
-    } catch (error) {
-      console.error("Error updating data:", error);
-      toast.error("An error occurred. Please try again.");
-    }
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error Data:", errorData);
+          throw new Error("Could not update. Please try again.");
+        }
+
+        const data = await response.json();
+
+        const updatedMapping = {
+          id: data.data.id,
+          name: data.data.attributes.faculty.data.attributes.name,
+          subjects: data.data.attributes.subjects.data.map((subject) => ({
+            id: subject.id,
+            attributes: {
+              name: subject.attributes.name,
+            },
+          })),
+        };
+
+        setMappingOptions((prev) =>
+          prev.map((item, i) => (i === editIndex ? updatedMapping : item))
+        );
+        setSelectedFaculty("");
+        setSelectedSubjects([]);
+        setIsEditing(false);
+      })(),
+      {
+        loading: "Saving changes...",
+        success: "Mapping updated successfully!",
+        error: "Could not update. Please try again.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
+
+    await action;
   };
 
   return (
