@@ -1,322 +1,464 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
-import SearchableSingleSelect from "../_components/searchAbleDropDown";
+import React, { useState, useEffect } from "react";
+import MultiSelectDropDown from "../_components/multiSelectDropDown2";
+import SearchableSingleSelect from "../_components/searchAbleDropDownv2";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import toast, { Toaster } from "react-hot-toast";
 
-const subjects = [
-  { id: "1", name: "Mathematics" },
-  { id: "2", name: "Physics" },
-];
-
-const chaptersData = {
-  Mathematics: [
-    { id: "1", name: "Algebra" },
-    { id: "2", name: "Calculus" },
-  ],
-  Physics: [
-    { id: "3", name: "Mechanics" },
-    { id: "4", name: "Optics" },
-  ],
-};
-
-const topicsData = {
-  Algebra: [
-    { id: "1", name: "Linear Equations" },
-    { id: "2", name: "Quadratic Equations" },
-  ],
-  Calculus: [
-    { id: "3", name: "Derivatives" },
-    { id: "4", name: "Integrals" },
-  ],
-  Mechanics: [
-    { id: "5", name: "Newton's Laws" },
-    { id: "6", name: "Kinematics" },
-  ],
-  Optics: [
-    { id: "7", name: "Refraction" },
-    { id: "8", name: "Reflection" },
-  ],
-};
-
-const classes = [
-  { id: "1", name: "Class 10" },
-  { id: "2", name: "Class 11" },
-];
-
-const academicYears = [
-  { id: "1", name: "2024-2025" },
-  { id: "2", name: "2023-2024" },
-];
-
-const QuestionBankManagement = () => {
+const QuestionBank = () => {
   const [formData, setFormData] = useState({
-    id: "",
-    subject: "",
-    chapter: "",
-    topic: "",
-    class: "",
-    academicYear: "",
+    selectedClass: "",
+    selectedSubject: "",
+    selectedChapters: [],
+    selectedTopics: [],
+    selectedYear: "",
     question: "",
     answers: ["", "", "", ""],
-    correctAnswerIndex: -1,
+    correctAnswerIndex: null, // Store the correct answer as an index
   });
 
+  const [editIndex, setEditIndex] = useState(null);
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState([]);
-  const [filteredChapters, setFilteredChapters] = useState([]);
-  const [filteredTopics, setFilteredTopics] = useState([]);
-  const [isEdit, setIsEdit] = useState(false);
+  const [dropdownLoading, setDropdownLoading] = useState({
+    classes: false,
+    subjects: false,
+    chapters: false,
+    topics: false,
+    years: false,
+  });
+  const [data, setData] = useState({
+    classes: [],
+    subjects: [],
+    chapters: [],
+    topics: [],
+    years: [],
+  });
 
-  // Handle subject change
   useEffect(() => {
-    if (formData.subject) {
-      setFilteredChapters(chaptersData[formData.subject] || []);
-      if (!isEdit) {
-        // Reset chapter and topic only when not in edit mode
-        setFormData((prevData) => ({
-          ...prevData,
-          chapter: "",
-          topic: "",
-        }));
-      }
-    }
-  }, [formData.subject, isEdit]);
-
-  // Handle chapter change
-  useEffect(() => {
-    if (formData.chapter) {
-      setFilteredTopics(topicsData[formData.chapter] || []);
-      if (!isEdit) {
-        // Reset topic only when not in edit mode
-        setFormData((prevData) => ({
-          ...prevData,
-          topic: "",
-        }));
-      }
-    }
-  }, [formData.chapter, isEdit]);
-
-  const handleInputChange = useCallback((field, value) => {
-    setFormData((prevData) => {
-      const newFormData = {
-        ...prevData,
-        [field]: value,
-      };
-      if (field === "subject") {
-        return {
-          ...newFormData,
-          chapter: "", // Reset chapter
-          topic: "", // Reset topic
-        };
-      }
-      if (field === "chapter") {
-        return {
-          ...newFormData,
-          topic: "", // Reset topic
-        };
-      }
-
-      // Return updated form data for other fields
-      return newFormData;
-    });
-  }, []);
-
-  const handleAnswerChange = useCallback(
-    (index, value) => {
-      const newAnswers = [...formData.answers];
-      newAnswers[index] = value;
-      setFormData((prevData) => ({
-        ...prevData,
-        answers: newAnswers,
+    const fetchData = async () => {
+      setLoading(true);
+      setDropdownLoading((prevState) => ({
+        ...prevState,
+        classes: true,
+        years: true,
       }));
-    },
-    [formData.answers]
-  );
 
-  const handleCorrectAnswerChange = useCallback((index) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      correctAnswerIndex: index,
-    }));
-  }, []);
+      try {
+        const [
+          classesResponse,
+          chaptersResponse,
+          yearsResponse,
+          questionsResponse,
+        ] = await Promise.all([
+          fetch("/api/class"),
+          fetch("/api/chapter"),
+          fetch("/api/academic"),
+          fetch("/api/question-bank"),
+        ]);
 
-  const handleAddQuestion = useCallback(() => {
-    const newQuestion = { ...formData, id: new Date().toISOString() };
-    setQuestions((prevQuestions) => [...prevQuestions, newQuestion]);
-    resetForm();
-  }, [formData]);
+        const classesResult = await classesResponse.json();
+        const chaptersResult = await chaptersResponse.json();
+        const yearsResult = await yearsResponse.json();
+        const questionsResult = await questionsResponse.json();
 
-  const handleUpdateQuestion = useCallback(() => {
-    setQuestions((prevQuestions) =>
-      prevQuestions.map((q) => (q.id === formData.id ? { ...formData } : q))
-    );
-    resetForm();
-  }, [formData]);
+        const classesData = classesResult.data.map((classItem) => ({
+          id: classItem.id,
+          name: classItem.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, classes: classesData }));
 
-  const handleEditQuestion = useCallback(
-    (id) => {
-      const questionToEdit = questions.find((q) => q.id === id);
-      if (questionToEdit) {
-        setFormData(questionToEdit);
-        setIsEdit(true);
-        // Ensure correct chapter and topic filtering
-        setFilteredChapters(chaptersData[questionToEdit.subject] || []);
-        setFilteredTopics(topicsData[questionToEdit.chapter] || []);
+        const yearsData = yearsResult.data.map((year) => ({
+          id: year.id,
+          year: year.attributes.year,
+        }));
+        setData((prevState) => ({ ...prevState, years: yearsData }));
+
+        const chaptersData = chaptersResult.data.map((chapter) => ({
+          id: chapter.id,
+          name: chapter.attributes.name,
+          subjectId: chapter.attributes.subject.data.id,
+          subjectName: chapter.attributes.subject.data.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, chapters: chaptersData }));
+
+        const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
+          if (!acc.find((subject) => subject.id === chapter.subjectId)) {
+            acc.push({
+              id: chapter.subjectId,
+              name: chapter.subjectName,
+            });
+          }
+          return acc;
+        }, []);
+        setData((prevState) => ({ ...prevState, subjects: uniqueSubjects }));
+
+        const chapterIds = chaptersData.map((chapter) => chapter.id);
+        const queryString = chapterIds
+          .map((id) => `filters[chapter][id][$eq]=${id}`)
+          .join("&");
+        const topicsResponse = await fetch(
+          `/api/topics?populate[chapter]=*&${queryString}`
+        );
+        const topicsResult = await topicsResponse.json();
+        const topicsData = topicsResult.data.map((topic) => ({
+          id: topic.id,
+          name: topic.attributes.name,
+          chapterId: topic.attributes.chapter.data.id,
+        }));
+        setData((prevState) => ({ ...prevState, topics: topicsData }));
+
+        const mappedQuestions = questionsResult.data.map((item) => ({
+          id: item.id,
+          question: item.attributes.question,
+          answers: [
+            item.attributes.answer_1,
+            item.attributes.answer_2,
+            item.attributes.answer_3,
+            item.attributes.answer_4,
+          ],
+          correctAnswer: item.attributes.correct_answer,
+          subject: item.attributes.subject.data.attributes.name,
+          chapter: item.attributes.chapters.data
+            .map((chap) => chap.attributes.name)
+            .join(", "),
+          topic: item.attributes.topics.data
+            .map((top) => top.attributes.name)
+            .join(", "),
+          class: item.attributes.class.data.attributes.name,
+          academicYear: item.attributes.academic_year.data.attributes.year,
+        }));
+        console.log(mappedQuestions);
+        setQuestions(mappedQuestions);
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+        setDropdownLoading((prevState) => ({
+          ...prevState,
+          classes: false,
+          years: false,
+        }));
       }
-    },
-    [questions]
+    };
+
+    fetchData();
+  }, []);
+
+  const handleEdit = (index) => {
+    const material = materials[index];
+    setFormData({
+      selectedClass: material.className,
+      selectedSubject: material.subjectName,
+      selectedChapters: material.chapterNames,
+      selectedTopics: material.topicNames,
+      selectedYear: material.year,
+      question: material.question,
+      answers: material.answers,
+      correctAnswer: material.correctAnswer, // Set the correct answer value
+    });
+    setEditIndex(index);
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData((prevState) => ({ ...prevState, [field]: value }));
+  };
+
+  const handleAnswerChange = (index, value) => {
+    const updatedAnswers = [...formData.answers];
+    updatedAnswers[index] = value;
+    setFormData((prevState) => ({ ...prevState, answers: updatedAnswers }));
+  };
+
+  const handleCorrectAnswerChange = (index) => {
+    setFormData((prevState) => ({ ...prevState, correctAnswerIndex: index }));
+  };
+
+  const filteredChapters = data.chapters.filter(
+    (chapter) => chapter.subjectId === Number(formData.selectedSubject)
   );
 
-  const handleDeleteQuestion = useCallback((id) => {
-    setQuestions((prevQuestions) => prevQuestions.filter((q) => q.id !== id));
-  }, []);
+  const handleAdd = async () => {
+    const payload = {
+      data: {
+        subject: formData.selectedSubject,
+        chapters: formData.selectedChapters,
+        topics: formData.selectedTopics,
+        class: formData.selectedClass,
+        academic_year: formData.selectedYear,
+        question: formData.question,
+        answer_1: formData.answers[0],
+        answer_2: formData.answers[1],
+        answer_3: formData.answers[2],
+        answer_4: formData.answers[3],
+        correct_answer:
+          formData.correctAnswerIndex !== null
+            ? formData.correctAnswerIndex.toString() // Convert index to string
+            : null,
+      },
+    };
 
-  const resetForm = useCallback(() => {
-    setFormData({
-      id: "",
-      subject: "",
-      chapter: "",
-      topic: "",
-      class: "",
-      academicYear: "",
-      question: "",
-      answers: ["", "", "", ""],
-      correctAnswerIndex: -1,
-    });
-    setFilteredChapters([]);
-    setFilteredTopics([]);
-    setIsEdit(false);
-  }, []);
+    toast.promise(
+      fetch("/api/question-bank", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((data) => {
+              throw new Error(
+                data.error || "Failed to add question. Please try again."
+              );
+            });
+          }
+          return response.json();
+        })
+        .then((result) => {
+          // Map the new question and append it to existing questions
+          const newQuestion = {
+            id: result.data.id,
+            question: result.data.attributes.question,
+            answers: [
+              result.data.attributes.answer_1,
+              result.data.attributes.answer_2,
+              result.data.attributes.answer_3,
+              result.data.attributes.answer_4,
+            ],
+            correctAnswer: result.data.attributes.correct_answer,
+            subject: result.data.attributes.subject.data.attributes.name,
+            chapter: result.data.attributes.chapters.data
+              .map((chap) => chap.attributes.name)
+              .join(", "),
+            topic: result.data.attributes.topics.data
+              .map((top) => top.attributes.name)
+              .join(", "),
+            class: result.data.attributes.class.data.attributes.name,
+            academicYear:
+              result.data.attributes.academic_year.data.attributes.year,
+          };
 
-  const isFormValid = () => {
-    return (
-      formData.subject &&
-      formData.chapter &&
-      formData.topic &&
-      formData.class &&
-      formData.academicYear &&
-      formData.question &&
-      formData.correctAnswerIndex !== -1
+          // Update the questions state with the new question
+          setQuestions((prevQuestions) => [...prevQuestions, newQuestion]);
+
+          // Optionally, clear the form or update the UI with the new question
+          setFormData({
+            selectedClass: "",
+            selectedSubject: "",
+            selectedChapters: [],
+            selectedTopics: [],
+            selectedYear: "",
+            question: "",
+            answers: ["", "", "", ""],
+            correctAnswerIndex: null,
+          });
+        }),
+      {
+        loading: "Adding question...",
+        success: <b>Question added successfully!</b>,
+        error: <b>Failed to add question. Please try again.</b>,
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
+  };
+
+  const handleDelete = async (id) => {
+    toast.promise(
+      fetch("/api/question-bank", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ qbId: id }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((data) => {
+              throw new Error(
+                data.error || "Failed to delete question. Please try again."
+              );
+            });
+          }
+          return response.json();
+        })
+        .then((result) => {
+          // Remove the deleted question from the state
+          setQuestions((prevQuestions) =>
+            prevQuestions.filter((question) => question.id !== id)
+          );
+        }),
+      {
+        loading: "Deleting question...",
+        success: <b>Question deleted successfully!</b>,
+        error: <b>Failed to delete question. Please try again.</b>,
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
     );
   };
 
   return (
     <div className="container">
-      <div className="sectionHeader">Question Bank Management</div>
+      <Toaster position="top-right" reverseOrder={false} />
+      <div className="sectionHeader">Dynamic Dropdowns</div>
+
       <div className="inputContainer">
-        <SearchableSingleSelect
-          options={subjects}
-          selectedValue={formData.subject}
-          onChange={(value) => handleInputChange("subject", value)}
-          placeholder="Select subject"
-        />
-        <SearchableSingleSelect
-          options={filteredChapters}
-          selectedValue={formData.chapter}
-          onChange={(value) => handleInputChange("chapter", value)}
-          placeholder="Select chapter"
-        />
-        <SearchableSingleSelect
-          options={filteredTopics}
-          selectedValue={formData.topic}
-          onChange={(value) => handleInputChange("topic", value)}
-          placeholder="Select topic"
-        />
-        <SearchableSingleSelect
-          options={classes}
-          selectedValue={formData.class}
-          onChange={(value) => handleInputChange("class", value)}
-          placeholder="Select class"
-        />
-        <SearchableSingleSelect
-          options={academicYears}
-          selectedValue={formData.academicYear}
-          onChange={(value) => handleInputChange("academicYear", value)}
-          placeholder="Select academic year"
-        />
+        <div className="formGroup">
+          <SearchableSingleSelect
+            options={data.classes}
+            selectedValue={formData.selectedClass}
+            onChange={(value) => handleInputChange("selectedClass", value)}
+            placeholder="Select class"
+            isLoading={dropdownLoading.classes}
+          />
+        </div>
+        <div className="formGroup">
+          <SearchableSingleSelect
+            options={data.subjects}
+            selectedValue={formData.selectedSubject}
+            onChange={(value) => handleInputChange("selectedSubject", value)}
+            placeholder="Select subject"
+            isLoading={dropdownLoading.subjects}
+          />
+        </div>
+        <div className="formGroup">
+          <MultiSelectDropDown
+            options={filteredChapters}
+            selectedValues={formData.selectedChapters}
+            onChange={(values) => handleInputChange("selectedChapters", values)}
+            placeholder="Select chapters"
+            isLoading={dropdownLoading.chapters}
+          />
+        </div>
+        <div className="formGroup">
+          <MultiSelectDropDown
+            options={data.topics.filter((topic) =>
+              formData.selectedChapters.includes(topic.chapterId)
+            )}
+            selectedValues={formData.selectedTopics}
+            onChange={(values) => handleInputChange("selectedTopics", values)}
+            placeholder="Select topics"
+            isLoading={dropdownLoading.topics}
+          />
+        </div>
+        <div className="formGroup">
+          <SearchableSingleSelect
+            options={data.years.map((year) => ({
+              id: year.id,
+              name: year.year,
+            }))}
+            selectedValue={formData.selectedYear}
+            onChange={(value) => handleInputChange("selectedYear", value)}
+            placeholder="Select Academic Year"
+            isLoading={dropdownLoading.years}
+          />
+        </div>
       </div>
+
       <textarea
-        value={formData.question}
-        onChange={(e) => handleInputChange("question", e.target.value)}
         placeholder="Enter the question"
         className="textArea"
+        value={formData.question}
+        onChange={(e) => handleInputChange("question", e.target.value)}
       />
-      <p style={{ fontSize: 14 }}>Click on checkbox to choose correct answer</p>
+
       <div className="inputContainer">
         {formData.answers.map((answer, index) => (
           <div key={index} className="checkBoxContainer">
             <input
               type="radio"
+              className="checkbox"
               checked={formData.correctAnswerIndex === index}
               onChange={() => handleCorrectAnswerChange(index)}
-              className="checkbox"
             />
             <input
               type="text"
-              value={answer}
-              onChange={(e) => handleAnswerChange(index, e.target.value)}
               placeholder={`Answer ${index + 1}`}
               className="answerInput"
+              value={answer}
+              onChange={(e) => handleAnswerChange(index, e.target.value)}
             />
           </div>
         ))}
-        <button
-          onClick={isEdit ? handleUpdateQuestion : handleAddQuestion}
-          className="addButton"
-          disabled={!isFormValid()}
-        >
-          {isEdit ? "Update" : "Add"}
-        </button>
       </div>
-      <div className="questionsList">
-        {questions.map((question, id) => (
-          <div key={question.id} className="questionItem">
-            <div className="questionContainer">
-              <div className="questionText">
-                <strong>
-                  Subject: {question.subject} | Chapter: {question.chapter} |
-                  Topic: {question.topic}
-                </strong>
-                <br />
-                <strong>
-                  Class: {question.class} | Academic Year:{" "}
-                  {question.academicYear}
-                </strong>
-                <div className="question">
-                  Question {id + 1}: {question.question}
-                </div>
-                <div className="answers">
-                  {question.answers.map((answer, index) => (
-                    <div
-                      key={index}
-                      className={`answer ${
-                        question.correctAnswerIndex === index ? "correct" : ""
-                      }`}
-                    >
-                      {index + 1}. {answer}
+      <button className="addButton" onClick={handleAdd}>
+        Add
+      </button>
+
+      {loading ? (
+        <div className="loader" style={{ marginTop: 50 }}>
+          Loading...
+        </div>
+      ) : (
+        <div className="questionsList" style={{ marginTop: 50 }}>
+          <h2>Questions List</h2>
+          {questions.map((question, index) => (
+            <div key={question.id} className="questionItem">
+              <div className="questionContainer">
+                <div className="questionText">
+                  <strong>
+                    Subject: {question.subject} | Chapter: {question.chapter} |
+                    Topic: {question.topic}{" "}
+                  </strong>
+
+                  <strong>
+                    | Class: {question.class} | Academic Year:{" "}
+                    {question.academicYear}
+                  </strong>
+                  <div className="questionList">
+                    <div className="question">
+                      {index + 1}: {question.question}
                     </div>
-                  ))}
+                    <div className="answers">
+                      {question.answers.map((answer, index) => (
+                        <div
+                          key={index}
+                          className={`answer ${
+                            question.correctAnswer == index ? "highlight" : ""
+                          }`}
+                        >
+                          {console.log(question.correctAnswer)}
+                          {index + 1}. {answer}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="actions">
-                <button
-                  onClick={() => handleEditQuestion(question.id)}
-                  className="editButton"
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  onClick={() => handleDeleteQuestion(question.id)}
-                  className="deleteButton"
-                >
-                  <FaTrash />
-                </button>
+                <div className="buttonContainer">
+                  <button
+                    onClick={() => handleEditQuestion(question.id)}
+                    className="editButton"
+                  >
+                    <FaEdit /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(question.id)}
+                    className="deleteButton"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default QuestionBankManagement;
+export default QuestionBank;
