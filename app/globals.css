@@ -5,6 +5,13 @@ textarea {
     sans-serif;
 }
 
+ul {
+  padding-left: 0;
+}
+li {
+  list-style: none;
+}
+
 .container {
   max-width: 1200px;
   margin: auto;
@@ -204,7 +211,7 @@ textarea {
 .questionItem {
   padding-bottom: 30px;
   margin-bottom: 30px;
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid #ccc;
 }
 
 .questionList,
@@ -301,6 +308,34 @@ textarea {
 
 .deleteButton:hover {
   background-color: #c0392b;
+}
+
+.testActions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: space-between;
+}
+.testDuration {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.selectedValuesContainer {
+  border-top: 1px solid #ccc;
+  padding-top: 20px;
+  margin-top: 30px;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+  background-color: #f5f5f5;
 }
 
 @media (max-width: 1200px) {
