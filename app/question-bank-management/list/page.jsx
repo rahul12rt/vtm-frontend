@@ -1,72 +1,10 @@
 "use client";
-import React, { useState, useCallback } from "react";
-import SearchableSingleSelect from "../../_components/searchAbleDropDown";
-import MultiSelectDropDown from "../../_components/multiSelectDropDown";
-import questionsData from "../../_utils/QuestionsList.json";
-
-const subjects = [
-  { id: "1", name: "Mathematics" },
-  { id: "2", name: "Physics" },
-];
-
-const chaptersData = {
-  Mathematics: [
-    { id: "1", name: "Algebra" },
-    { id: "2", name: "Calculus" },
-  ],
-  Physics: [
-    { id: "3", name: "Mechanics" },
-    { id: "4", name: "Optics" },
-  ],
-};
-
-const topicsData = {
-  Algebra: [
-    { id: "1", name: "Linear Equations" },
-    { id: "2", name: "Quadratic Equations" },
-  ],
-  Calculus: [
-    { id: "3", name: "Derivatives" },
-    { id: "4", name: "Integrals" },
-  ],
-  Mechanics: [
-    { id: "5", name: "Newton's Laws" },
-    { id: "6", name: "Kinematics" },
-  ],
-  Optics: [
-    { id: "7", name: "Refraction" },
-    { id: "8", name: "Reflection" },
-  ],
-};
-
-const classes = [
-  { id: "1", name: "Class 10" },
-  { id: "2", name: "Class 11" },
-];
-
-const academicYears = [
-  { id: "1", name: "2024-2025" },
-  { id: "2", name: "2023-2024" },
-];
-
-const transformQuestionsData = (data) => {
-  return data.map((item) => ({
-    id: item.id,
-    subject: item.subject,
-    chapter: item.chapter,
-    topic: item.topic,
-    class: item.class,
-    academicYear: item.academicYear,
-    question: item.question,
-    options: item.options,
-    correctOption: item.correctOption,
-  }));
-};
+import React, { useState, useCallback, useEffect } from "react";
+import SearchableSingleSelect from "../../_components/searchAbleDropDownv2";
+import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
 
 const QuestionsList = () => {
-  const [questions, setQuestions] = useState(
-    transformQuestionsData(questionsData)
-  );
+  const [questions, setQuestions] = useState([]);
   const [filters, setFilters] = useState({
     subject: "",
     chapter: [],
@@ -75,8 +13,168 @@ const QuestionsList = () => {
     academicYear: "",
     question: "",
   });
-
+  const [data, setData] = useState({
+    subjects: [],
+    chapters: [],
+    topics: [],
+    classes: [],
+    years: [],
+  });
+  const [loading, setLoading] = useState(false);
+  const [dropdownLoading, setDropdownLoading] = useState({
+    classes: false,
+    years: false,
+  });
   const [editingId, setEditingId] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setDropdownLoading((prevState) => ({
+        ...prevState,
+        classes: true,
+        years: true,
+      }));
+
+      try {
+        // Build query string for filters
+        const buildQueryString = () => {
+          const filtersArray = [];
+
+          if (filters.subject) {
+            filtersArray.push(`filters[subject][id][$eq]=${filters.subject}`);
+          }
+          if (filters.chapter.length) {
+            filtersArray.push(
+              ...filters.chapter.map((ch) => `filters[chapters][id][$eq]=${ch}`)
+            );
+          }
+          if (filters.topic.length) {
+            filtersArray.push(
+              ...filters.topic.map((tp) => `filters[topics][id][$eq]=${tp}`)
+            );
+          }
+          if (filters.class) {
+            filtersArray.push(`filters[class][id][$eq]=${filters.class}`);
+          }
+          if (filters.academicYear) {
+            filtersArray.push(
+              `filters[academic_year][id][$eq]=${filters.academicYear}`
+            );
+          }
+          if (filters.question) {
+            filtersArray.push(
+              `filters[question][$containsi]=${filters.question}`
+            );
+          }
+
+          return filtersArray.join("&");
+        };
+
+        const queryString = buildQueryString();
+        console.log(queryString);
+
+        const [
+          classesResponse,
+          chaptersResponse,
+          yearsResponse,
+          questionsResponse,
+        ] = await Promise.all([
+          fetch("/api/class"),
+          fetch("/api/chapter"),
+          fetch("/api/academic"),
+          fetch(`/api/filter-questions${queryString ? `?${queryString}` : ""}`),
+        ]);
+
+        const classesResult = await classesResponse.json();
+        const chaptersResult = await chaptersResponse.json();
+        const yearsResult = await yearsResponse.json();
+        const questionsResult = await questionsResponse.json();
+
+        console.log(questionsResult);
+
+        const classesData = classesResult.data.map((classItem) => ({
+          id: classItem.id,
+          name: classItem.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, classes: classesData }));
+
+        const yearsData = yearsResult.data.map((year) => ({
+          id: year.id,
+          name: year.attributes.year,
+        }));
+        setData((prevState) => ({ ...prevState, years: yearsData }));
+
+        const chaptersData = chaptersResult.data.map((chapter) => ({
+          id: chapter.id,
+          name: chapter.attributes.name,
+          subjectId: chapter.attributes.subject.data.id,
+          subjectName: chapter.attributes.subject.data.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, chapters: chaptersData }));
+
+        const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
+          if (!acc.find((subject) => subject.id === chapter.subjectId)) {
+            acc.push({
+              id: chapter.subjectId,
+              name: chapter.subjectName,
+            });
+          }
+          return acc;
+        }, []);
+        setData((prevState) => ({ ...prevState, subjects: uniqueSubjects }));
+
+        const chapterIds = chaptersData.map((chapter) => chapter.id);
+        const topicQueryString = chapterIds
+          .map((id) => `filters[chapter][id][$eq]=${id}`)
+          .join("&");
+        const topicsResponse = await fetch(
+          `/api/topics?populate[chapter]=*&${topicQueryString}`
+        );
+        const topicsResult = await topicsResponse.json();
+        const topicsData = topicsResult.data.map((topic) => ({
+          id: topic.id,
+          name: topic.attributes.name,
+          chapterId: topic.attributes.chapter.data.id,
+        }));
+        setData((prevState) => ({ ...prevState, topics: topicsData }));
+
+        const mappedQuestions = questionsResult.data.map((item) => ({
+          id: item.id,
+          question: item.attributes.question,
+          options: [
+            item.attributes.answer_1,
+            item.attributes.answer_2,
+            item.attributes.answer_3,
+            item.attributes.answer_4,
+          ],
+          correctOption: item.attributes.correct_answer,
+          subject: item.attributes.subject.data.attributes.name,
+          chapter: item.attributes.chapters.data
+            .map((chap) => chap.attributes.name)
+            .join(", "),
+          topic: item.attributes.topics.data
+            .map((top) => top.attributes.name)
+            .join(", "),
+          class: item.attributes.class.data.attributes.name,
+          academicYear: item.attributes.academic_year.data.attributes.year,
+        }));
+        console.log(mappedQuestions);
+        setQuestions(mappedQuestions);
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+        setDropdownLoading((prevState) => ({
+          ...prevState,
+          classes: false,
+          years: false,
+        }));
+      }
+    };
+
+    fetchData();
+  }, [filters]);
 
   const handleFilterChange = useCallback((field, value) => {
     setFilters((prevFilters) => {
@@ -92,32 +190,6 @@ const QuestionsList = () => {
       return newFilters;
     });
   }, []);
-
-  const filteredQuestions = questions.filter((question) => {
-    const isSubjectMatch =
-      !filters.subject || question.subject === filters.subject;
-    const isChapterMatch =
-      !filters.chapter.length ||
-      filters.chapter.some((ch) => question.chapter.includes(ch));
-    const isTopicMatch =
-      !filters.topic.length ||
-      filters.topic.some((tp) => question.topic.includes(tp));
-    const isClassMatch = !filters.class || question.class === filters.class;
-    const isAcademicYearMatch =
-      !filters.academicYear || question.academicYear === filters.academicYear;
-    const isQuestionMatch =
-      !filters.question ||
-      question.question.toLowerCase().includes(filters.question.toLowerCase());
-
-    return (
-      isSubjectMatch &&
-      isChapterMatch &&
-      isTopicMatch &&
-      isClassMatch &&
-      isAcademicYearMatch &&
-      isQuestionMatch
-    );
-  });
 
   const handleEditClick = (id) => {
     setEditingId(id);
@@ -153,69 +225,64 @@ const QuestionsList = () => {
     );
   };
 
-  const handleCorrectOptionChange = (questionId, correctOption) => {
-    setQuestions((prevQuestions) =>
-      prevQuestions.map((question) =>
-        question.id === questionId ? { ...question, correctOption } : question
-      )
-    );
-  };
-
   return (
     <div className="container">
       <div className="sectionHeader">List of Questions</div>
       <div className="inputContainer">
         <div className="formGroup">
           <SearchableSingleSelect
-            options={subjects}
+            options={data.subjects}
             selectedValue={filters.subject}
             onChange={(value) => handleFilterChange("subject", value)}
-            placeholder="Select subject"
+            placeholder="Select Subject"
           />
         </div>
         <div className="formGroup">
           <MultiSelectDropDown
-            options={chaptersData[filters.subject] || []}
+            options={data.chapters}
             selectedValues={filters.chapter}
-            onChange={(value) => handleFilterChange("chapter", value)}
-            placeholder="Select chapters"
+            onChange={(values) => handleFilterChange("chapter", values)}
+            placeholder="Select Chapters"
           />
         </div>
         <div className="formGroup">
           <MultiSelectDropDown
-            options={filters.chapter.flatMap((ch) => topicsData[ch] || [])}
+            options={data.topics}
             selectedValues={filters.topic}
-            onChange={(value) => handleFilterChange("topic", value)}
-            placeholder="Select topics"
+            onChange={(values) => handleFilterChange("topic", values)}
+            placeholder="Select Topics"
           />
         </div>
         <div className="formGroup">
           <SearchableSingleSelect
-            options={classes}
+            options={data.classes}
             selectedValue={filters.class}
             onChange={(value) => handleFilterChange("class", value)}
-            placeholder="Select class"
+            placeholder="Select Class"
           />
         </div>
         <div className="formGroup">
           <SearchableSingleSelect
-            options={academicYears}
+            options={data.years}
             selectedValue={filters.academicYear}
             onChange={(value) => handleFilterChange("academicYear", value)}
-            placeholder="Select academic year"
+            placeholder="Select Academic Year"
           />
         </div>
       </div>
-      <div className="formGroup" style={{ marginBottom: 20 }}>
+      <div className="formGroup">
         <input
           type="text"
           value={filters.question}
           onChange={(e) => handleFilterChange("question", e.target.value)}
-          placeholder="Search question text"
+          placeholder="Search Question"
         />
       </div>
-      <div style={{ overflowX: "auto" }}>
-        <table className="table">
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <table className="table" style={{ marginTop: 20 }}>
           <thead>
             <tr>
               <th style={{ width: "40%" }}>Question</th>
@@ -224,11 +291,10 @@ const QuestionsList = () => {
               <th>Topic</th>
               <th>Class</th>
               <th>Academic Year</th>
-              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredQuestions.map((question) => (
+            {questions.map((question) => (
               <tr key={question.id}>
                 <td>
                   {editingId === question.id ? (
@@ -236,81 +302,26 @@ const QuestionsList = () => {
                       type="text"
                       value={question.question}
                       onChange={(e) =>
-                        setQuestions((prevQuestions) =>
-                          prevQuestions.map((q) =>
-                            q.id === question.id
-                              ? { ...q, question: e.target.value }
-                              : q
-                          )
-                        )
+                        handleSaveClick(question.id, {
+                          ...question,
+                          question: e.target.value,
+                        })
                       }
                     />
                   ) : (
                     question.question
                   )}
-                  <div className="optionContainer">
-                    {question.options.map((option, index) => (
-                      <div key={index}>
-                        <input
-                          type="radio"
-                          name={`correctOption-${question.id}`}
-                          checked={question.correctOption === option}
-                          onChange={() =>
-                            handleCorrectOptionChange(question.id, option)
-                          }
-                        />
-                        {editingId === question.id ? (
-                          <input
-                            type="text"
-                            value={option}
-                            onChange={(e) =>
-                              handleOptionChange(
-                                question.id,
-                                index,
-                                e.target.value
-                              )
-                            }
-                          />
-                        ) : (
-                          option
-                        )}
-                      </div>
-                    ))}
-                  </div>
                 </td>
                 <td>{question.subject}</td>
-                <td>{question.chapter.join(", ")}</td>
-                <td>{question.topic.join(", ")}</td>
+                <td>{question.chapter}</td>
+                <td>{question.topic}</td>
                 <td>{question.class}</td>
                 <td>{question.academicYear}</td>
-                <td>
-                  {editingId === question.id ? (
-                    <button
-                      onClick={() => handleSaveClick(question.id, question)}
-                      className="editButton"
-                    >
-                      Save
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleEditClick(question.id)}
-                      className="editButton"
-                    >
-                      Edit
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDeleteClick(question.id)}
-                    className="deleteButton"
-                  >
-                    Delete
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      )}
     </div>
   );
 };
