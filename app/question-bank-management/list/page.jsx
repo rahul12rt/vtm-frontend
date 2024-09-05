@@ -225,6 +225,10 @@ const QuestionsList = () => {
     );
   };
 
+  const filteredChapters = data.chapters.filter(
+    (chapter) => chapter.subjectId === Number(filters.subject)
+  );
+
   return (
     <div className="container">
       <div className="sectionHeader">List of Questions</div>
@@ -239,7 +243,7 @@ const QuestionsList = () => {
         </div>
         <div className="formGroup">
           <MultiSelectDropDown
-            options={data.chapters}
+            options={filteredChapters}
             selectedValues={filters.chapter}
             onChange={(values) => handleFilterChange("chapter", values)}
             placeholder="Select Chapters"
@@ -247,7 +251,9 @@ const QuestionsList = () => {
         </div>
         <div className="formGroup">
           <MultiSelectDropDown
-            options={data.topics}
+            options={data.topics.filter((topic) =>
+              filters.chapter.includes(topic.chapterId)
+            )}
             selectedValues={filters.topic}
             onChange={(values) => handleFilterChange("topic", values)}
             placeholder="Select Topics"

@@ -1,161 +1,307 @@
 "use client";
-import React, { useState, useCallback, useMemo } from "react";
-import SearchableSingleSelect from "../../_components/searchAbleDropDown";
-import MultiSelectDropDown from "../../_components/multiSelectDropDown";
+import React, { useState, useEffect } from "react";
+import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
 
-const testData = [
-  {
-    id: "1",
-    college: "College A",
-    class: "Class 10",
-    subject: "Mathematics",
-    chapter: ["Algebra"],
-    question: "Assessment 1",
-  },
-  {
-    id: "2",
-    college: "College B",
-    class: "Class 11",
-    subject: "Physics",
-    chapter: ["Mechanics"],
-    question: "Assessment 2",
-  },
-  // Add more test data here
-];
-
-const TestList = () => {
+const FilterQuestionsComponent = () => {
   const [filters, setFilters] = useState({
-    college: "",
-    class: "",
-    subject: [],
+    subject: "",
     chapter: [],
+    topic: [],
+    class: "",
+    academicYear: "",
+    question: "",
   });
 
-  const uniqueColleges = useMemo(
-    () => Array.from(new Set(testData.map((test) => test.college))),
-    []
-  );
-
-  const uniqueClasses = useMemo(
-    () => Array.from(new Set(testData.map((test) => test.class))),
-    []
-  );
-
-  const uniqueSubjects = useMemo(
-    () => Array.from(new Set(testData.map((test) => test.subject))),
-    []
-  );
-
-  const uniqueChapters = useMemo(() => {
-    const chaptersSet = new Set();
-    testData.forEach((test) =>
-      test.chapter.forEach((ch) => chaptersSet.add(ch))
-    );
-    return Array.from(chaptersSet);
-  }, []);
-
-  const handleFilterChange = useCallback((field, value) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [field]: value,
-    }));
-  }, []);
-
-  const filteredTests = testData.filter((test) => {
-    return (
-      (!filters.college || test.college === filters.college) &&
-      (!filters.class || test.class === filters.class) &&
-      (!filters.subject.length || filters.subject.includes(test.subject)) &&
-      (!filters.chapter.length ||
-        filters.chapter.some((ch) => test.chapter.includes(ch)))
-    );
+  const [data, setData] = useState({
+    subjects: [],
+    chapters: [],
+    topics: [],
+    classes: [],
+    years: [],
+    assessments: [],
   });
+
+  const [loading, setLoading] = useState(false);
+  const [dropdownLoading, setDropdownLoading] = useState({
+    classes: false,
+    years: false,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setDropdownLoading((prevState) => ({
+        ...prevState,
+        classes: true,
+        years: true,
+      }));
+
+      try {
+        // Build query string for filters
+        const buildQueryString = () => {
+          const filtersArray = [];
+
+          if (filters.subject) {
+            filtersArray.push(
+              `filters[question_banks][subject][id][$eq]=${filters.subject}`
+            );
+          }
+          if (filters.chapter.length) {
+            filtersArray.push(
+              ...filters.chapter.map(
+                (ch) => `filters[question_banks][chapters][id][$eq]=${ch}`
+              )
+            );
+          }
+          if (filters.topic.length) {
+            filtersArray.push(
+              ...filters.topic.map(
+                (tp) => `filters[question_banks][topics][id][$eq]=${tp}`
+              )
+            );
+          }
+          if (filters.class) {
+            filtersArray.push(
+              `filters[question_banks][class][id][$eq]=${filters.class}`
+            );
+          }
+          if (filters.academicYear) {
+            filtersArray.push(
+              `filters[academic_year][id][$eq]=${filters.academicYear}`
+            );
+          }
+          if (filters.question) {
+            filtersArray.push(
+              `filters[question][$containsi]=${filters.question}`
+            );
+          }
+
+          return filtersArray.join("&");
+        };
+
+        const queryString = buildQueryString();
+
+        const [
+          classesResponse,
+          chaptersResponse,
+          yearsResponse,
+          topicsResponse,
+          assessmentsResponse,
+        ] = await Promise.all([
+          fetch("/api/class"),
+          fetch("/api/chapter"),
+          fetch("/api/academic"),
+          fetch("/api/topics"),
+          fetch(`/api/create-test${queryString ? `?${queryString}` : ""}`),
+        ]);
+
+        const classesResult = await classesResponse.json();
+        const chaptersResult = await chaptersResponse.json();
+        const yearsResult = await yearsResponse.json();
+        const topicsResult = await topicsResponse.json();
+        const assessmentsResult = await assessmentsResponse.json();
+
+        // Map the API data to your component's structure
+        const classesData = classesResult.data.map((classItem) => ({
+          id: classItem.id,
+          name: classItem.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, classes: classesData }));
+
+        const yearsData = yearsResult.data.map((year) => ({
+          id: year.id,
+          name: year.attributes.year,
+        }));
+        setData((prevState) => ({ ...prevState, years: yearsData }));
+
+        const chaptersData = chaptersResult.data.map((chapter) => ({
+          id: chapter.id,
+          name: chapter.attributes.name,
+          subjectId: chapter.attributes.subject.data.id,
+          subjectName: chapter.attributes.subject.data.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, chapters: chaptersData }));
+
+        const topicsData = topicsResult.data.map((topic) => ({
+          id: topic.id,
+          name: topic.attributes.name,
+          chapterId: topic.attributes.chapter.data.id,
+        }));
+        setData((prevState) => ({ ...prevState, topics: topicsData }));
+
+        // Extract unique subjects from chapters data
+        const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
+          if (!acc.find((subject) => subject.id === chapter.subjectId)) {
+            acc.push({
+              id: chapter.subjectId,
+              name: chapter.subjectName,
+            });
+          }
+          return acc;
+        }, []);
+        setData((prevState) => ({ ...prevState, subjects: uniqueSubjects }));
+
+        // Map the assessments to the required format
+        const mappedAssessments = assessmentsResult.data.map((assessment) => {
+          const chapterNames = assessment.attributes.chapters.data.map(
+            (c) => c.attributes.name
+          );
+          const topicNames = assessment.attributes.topics.data.map(
+            (c) => c.attributes.name
+          );
+
+          return {
+            id: assessment.id,
+            name: assessment.attributes.name,
+            subject: assessment.attributes.subject.data.attributes.name,
+            chapter: chapterNames.join(", "),
+            topic: topicNames.join(", "),
+            class: assessment.attributes.class.data.attributes.name,
+            academicYear:
+              assessment.attributes.academic_year.data.attributes.year,
+          };
+        });
+
+        setData((prevState) => ({
+          ...prevState,
+          assessments: mappedAssessments,
+        }));
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+        setDropdownLoading((prevState) => ({
+          ...prevState,
+          classes: false,
+          years: false,
+        }));
+      }
+    };
+
+    fetchData();
+  }, [filters]);
+
+  const handleFilterChange = (key, value) => {
+    setFilters((prevFilters) => ({ ...prevFilters, [key]: value }));
+  };
+
+  const filteredChapters = data.chapters.filter(
+    (chapter) => chapter.subjectId === Number(filters.subject)
+  );
+
+  const filteredAssessments = data.assessments.filter((assessment) =>
+    assessment.name.toLowerCase().includes(filters.question.toLowerCase())
+  );
 
   return (
     <div className="container">
       <div className="sectionHeader">List of Tests</div>
       <div className="inputContainer">
         <div className="formGroup">
-          <label>Filter by College</label>
-          <SearchableSingleSelect
-            options={uniqueColleges.map((college) => ({
-              id: college,
-              name: college,
-            }))}
-            selectedValue={filters.college}
-            onChange={(value) => handleFilterChange("college", value)}
-            placeholder="Select college"
-          />
+          <select
+            value={filters.subject}
+            onChange={(e) => handleFilterChange("subject", e.target.value)}
+          >
+            <option value="">Select Subject</option>
+            {data.subjects.map((subject) => (
+              <option key={subject.id} value={subject.id}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="formGroup">
-          <label>Filter by Class</label>
-          <SearchableSingleSelect
-            options={uniqueClasses.map((cls) => ({
-              id: cls,
-              name: cls,
-            }))}
-            selectedValue={filters.class}
-            onChange={(value) => handleFilterChange("class", value)}
-            placeholder="Select class"
-          />
-        </div>
-        <div className="formGroup">
-          <label>Filter by Subject</label>
           <MultiSelectDropDown
-            options={uniqueSubjects.map((subject) => ({
-              id: subject,
-              name: subject,
-            }))}
-            selectedValues={filters.subject}
-            onChange={(value) => handleFilterChange("subject", value)}
-            placeholder="Select subjects"
-          />
-        </div>
-        <div className="formGroup">
-          <label>Filter by Chapter</label>
-          <MultiSelectDropDown
-            options={uniqueChapters.map((chapter) => ({
-              id: chapter,
-              name: chapter,
-            }))}
+            options={filteredChapters}
             selectedValues={filters.chapter}
-            onChange={(value) => handleFilterChange("chapter", value)}
-            placeholder="Select chapters"
+            onChange={(values) => handleFilterChange("chapter", values)}
+            placeholder="Select Chapters"
           />
         </div>
+        {/* Uncomment if needed */}
+        {/* <div className="formGroup">
+          <MultiSelectDropDown
+            options={data.topics.filter((topic) =>
+              filters.chapter.includes(topic.chapterId)
+            )}
+            selectedValues={filters.topic}
+            onChange={(values) => handleFilterChange("topic", values)}
+            placeholder="Select Topics"
+          />
+        </div> */}
+        <div className="formGroup">
+          <select
+            value={filters.class}
+            onChange={(e) => handleFilterChange("class", e.target.value)}
+          >
+            <option value="">Select Class</option>
+            {data.classes.map((classItem) => (
+              <option key={classItem.id} value={classItem.id}>
+                {classItem.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* Uncomment if needed */}
+        {/* <div className="formGroup">
+          <select
+            value={filters.academicYear}
+            onChange={(e) => handleFilterChange("academicYear", e.target.value)}
+          >
+            <option value="">Select Academic Year</option>
+            {data.years.map((year) => (
+              <option key={year.id} value={year.id}>
+                {year.name}
+              </option>
+            ))}
+          </select>
+        </div> */}
       </div>
-
-      <div className="questionList">
-        <h3>Filtered Tests</h3>
-        {filteredTests.length > 0 ? (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Test Title</th>
-                <th>College</th>
-                <th>Class</th>
-                <th>Subject</th>
-                <th>Chapters</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTests.map((test) => (
-                <tr key={test.id}>
-                  <td>{test.question}</td>
-                  <td>{test.college}</td>
-                  <td>{test.class}</td>
-                  <td>{test.subject}</td>
-                  <td>{test.chapter.join(", ")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="formGroup">
+        <input
+          type="text"
+          value={filters.question}
+          onChange={(e) => handleFilterChange("question", e.target.value)}
+          placeholder="Search by assessment"
+        />
+      </div>
+      <div>
+        <h2>Assessments</h2>
+        {loading ? (
+          <p>Loading...</p>
         ) : (
-          <p>No data found.</p>
+          <div className="questionList">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th style={{ width: "50%" }}>Name</th>
+                  <th>Subject</th>
+                  <th>Chapter</th>
+                  {/* Uncomment if needed */}
+                  {/* <th>Topic</th> */}
+                  <th>Class</th>
+                  <th>Academic Year</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAssessments.map((assessment) => (
+                  <tr key={assessment.id}>
+                    <td>{assessment.name}</td>
+                    <td>{assessment.subject}</td>
+                    <td>{assessment.chapter}</td>
+                    {/* Uncomment if needed */}
+                    {/* <td>{assessment.topic}</td> */}
+                    <td>{assessment.class}</td>
+                    <td>{assessment.academicYear}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-export default TestList;
+export default FilterQuestionsComponent;

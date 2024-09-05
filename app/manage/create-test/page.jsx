@@ -93,6 +93,8 @@ const CreateTest = () => {
           fetch(`/api/filter-questions${queryString ? `?${queryString}` : ""}`),
         ]);
 
+        console.log(queryString);
+
         const classesResult = await classesResponse.json();
         const chaptersResult = await chaptersResponse.json();
         const yearsResult = await yearsResponse.json();
@@ -141,6 +143,8 @@ const CreateTest = () => {
         const topicsResponse = await fetch(
           `/api/topics?populate[chapter]=*&${topicQueryString}`
         );
+
+        console.log(topicQueryString);
         const topicsResult = await topicsResponse.json();
         const topicsData = topicsResult.data.map((topic) => ({
           id: topic.id,
@@ -240,8 +244,13 @@ const CreateTest = () => {
       const payload = {
         data: {
           name: testTitle,
-          duration: parseInt(testDuration, 10) || 0, // Ensure duration is a number
+          duration: parseInt(testDuration, 10) || 0,
           question_banks: selectedQuestions,
+          subject: Number(filters.subject),
+          chapters: filters.chapter,
+          topics: filters.topic,
+          class: Number(filters.class),
+          academic_year: Number(filters.academicYear),
         },
       };
 
@@ -286,6 +295,9 @@ const CreateTest = () => {
     }
   };
 
+  const filteredChapters = data.chapters.filter(
+    (chapter) => chapter.subjectId === Number(filters.subject)
+  );
   return (
     <div className="container">
       <Toaster position="top-right" reverseOrder={true} />
@@ -305,20 +317,16 @@ const CreateTest = () => {
         </select>
 
         <MultiSelectDropDown
-          options={data.chapters.map((ch) => ({
-            id: ch.id,
-            name: ch.name,
-          }))}
+          options={filteredChapters}
           selectedValues={filters.chapter}
           onChange={(selected) => handleFilterChange("chapter", selected)}
           placeholder="Select Chapters"
         />
 
         <MultiSelectDropDown
-          options={data.topics.map((tp) => ({
-            id: tp.id,
-            name: tp.name,
-          }))}
+          options={data.topics.filter((topic) =>
+            filters.chapter.includes(topic.chapterId)
+          )}
           selectedValues={filters.topic}
           onChange={(selected) => handleFilterChange("topic", selected)}
           placeholder="Select Topics"

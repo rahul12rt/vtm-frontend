@@ -101,6 +101,7 @@ const QuestionBank = () => {
         const topicsResponse = await fetch(
           `/api/topics?populate[chapter]=*&${queryString}`
         );
+        console.log(queryString);
         const topicsResult = await topicsResponse.json();
         const topicsData = topicsResult.data.map((topic) => ({
           id: topic.id,
@@ -162,7 +163,24 @@ const QuestionBank = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setFormData((prevState) => ({ ...prevState, [field]: value }));
+    if (field === "selectedSubject") {
+      // When the subject is changed, reset the selected chapters and topics
+      setFormData((prevState) => ({
+        ...prevState,
+        selectedSubject: value,
+        selectedChapters: [], // Reset chapters
+        selectedTopics: [], // Reset topics
+      }));
+    } else if (field === "selectedChapters") {
+      // When chapters are changed, reset the topics
+      setFormData((prevState) => ({
+        ...prevState,
+        selectedChapters: value,
+        selectedTopics: [], // Reset topics
+      }));
+    } else {
+      setFormData((prevState) => ({ ...prevState, [field]: value }));
+    }
   };
 
   const handleAnswerChange = (index, value) => {
