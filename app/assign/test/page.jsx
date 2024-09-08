@@ -1,208 +1,359 @@
 "use client";
-import React, { useState, useCallback, useMemo } from "react";
-import SearchableSingleSelect from "../../_components/searchAbleDropDown";
-
-const questionsData = [
-  {
-    id: "1",
-    college: "College A",
-    class: "Class 10",
-    subject: "Mathematics",
-    chapter: ["Algebra"],
-    topic: ["Linear Equations"],
-    question: "Assessment 1",
-    status: "Assign",
-  },
-  {
-    id: "2",
-    college: "College B",
-    class: "Class 11",
-    subject: "Physics",
-    chapter: ["Mechanics"],
-    topic: ["Newton's Laws"],
-    question: "Assessment 2",
-    status: "Assigned",
-  },
-  // Add more data if needed
-];
+import React, { useState, useEffect } from "react";
+import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
 
 const AssignTest = () => {
   const [filters, setFilters] = useState({
-    college: "",
-    class: "",
     subject: "",
     chapter: [],
     topic: [],
-    testTitle: "",
-    status: "", // Add filter for status
+    class: "",
+    academicYear: "",
+    question: "",
   });
 
-  // Generate dropdown options dynamically from JSON data
-  const uniqueColleges = useMemo(
-    () => Array.from(new Set(questionsData.map((q) => q.college))),
-    []
-  );
-  const uniqueClasses = useMemo(
-    () => Array.from(new Set(questionsData.map((q) => q.class))),
-    []
-  );
-  const uniqueSubjects = useMemo(
-    () => Array.from(new Set(questionsData.map((q) => q.subject))),
-    []
-  );
+  const [data, setData] = useState({
+    subjects: [],
+    chapters: [],
+    topics: [],
+    classes: [],
+    years: [],
+    assessments: [],
+  });
 
-  const uniqueChapters = useMemo(() => {
-    const chaptersSet = new Set();
-    questionsData
-      .filter((q) => q.subject === filters.subject)
-      .forEach((q) => q.chapter.forEach((ch) => chaptersSet.add(ch)));
-    return Array.from(chaptersSet);
-  }, [filters.subject]);
+  const [loading, setLoading] = useState(false);
+  const [dropdownLoading, setDropdownLoading] = useState({
+    classes: false,
+    years: false,
+  });
 
-  const uniqueTopics = useMemo(() => {
-    const topicsSet = new Set();
-    questionsData
-      .filter((q) =>
-        filters.chapter.length
-          ? filters.chapter.some((ch) => q.chapter.includes(ch))
-          : true
-      )
-      .forEach((q) => q.topic.forEach((tp) => topicsSet.add(tp)));
-    return Array.from(topicsSet);
-  }, [filters.chapter]);
+  // New state to track assigned assessments
+  const [assignedTests, setAssignedTests] = useState({});
 
-  const uniqueStatuses = useMemo(
-    () => Array.from(new Set(questionsData.map((q) => q.status))),
-    []
-  );
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setDropdownLoading((prevState) => ({
+        ...prevState,
+        classes: true,
+        years: true,
+      }));
 
-  const handleFilterChange = useCallback((field, value) => {
-    setFilters((prevFilters) => {
-      let newFilters = { ...prevFilters, [field]: value };
+      try {
+        // Build query string for filters
+        const buildQueryString = () => {
+          const filtersArray = [];
 
-      if (field === "subject") {
-        newFilters.chapter = [];
-        newFilters.topic = [];
-      } else if (field === "chapter") {
-        newFilters.topic = [];
+          if (filters.subject) {
+            filtersArray.push(
+              `filters[question_banks][subject][id][$eq]=${filters.subject}`
+            );
+          }
+          if (filters.chapter.length) {
+            filtersArray.push(
+              ...filters.chapter.map(
+                (ch) => `filters[question_banks][chapters][id][$eq]=${ch}`
+              )
+            );
+          }
+          if (filters.topic.length) {
+            filtersArray.push(
+              ...filters.topic.map(
+                (tp) => `filters[question_banks][topics][id][$eq]=${tp}`
+              )
+            );
+          }
+          if (filters.class) {
+            filtersArray.push(
+              `filters[question_banks][class][id][$eq]=${filters.class}`
+            );
+          }
+          if (filters.academicYear) {
+            filtersArray.push(
+              `filters[academic_year][id][$eq]=${filters.academicYear}`
+            );
+          }
+          if (filters.question) {
+            filtersArray.push(
+              `filters[question][$containsi]=${filters.question}`
+            );
+          }
+
+          return filtersArray.join("&");
+        };
+
+        const queryString = buildQueryString();
+
+        const [
+          classesResponse,
+          chaptersResponse,
+          yearsResponse,
+          topicsResponse,
+          assessmentsResponse,
+          assignTestResponse,
+        ] = await Promise.all([
+          fetch("/api/class"),
+          fetch("/api/chapter"),
+          fetch("/api/academic"),
+          fetch("/api/topics"),
+          fetch(`/api/create-test${queryString ? `?${queryString}` : ""}`),
+          fetch("/api/assign-tests"),
+        ]);
+
+        const classesResult = await classesResponse.json();
+        const chaptersResult = await chaptersResponse.json();
+        const yearsResult = await yearsResponse.json();
+        const topicsResult = await topicsResponse.json();
+        const assessmentsResult = await assessmentsResponse.json();
+        const assignTestResult = await assignTestResponse.json();
+        // Map the API data to your component's structure
+        const mappedAssignedTests = {};
+        assignTestResult.data.forEach((test) => {
+          const testId = test.attributes.create_test.data.id;
+          mappedAssignedTests[testId] = test.attributes.Assign;
+        });
+        setAssignedTests(mappedAssignedTests);
+
+        const classesData = classesResult.data.map((classItem) => ({
+          id: classItem.id,
+          name: classItem.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, classes: classesData }));
+
+        const yearsData = yearsResult.data.map((year) => ({
+          id: year.id,
+          name: year.attributes.year,
+        }));
+        setData((prevState) => ({ ...prevState, years: yearsData }));
+
+        const chaptersData = chaptersResult.data.map((chapter) => ({
+          id: chapter.id,
+          name: chapter.attributes.name,
+          subjectId: chapter.attributes.subject.data.id,
+          subjectName: chapter.attributes.subject.data.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, chapters: chaptersData }));
+
+        const topicsData = topicsResult.data.map((topic) => ({
+          id: topic.id,
+          name: topic.attributes.name,
+          chapterId: topic.attributes.chapter.data.id,
+        }));
+        setData((prevState) => ({ ...prevState, topics: topicsData }));
+
+        // Extract unique subjects from chapters data
+        const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
+          if (!acc.find((subject) => subject.id === chapter.subjectId)) {
+            acc.push({
+              id: chapter.subjectId,
+              name: chapter.subjectName,
+            });
+          }
+          return acc;
+        }, []);
+        setData((prevState) => ({ ...prevState, subjects: uniqueSubjects }));
+
+        // Map the assessments to the required format
+        const mappedAssessments = assessmentsResult.data.map((assessment) => {
+          const chapterNames = assessment.attributes.chapters.data.map(
+            (c) => c.attributes.name
+          );
+          const topicNames = assessment.attributes.topics.data.map(
+            (c) => c.attributes.name
+          );
+
+          return {
+            id: assessment.id,
+            name: assessment.attributes.name,
+            subject: assessment.attributes.subject.data.attributes.name,
+            chapter: chapterNames.join(", "),
+            topic: topicNames.join(", "),
+            class: assessment.attributes.class.data.attributes.name,
+            academicYear:
+              assessment.attributes.academic_year.data.attributes.year,
+          };
+        });
+
+        setData((prevState) => ({
+          ...prevState,
+          assessments: mappedAssessments,
+        }));
+      } catch (error) {
+        console.error("Failed to fetch data", error);
+      } finally {
+        setLoading(false);
+        setDropdownLoading((prevState) => ({
+          ...prevState,
+          classes: false,
+          years: false,
+        }));
       }
+    };
 
-      return newFilters;
-    });
-  }, []);
+    fetchData();
+  }, [filters]);
 
-  const filteredQuestions = questionsData.filter((question) => {
-    return (
-      (!filters.college || question.college === filters.college) &&
-      (!filters.class || question.class === filters.class) &&
-      (!filters.subject || question.subject === filters.subject) &&
-      (!filters.chapter.length ||
-        filters.chapter.every((ch) => question.chapter.includes(ch))) &&
-      (!filters.topic.length ||
-        filters.topic.every((tp) => question.topic.includes(tp))) &&
-      (!filters.testTitle ||
-        question.question
-          .toLowerCase()
-          .includes(filters.testTitle.toLowerCase())) &&
-      (!filters.status || question.status === filters.status) // Add filter for status
-    );
-  });
+  const handleFilterChange = (key, value) => {
+    setFilters((prevFilters) => ({ ...prevFilters, [key]: value }));
+  };
 
-  const toggleStatus = (id) => {
-    setFilters((prevFilters) => {
-      const updatedQuestions = questionsData.map((q) =>
-        q.id === id
-          ? { ...q, status: q.status === "Assign" ? "Assigned" : "Assign" }
-          : q
-      );
-      return { ...prevFilters, questionsData: updatedQuestions };
-    });
+  const filteredChapters = data.chapters.filter(
+    (chapter) => chapter.subjectId === Number(filters.subject)
+  );
+
+  const filteredAssessments = data.assessments.filter((assessment) =>
+    assessment.name.toLowerCase().includes(filters.question.toLowerCase())
+  );
+
+  const handleAssignClick = async (assessmentId) => {
+    const isCurrentlyAssigned = assignedTests[assessmentId];
+
+    console.log(assessmentId);
+
+    try {
+      const response = await fetch("/api/assign-tests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: {
+            create_test: assessmentId,
+            Assign: !isCurrentlyAssigned, // Toggle assign/unassign
+          },
+        }),
+      });
+
+      if (response.ok) {
+        setAssignedTests((prevState) => ({
+          ...prevState,
+          [assessmentId]: !isCurrentlyAssigned, // Toggle the assigned state
+        }));
+      }
+    } catch (error) {
+      console.error("Error assigning/unassigning test", error);
+    }
   };
 
   return (
     <div className="container">
-      <div className="sectionHeader">Assign Test</div>
+      <div className="sectionHeader">List of Tests</div>
       <div className="inputContainer">
         <div className="formGroup">
-          <label>Filter by Test Title</label>
-          <input
-            type="text"
-            value={filters.testTitle}
-            onChange={(e) => handleFilterChange("testTitle", e.target.value)}
-            placeholder="Enter test title"
-            className="textInput"
-          />
+          <select
+            value={filters.subject}
+            onChange={(e) => handleFilterChange("subject", e.target.value)}
+          >
+            <option value="">Select Subject</option>
+            {data.subjects.map((subject) => (
+              <option key={subject.id} value={subject.id}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="formGroup">
-          <label>Filter by Class</label>
-          <SearchableSingleSelect
-            options={uniqueClasses.map((cls) => ({ id: cls, name: cls }))}
-            selectedValue={filters.class}
-            onChange={(value) => handleFilterChange("class", value)}
-            placeholder="Select class"
+          <MultiSelectDropDown
+            options={filteredChapters}
+            selectedValues={filters.chapter}
+            onChange={(values) => handleFilterChange("chapter", values)}
+            placeholder="Select Chapters"
           />
         </div>
+        {/* Uncomment if needed */}
+        {/* <div className="formGroup">
+          <MultiSelectDropDown
+            options={data.topics.filter((topic) =>
+              filters.chapter.includes(topic.chapterId)
+            )}
+            selectedValues={filters.topic}
+            onChange={(values) => handleFilterChange("topic", values)}
+            placeholder="Select Topics"
+          />
+        </div> */}
         <div className="formGroup">
-          <label>Filter by Status</label>
-          <SearchableSingleSelect
-            options={uniqueStatuses.map((status) => ({
-              id: status,
-              name: status,
-            }))}
-            selectedValue={filters.status}
-            onChange={(value) => handleFilterChange("status", value)}
-            placeholder="Select status"
-          />
+          <select
+            value={filters.class}
+            onChange={(e) => handleFilterChange("class", e.target.value)}
+          >
+            <option value="">Select Class</option>
+            {data.classes.map((classItem) => (
+              <option key={classItem.id} value={classItem.id}>
+                {classItem.name}
+              </option>
+            ))}
+          </select>
         </div>
+        {/* Uncomment if needed */}
+        {/* <div className="formGroup">
+          <select
+            value={filters.academicYear}
+            onChange={(e) => handleFilterChange("academicYear", e.target.value)}
+          >
+            <option value="">Select Academic Year</option>
+            {data.years.map((year) => (
+              <option key={year.id} value={year.id}>
+                {year.name}
+              </option>
+            ))}
+          </select>
+        </div> */}
       </div>
-
-      <div className="questionList">
-        <h3 style={{ marginBottom: 8 }}>Filtered Questions</h3>
-        {filteredQuestions.length > 0 ? (
-          <table className="table">
-            <thead>
-              <tr>
-                <th style={{ width: "70%" }}>Test Title</th>
-                <th style={{ width: "10%" }}>Class</th>
-                <th style={{ width: "10%" }}>Status</th>
-                <th style={{ width: "10%" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredQuestions.map((question) => (
-                <tr key={question.id}>
-                  <td style={{ width: "70%" }}>{question.question}</td>
-                  <td style={{ width: "10%" }}>{question.class}</td>
-                  <td style={{ width: "10%" }}>{question.status}</td>
-                  <td style={{ width: "10%" }}>
-                    <button
-                      style={{ width: "100%" }}
-                      className={
-                        question.status === "Assign"
-                          ? "addButton"
-                          : "editButton"
-                      }
-                      onClick={() => toggleStatus(question.id)}
-                    >
-                      {question.status === "Assign" ? "Assign" : "Assigned"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="formGroup">
+        <input
+          type="text"
+          value={filters.question}
+          onChange={(e) => handleFilterChange("question", e.target.value)}
+          placeholder="Search by assessment"
+        />
+      </div>
+      <div>
+        <h2>Assessments</h2>
+        {loading ? (
+          <p>Loading...</p>
         ) : (
-          <p>
-            {filters.college ||
-            filters.class ||
-            filters.subject ||
-            filters.chapter.length ||
-            filters.topic.length ||
-            filters.testTitle ||
-            filters.status
-              ? "No data found."
-              : "Filter to assign a test."}
-          </p>
+          <div className="questionList">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th style={{ width: "40%" }}>Name</th>
+                  <th>Subject</th>
+                  <th>Chapter</th>
+                  {/* <th>Topic</th> */}
+                  <th>Class</th>
+                  {/* <th>Academic Year</th> */}
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAssessments.map((assessment) => (
+                  <tr key={assessment.id}>
+                    <td>{assessment.name}</td>
+                    <td>{assessment.subject}</td>
+                    <td>{assessment.chapter}</td>
+
+                    {/* Uncomment if needed */}
+                    {/* <td>{assessment.topic}</td> */}
+                    <td>{assessment.class}</td>
+                    {/* <td>{assessment.academicYear}</td> */}
+                    <td>
+                      <button
+                        className={
+                          assignedTests[assessment.id]
+                            ? "editButton"
+                            : "submitButton"
+                        }
+                        onClick={() => handleAssignClick(assessment.id)}
+                        disabled={assignedTests[assessment.id]}
+                      >
+                        {assignedTests[assessment.id] ? "Assigned" : "Assign"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
