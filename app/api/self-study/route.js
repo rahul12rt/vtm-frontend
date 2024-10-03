@@ -110,3 +110,45 @@ export async function DELETE(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function PUT(request) {
+  try {
+    const strapiApiUrl = process.env.STRAPI_API_URL;
+    if (!strapiApiUrl) {
+      return NextResponse.json(
+        { error: "STRAPI_API_URL is not defined in environment variables" },
+        { status: 500 }
+      );
+    }
+
+    // Get the updated data and ID from the request body
+    const { studyId, updatedData } = await request.json();
+
+    if (!studyId || !updatedData) {
+      return NextResponse.json(
+        { error: "Both studyId and updatedData are required" },
+        { status: 400 }
+      );
+    }
+
+    const strapiEndpoint = `${strapiApiUrl}/api/self-studies/${studyId}?populate[class]=*&populate[subject]=*&populate[chapters]=*&populate[topics]=*`;
+    const response = await fetch(strapiEndpoint, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Error updating Study Material: ${errorData.message}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

@@ -24,22 +24,6 @@ const AssignSelfStudy = () => {
 
   const handleSubmit = async () => {
     if (selectedSelfStudies.length > 0 && selectedCollege) {
-      const newAssignment = {
-        id: assignedMaterials.length + 1,
-        college: selectedCollege,
-        selfStudies: selectedSelfStudies,
-      };
-
-      // Update or add the assignment locally
-      if (editIndex !== null) {
-        const updatedMaterials = [...assignedMaterials];
-        updatedMaterials[editIndex] = newAssignment;
-        setAssignedMaterials(updatedMaterials);
-        setEditIndex(null);
-      } else {
-        setAssignedMaterials([...assignedMaterials, newAssignment]);
-      }
-
       // Create the payload
       const payload = {
         data: {
@@ -64,7 +48,17 @@ const AssignSelfStudy = () => {
               throw new Error("Failed to assign self-study materials.");
             }
 
-            await response.json(); // Ensure to await the response to handle possible errors
+            const data = await response.json();
+
+            const newAssignment = {
+              id: data.data.id,
+              college: data.data.attributes.college.data.attributes.name,
+              selfStudies: data.data.attributes.self_studies.data.map(
+                (study) => study.attributes.name
+              ),
+            };
+
+            setAssignedMaterials([...assignedMaterials, newAssignment]);
           })(),
           {
             loading: "Assigning self-study materials...",
@@ -96,9 +90,82 @@ const AssignSelfStudy = () => {
 
   const handleEdit = (index) => {
     const material = assignedMaterials[index];
-    setSelectedSelfStudies(material.selfStudies);
-    setSelectedCollege(material.college);
+    const selectedSelfStudiesWithIds = selfStudiesOptions
+      .filter((chapter) => material.selfStudies.includes(chapter.name))
+      .map((chapter) => chapter.id);
+    setSelectedSelfStudies(selectedSelfStudiesWithIds);
+    const selectedCollegeOption = collegesOptions.find(
+      (sub) => sub.name === material.college
+    );
+    setSelectedCollege(selectedCollegeOption.id);
     setEditIndex(index);
+  };
+
+  const handleUpdate = async () => {
+    if (selectedSelfStudies.length > 0 && selectedCollege !== "") {
+      const payload = {
+        materialId: assignedMaterials[editIndex].id, // Include ID in payload
+        data: {
+          self_studies: selectedSelfStudies,
+          college: selectedCollege,
+        },
+      };
+
+      try {
+        await toast.promise(
+          (async () => {
+            const response = await fetch(`/api/assign-study-college`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to update assignment.");
+            }
+
+            const updatedAssignment = {
+              id: assignedMaterials[editIndex].id,
+              college: collegesOptions.find(
+                (college) => college.id === selectedCollege
+              ).name,
+              selfStudies: selectedSelfStudies.map(
+                (studyId) =>
+                  selfStudiesOptions.find((study) => study.id === studyId).name
+              ),
+            };
+
+            const updatedMaterials = [...assignedMaterials];
+            updatedMaterials[editIndex] = updatedAssignment;
+            setAssignedMaterials(updatedMaterials);
+            setEditIndex(null);
+            setSelectedSelfStudies([]);
+            setSelectedCollege("");
+          })(),
+          {
+            loading: "Updating assignment...",
+            success: "Assignment updated successfully.",
+            error: "Failed to update assignment. Please try again.",
+          },
+          {
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error updating data:", error);
+        toast.error("Error updating data. Please try again.");
+      }
+    } else {
+      toast.error(
+        "Please select at least one self-study material and a college."
+      );
+    }
   };
 
   const handleDelete = async (id) => {
@@ -215,7 +282,10 @@ const AssignSelfStudy = () => {
           placeholder="Select College"
         />
 
-        <button onClick={handleSubmit} className="addButton">
+        <button
+          onClick={editIndex !== null ? handleUpdate : handleSubmit}
+          className="addButton"
+        >
           {editIndex !== null ? "Update" : "Assign"}
         </button>
       </div>

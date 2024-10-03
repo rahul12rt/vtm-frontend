@@ -160,18 +160,19 @@ const ManageTopic = () => {
         }
 
         const newTopic = await response.json();
-        setTopics((prevTopics) => [
-          ...prevTopics,
-          {
-            id: newTopic.data.id,
-            subject: selectedSubject,
-            chapter:
-              chapters[selectedSubject]?.find(
-                (chap) => chap.id === selectedChapterId
-              )?.name || "",
-            topic: inputValue,
-          },
-        ]);
+        await fetchTopics();
+        // setTopics((prevTopics) => [
+        //   ...prevTopics,
+        //   {
+        //     id: newTopic.data.id,
+        //     subject: selectedSubject,
+        //     chapter:
+        //       chapters[selectedSubject]?.find(
+        //         (chap) => chap.id === selectedChapterId
+        //       )?.name || "",
+        //     topic: inputValue,
+        //   },
+        // ]);
         setInputValue("");
       })(),
       {
@@ -213,20 +214,21 @@ const ManageTopic = () => {
         }
 
         const updatedTopic = await response.json();
-        setTopics((prevTopics) =>
-          prevTopics.map((topic) =>
-            topic.id === editingTopic.id
-              ? {
-                  ...topic,
-                  topic: inputValue,
-                  chapter:
-                    chapters[selectedSubject]?.find(
-                      (chap) => chap.id === selectedChapterId
-                    )?.name || "",
-                }
-              : topic
-          )
-        );
+        await fetchTopics();
+        // setTopics((prevTopics) =>
+        //   prevTopics.map((topic) =>
+        //     topic.id === editingTopic.id
+        //       ? {
+        //           ...topic,
+        //           topic: inputValue,
+        //           chapter:
+        //             chapters[selectedSubject]?.find(
+        //               (chap) => chap.id === selectedChapterId
+        //             )?.name || "",
+        //         }
+        //       : topic
+        //   )
+        // );
         setInputValue("");
         setEditingTopic(null);
       })(),
@@ -253,17 +255,15 @@ const ManageTopic = () => {
       <div className="sectionHeader">Manage Topics</div>
       <div className="inputContainer">
         <div className="formGroup">
-          <label htmlFor="inputField">Information</label>
           <input
             type="text"
             id="inputField"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter some information"
+            placeholder="Enter topic"
           />
         </div>
         <div className="formGroup">
-          <label htmlFor="subjects">Subject</label>
           <select
             id="subjects"
             value={selectedSubject}
@@ -286,7 +286,6 @@ const ManageTopic = () => {
           </select>
         </div>
         <div className="formGroup">
-          <label htmlFor="chapters">Chapter</label>
           <select
             id="chapters"
             value={selectedChapterId}
@@ -305,11 +304,11 @@ const ManageTopic = () => {
           </select>
         </div>
         {editingTopic ? (
-          <button onClick={handleUpdateTopic} className="updateButton">
+          <button onClick={handleUpdateTopic} className="submitButton">
             Update Topic
           </button>
         ) : (
-          <button onClick={handleAddTopic} className="addButton">
+          <button onClick={handleAddTopic} className="submitButton">
             Add Topic
           </button>
         )}
@@ -333,13 +332,13 @@ const ManageTopic = () => {
                     onClick={() => handleEditTopic(topic)}
                     className="editButton"
                   >
-                    <FaEdit />
+                    <FaEdit /> Edit
                   </button>
                   <button
                     onClick={() => handleDeleteTopic(topic.id)}
                     className="deleteButton"
                   >
-                    <FaTrash />
+                    <FaTrash /> Delete
                   </button>
                 </div>
               </li>

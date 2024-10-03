@@ -45,6 +45,7 @@ const SelfStudy = () => {
           subjectId: chapter.attributes.subject.data.id,
           subjectName: chapter.attributes.subject.data.attributes.name,
         }));
+        console.log(chaptersData);
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
         // Extract unique subjects from chapters
@@ -99,6 +100,7 @@ const SelfStudy = () => {
             topicNames,
           };
         });
+        console.log(data);
         setMaterials(mappedMaterials);
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -211,10 +213,22 @@ const SelfStudy = () => {
   const handleEdit = (index) => {
     const material = materials[index];
     setName(material.name);
-    setSelectedSubject(material.subjectName);
-    setSelectedClass(material.className);
-    setSelectedChapters(material.chapterNames);
-    setSelectedTopics(material.topicNames);
+    const selectedSubjectOption = data.subjects.find(
+      (sub) => sub.name === material.subjectName
+    );
+    setSelectedSubject(selectedSubjectOption.id);
+    const selectedClassOption = data.classes.find(
+      (sub) => sub.name === material.className
+    );
+    setSelectedClass(selectedClassOption.id);
+    const selectedChaptersWithIds = data.chapters
+      .filter((chapter) => material.chapterNames.includes(chapter.name))
+      .map((chapter) => chapter.id);
+    setSelectedChapters(selectedChaptersWithIds);
+    const selectedTopicsWithIds = data.topics
+      .filter((topic) => material.topicNames.includes(topic.name))
+      .map((topic) => topic.id);
+    setSelectedTopics(selectedTopicsWithIds);
     setFile(material.file);
     setEditIndex(index);
   };
@@ -257,9 +271,85 @@ const SelfStudy = () => {
     await action;
   };
 
-  const handleFileChange = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0]);
+  const handleUpdateChange = async () => {
+    if (
+      name &&
+      selectedSubject &&
+      selectedClass &&
+      selectedChapters.length &&
+      selectedTopics.length
+    ) {
+      // Define the request payload to include studyId and updatedData
+      const payload = {
+        studyId: materials[editIndex].id, // Pass the ID of the study material being edited
+        updatedData: createPayload(),
+      };
+
+      const action = toast.promise(
+        (async () => {
+          const response = await fetch(`/api/self-study`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          console.log(response);
+
+          if (!response.status === 200) {
+            throw new Error("Failed to update study material.");
+          }
+
+          const result = await response.json();
+          console.log("Update Response:", result);
+
+          const updatedMaterial = {
+            id: payload.studyId,
+            name: result.data.attributes.name,
+            subjectName: result.data.attributes.subject.data.attributes.name,
+            className: result.data.attributes.class.data.attributes.name,
+            chapterNames: result.data.attributes.chapters.data.map(
+              (chapter) => chapter.attributes.name
+            ),
+            topicNames: result.data.attributes.topics.data.map(
+              (topic) => topic.attributes.name
+            ),
+          };
+
+          // Update the materials list with the newly updated material
+          setMaterials((prevMaterials) =>
+            prevMaterials.map((material, index) =>
+              index === editIndex ? updatedMaterial : material
+            )
+          );
+
+          // Reset form and exit edit mode
+          setName("");
+          setSelectedSubject("");
+          setSelectedClass("");
+          setSelectedChapters([]);
+          setSelectedTopics([]);
+          setFile(null);
+          setEditIndex(null);
+        })(),
+        {
+          loading: "Updating study material...",
+          success: "Study material updated successfully.",
+          error: "Failed to update study material.",
+        },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
+
+      await action;
+    } else {
+      toast.error("Please fill out all fields before updating.");
     }
   };
 
@@ -267,7 +357,6 @@ const SelfStudy = () => {
   const filteredChapters = data.chapters.filter(
     (chapter) => chapter.subjectId === Number(selectedSubject)
   );
-
   return (
     <div className="container">
       <Toaster position="top-right" reverseOrder={false} />
@@ -323,15 +412,18 @@ const SelfStudy = () => {
         </div>
 
         <div className="formGroup">
-          <input
+          {/* <input
             type="file"
             onChange={handleFileChange}
             className="file-input"
             accept=".pdf"
-          />
+          /> */}
         </div>
       </div>
-      <button onClick={handleSubmit} className="submitButton">
+      <button
+        onClick={editIndex !== null ? handleUpdateChange : handleSubmit}
+        className="submitButton"
+      >
         {editIndex !== null ? "Update Study Material" : "Create Study Material"}
       </button>
       {loading ? (

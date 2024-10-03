@@ -18,9 +18,6 @@ export async function GET(request) {
 
     const filters = queryParams.join("&");
 
-    console.log(queryParams);
-    console.log("Query Parameters:", filters, "------qp");
-
     const strapiEndpoint = `${strapiApiUrl}/api/create-tests?populate=*&${filters}`;
     const response = await fetch(`${strapiEndpoint}`, {
       headers: {

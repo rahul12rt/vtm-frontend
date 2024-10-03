@@ -157,6 +157,8 @@ const FacultyToCollege = () => {
           }))
         );
 
+        console.log(mappingData.data);
+
         setMappingOptions(
           mappingData.data.map((mapping) => ({
             id: mapping.id,
@@ -176,8 +178,11 @@ const FacultyToCollege = () => {
 
   const handleEditMapping = (index) => {
     const selectedMapping = mappingOptions[index];
-    console.log("Selected Mapping:", selectedMapping);
-    setSelectedFaculty(selectedMapping.id);
+    const selectedFacultyOption = facultyOptions.find(
+      (faculty) => faculty.name === selectedMapping.name
+    );
+    setSelectedFaculty(selectedFacultyOption.id);
+    console.log(selectedMapping);
     setSelectedColleges(selectedMapping.colleges.map((college) => college.id));
     setIsEditing(true);
     setEditIndex(index);

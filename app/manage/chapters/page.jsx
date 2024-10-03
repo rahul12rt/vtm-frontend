@@ -381,6 +381,7 @@ const Chapters = () => {
             itemsPerPage={itemsPerPage}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
           />
         </>
       )}

@@ -93,9 +93,15 @@ const AssignDPPToClass = () => {
 
   const handleEdit = (index) => {
     const assignment = assignedDPPs[index];
-    setSelectedDPPs(assignment.dppNames);
+    const selectedSelfStudiesWithIds = dpps
+      .filter((chapter) => assignment.dppNames.includes(chapter.name))
+      .map((chapter) => chapter.id);
+    setSelectedDPPs(selectedSelfStudiesWithIds);
+    const selectedCollegeOption = colleges.find(
+      (sub) => sub.name === assignment.college
+    );
     setSelectedClass(assignment.className);
-    setSelectedCollege(assignment.college);
+    setSelectedCollege(selectedCollegeOption.id);
     setEditIndex(index);
   };
 
@@ -140,6 +146,71 @@ const AssignDPPToClass = () => {
     );
   };
 
+  const handleUpdate = async () => {
+    if (selectedDPPs.length > 0 && selectedCollege && editIndex !== null) {
+      const assignmentToUpdate = assignedDPPs[editIndex];
+
+      const payload = {
+        materialId: assignmentToUpdate.id,
+        payload: {
+          data: {
+            creat_dpps: selectedDPPs.map((dpp) => dpp.id || dpp),
+            college: selectedCollege.id || selectedCollege,
+          },
+        },
+      };
+
+      toast.promise(
+        fetch(`/api/assign-dpp-college`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(
+                  data.error || "An error occurred while updating DPPs"
+                );
+              });
+            }
+            return response.json();
+          })
+          .then((responseData) => {
+            const updatedAssignment = {
+              id: responseData.data.id,
+              dppNames: responseData.data.attributes.creat_dpps.data.map(
+                (dpp) => dpp.attributes.name
+              ),
+              college:
+                responseData.data.attributes.college.data.attributes.name,
+            };
+
+            setAssignedDPPs((prevAssignments) => {
+              const newAssignments = [...prevAssignments];
+              newAssignments[editIndex] = updatedAssignment;
+              return newAssignments;
+            });
+
+            resetForm();
+          }),
+        {
+          loading: "Updating DPPs...",
+          success: <b>DPPs updated successfully!</b>,
+          error: <b>Failed to update DPPs. Please try again.</b>,
+        }
+      );
+    }
+  };
+  const resetForm = () => {
+    setSelectedDPPs([]);
+    setSelectedClass("");
+    setSelectedCollege("");
+    setEditIndex(null);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -163,18 +234,19 @@ const AssignDPPToClass = () => {
             const assignDppResults = await assignDppResponse.json();
 
             // Map DPPs and Classes
+
             const dppOptions = dppResults.data.map((dpp) => ({
-              id: dpp.id.toString(),
+              id: dpp.id,
               name: dpp.attributes.name,
             }));
             const classOptions = dppResults.data.map((dpp) => ({
-              id: dpp.attributes.class.data.id.toString(),
+              id: dpp.attributes.class.data.id,
               name: dpp.attributes.class.data.attributes.name,
             }));
 
             // Map Colleges
             const collegeOptions = collegeResults.data.map((college) => ({
-              id: college.id.toString(),
+              id: college.id,
               name: college.attributes.name,
             }));
 
@@ -182,7 +254,7 @@ const AssignDPPToClass = () => {
             const uniqueClassOptions = Array.from(
               new Map(classOptions.map((item) => [item.id, item])).values()
             );
-
+            console.log(assignDppResults);
             const mappedAssignments = assignDppResults.data.map(
               (assignment) => ({
                 id: assignment.id,
@@ -247,7 +319,10 @@ const AssignDPPToClass = () => {
               placeholder="Select College"
             />
 
-            <button onClick={handleSubmit} className="addButton">
+            <button
+              onClick={editIndex !== null ? handleUpdate : handleSubmit}
+              className="addButton"
+            >
               {editIndex !== null ? "Update" : "Assign"}
             </button>
           </div>

@@ -14,6 +14,8 @@ const FacultyToSubject = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
 
+  console.log(selectedFaculty);
+
   const handleFacultyChange = (event) => {
     setSelectedFaculty(event.target.value);
   };
@@ -177,7 +179,14 @@ const FacultyToSubject = () => {
   const handleEditSubject = (index) => {
     const selectedMapping = mappingOptions[index];
     console.log("Selected Mapping:", selectedMapping);
-    setSelectedFaculty(selectedMapping.id);
+    const selectedFacultyOption = facultyOptions.find(
+      (faculty) => faculty.name === selectedMapping.name
+    );
+
+    if (selectedFacultyOption) {
+      setSelectedFaculty(selectedFacultyOption.id);
+    }
+
     setSelectedSubjects(selectedMapping.subjects.map((subject) => subject.id));
     setIsEditing(true);
     setEditIndex(index);
@@ -213,7 +222,7 @@ const FacultyToSubject = () => {
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Error Data:", errorData);
-          throw new Error("Could not update. Please try again.");
+          // throw new Error("Could not update. Please try again.");
         }
 
         const data = await response.json();
@@ -252,6 +261,8 @@ const FacultyToSubject = () => {
 
     await action;
   };
+
+  console.log(facultyOptions);
 
   return (
     <div className="container">

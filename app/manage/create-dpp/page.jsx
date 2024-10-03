@@ -5,7 +5,7 @@ import SearchableSingleSelect from "../../_components/searchAbleDropDownv2";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
 
-const CreatDPP = () => {
+const CreateDpp = () => {
   const [name, setName] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
@@ -45,6 +45,7 @@ const CreatDPP = () => {
           subjectId: chapter.attributes.subject.data.id,
           subjectName: chapter.attributes.subject.data.attributes.name,
         }));
+        console.log(chaptersData);
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
         // Extract unique subjects from chapters
@@ -99,11 +100,12 @@ const CreatDPP = () => {
             topicNames,
           };
         });
+        console.log(data);
         setMaterials(mappedMaterials);
       } catch (error) {
         console.error("Failed to fetch data", error);
       } finally {
-        setLoading(false);
+        setLoading(false); // Set loading to false when fetching is done
       }
     };
 
@@ -139,92 +141,102 @@ const CreatDPP = () => {
     ) {
       const payload = createPayload();
 
-      toast
-        .promise(
-          fetch("/api/create-dpp", {
+      const action = toast.promise(
+        (async () => {
+          const response = await fetch("/api/create-dpp", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
-          })
-            .then((response) => {
-              if (!response.ok) {
-                throw new Error(`Error: ${response.statusText}`);
-              }
-              return response.json();
-            })
-            .then((result) => {
-              console.log("Server Response:", result);
+          });
 
-              const materialData = result.data;
-              const newMaterial = {
-                id: materialData.id,
-                name: materialData.attributes.name,
-                subjectName:
-                  materialData.attributes.subject.data.attributes.name,
-                className: materialData.attributes.class.data.attributes.name,
-                chapterNames: materialData.attributes.chapters.data.map(
-                  (chapter) => chapter.attributes.name
-                ),
-                topicNames: materialData.attributes.topics.data.map(
-                  (topic) => topic.attributes.name
-                ),
-              };
-
-              if (editIndex === null) {
-                setMaterials((prevMaterials) => [
-                  ...prevMaterials,
-                  newMaterial,
-                ]);
-              } else {
-                setMaterials((prevMaterials) =>
-                  prevMaterials.map((material, index) =>
-                    index === editIndex ? newMaterial : material
-                  )
-                );
-              }
-
-              // Reset the form
-              setName("");
-              setSelectedSubject("");
-              setSelectedClass("");
-              setSelectedChapters([]);
-              setSelectedTopics([]);
-              setFile(null);
-            }),
-          {
-            loading: "Submitting DPP material...",
-            success: "DPP material added successfully.",
-            error: "Failed to submit DPP material. Please try again.",
-          },
-          {
-            style: {
-              borderRadius: "10px",
-              background: "#333",
-              color: "#fff",
-            },
+          if (!response.ok) {
+            throw new Error(`Error: ${response.statusText}`);
           }
-        )
-        .catch((error) => {
-          console.error("Failed to submit data", error);
-        });
+
+          const result = await response.json();
+          console.log("Server Response:", result);
+
+          const materialData = result.data;
+          const newMaterial = {
+            id: materialData.id,
+            name: materialData.attributes.name,
+            subjectName: materialData.attributes.subject.data.attributes.name,
+            className: materialData.attributes.class.data.attributes.name,
+            chapterNames: materialData.attributes.chapters.data.map(
+              (chapter) => chapter.attributes.name
+            ),
+            topicNames: materialData.attributes.topics.data.map(
+              (topic) => topic.attributes.name
+            ),
+          };
+
+          if (editIndex === null) {
+            setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
+          } else {
+            setMaterials((prevMaterials) =>
+              prevMaterials.map((material, index) =>
+                index === editIndex ? newMaterial : material
+              )
+            );
+          }
+
+          // Reset the form
+          setName("");
+          setSelectedSubject("");
+          setSelectedClass("");
+          setSelectedChapters([]);
+          setSelectedTopics([]);
+          setFile(null);
+        })(),
+        {
+          loading: "Submitting DPP...",
+          success: "DPP added successfully.",
+          error: "Failed to add DPP. Please try again.",
+        },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
+
+      await action;
+    } else {
+      toast.error("Please fill out all fields before submitting.");
     }
   };
 
   const handleEdit = (index) => {
     const material = materials[index];
     setName(material.name);
-    setSelectedSubject(material.subjectName);
-    setSelectedClass(material.className);
-    setSelectedChapters(material.chapterNames);
-    setSelectedTopics(material.topicNames);
+    const selectedSubjectOption = data.subjects.find(
+      (sub) => sub.name === material.subjectName
+    );
+    setSelectedSubject(selectedSubjectOption.id);
+    const selectedClassOption = data.classes.find(
+      (sub) => sub.name === material.className
+    );
+    setSelectedClass(selectedClassOption.id);
+    const selectedChaptersWithIds = data.chapters
+      .filter((chapter) => material.chapterNames.includes(chapter.name))
+      .map((chapter) => chapter.id);
+    setSelectedChapters(selectedChaptersWithIds);
+    const selectedTopicsWithIds = data.topics
+      .filter((topic) => material.topicNames.includes(topic.name))
+      .map((topic) => topic.id);
+    setSelectedTopics(selectedTopicsWithIds);
     setFile(material.file);
     setEditIndex(index);
   };
 
   const handleDelete = async (id) => {
-    toast.promise(
+    console.log(id);
+
+    const action = toast.promise(
       (async () => {
         const response = await fetch("/api/create-dpp", {
           method: "DELETE",
@@ -235,21 +247,17 @@ const CreatDPP = () => {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete DPP material.");
+          throw new Error("Failed to delete DPP.");
         }
 
-        // Update state to remove the deleted item
         setMaterials((prevTopics) =>
           prevTopics.filter((topic) => topic.id !== id)
         );
-
-        return response.json(); // Return the response if needed for further processing
       })(),
       {
-        loading: "Deleting DPP material...",
-        success: <b>DPP material deleted successfully!</b>,
-        error: <b>Failed to delete DPP material. Please try again.</b>,
+        loading: "Deleting DPP...",
+        success: "DPP deleted successfully.",
+        error: "Failed to delete DPP.",
       },
       {
         style: {
@@ -259,11 +267,89 @@ const CreatDPP = () => {
         },
       }
     );
+
+    await action;
   };
 
-  const handleFileChange = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0]);
+  const handleUpdateChange = async () => {
+    if (
+      name &&
+      selectedSubject &&
+      selectedClass &&
+      selectedChapters.length &&
+      selectedTopics.length
+    ) {
+      // Define the request payload to include studyId and updatedData
+      const payload = {
+        studyId: materials[editIndex].id, // Pass the ID of the study material being edited
+        updatedData: createPayload(),
+      };
+
+      const action = toast.promise(
+        (async () => {
+          const response = await fetch(`/api/create-dpp`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          console.log(response);
+
+          if (!response.status === 200) {
+            throw new Error("Failed to update DPP.");
+          }
+
+          const result = await response.json();
+          console.log("Update Response:", result);
+
+          const updatedMaterial = {
+            id: payload.studyId,
+            name: result.data.attributes.name,
+            subjectName: result.data.attributes.subject.data.attributes.name,
+            className: result.data.attributes.class.data.attributes.name,
+            chapterNames: result.data.attributes.chapters.data.map(
+              (chapter) => chapter.attributes.name
+            ),
+            topicNames: result.data.attributes.topics.data.map(
+              (topic) => topic.attributes.name
+            ),
+          };
+
+          // Update the materials list with the newly updated material
+          setMaterials((prevMaterials) =>
+            prevMaterials.map((material, index) =>
+              index === editIndex ? updatedMaterial : material
+            )
+          );
+
+          // Reset form and exit edit mode
+          setName("");
+          setSelectedSubject("");
+          setSelectedClass("");
+          setSelectedChapters([]);
+          setSelectedTopics([]);
+          setFile(null);
+          setEditIndex(null);
+        })(),
+        {
+          loading: "Updating DPP...",
+          success: "DPP updated successfully.",
+          error: "Failed to update DPP.",
+        },
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
+
+      await action;
+    } else {
+      toast.error("Please fill out all fields before updating.");
     }
   };
 
@@ -271,7 +357,6 @@ const CreatDPP = () => {
   const filteredChapters = data.chapters.filter(
     (chapter) => chapter.subjectId === Number(selectedSubject)
   );
-
   return (
     <div className="container">
       <Toaster position="top-right" reverseOrder={false} />
@@ -282,7 +367,7 @@ const CreatDPP = () => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Enter DPP material name"
+            placeholder="Enter DPP name"
             className="text-input"
           />
         </div>
@@ -327,16 +412,19 @@ const CreatDPP = () => {
         </div>
 
         <div className="formGroup">
-          <input
+          {/* <input
             type="file"
             onChange={handleFileChange}
             className="file-input"
             accept=".pdf"
-          />
+          /> */}
         </div>
       </div>
-      <button onClick={handleSubmit} className="submitButton">
-        {editIndex !== null ? "Update DPP Material" : "Create DPP Material"}
+      <button
+        onClick={editIndex !== null ? handleUpdateChange : handleSubmit}
+        className="submitButton"
+      >
+        {editIndex !== null ? "Update DPP" : "Create DPP"}
       </button>
       {loading ? (
         <div className="loader" style={{ marginTop: 30 }}>
@@ -383,4 +471,4 @@ const CreatDPP = () => {
   );
 };
 
-export default CreatDPP;
+export default CreateDpp;

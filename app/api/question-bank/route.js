@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 // GET request handler
 export async function GET() {
   try {
@@ -64,6 +65,45 @@ export async function POST(request) {
   }
 }
 
+// PUT request handler
+export async function PUT(request) {
+  try {
+    const strapiApiUrl = process.env.STRAPI_API_URL;
+    if (!strapiApiUrl) {
+      return NextResponse.json(
+        { error: "STRAPI_API_URL is not defined in environment variables" },
+        { status: 500 }
+      );
+    }
+
+    const { qbId, payload } = await request.json();
+    if (!qbId) {
+      return NextResponse.json(
+        { error: "Qualification ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const strapiEndpoint = `${strapiApiUrl}/api/question-banks/${qbId}?populate=*`;
+    const response = await fetch(strapiEndpoint, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error updating Qualification: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 // DELETE request handler
 export async function DELETE(request) {
   try {
@@ -76,7 +116,6 @@ export async function DELETE(request) {
     }
 
     const { qbId } = await request.json();
-    console.log(qbId, "----");
     if (!qbId) {
       return NextResponse.json(
         { error: "Qualification ID is required" },

@@ -44,7 +44,7 @@ export async function POST(request) {
 
     const payload = await request.json();
 
-    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges?populate[self_study]=*&populate[college]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges?populate[self_studies]=*&populate[college]=*`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
       headers: {
@@ -80,7 +80,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges/${materialId}?populate[self_study]=*&populate[college]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges/${materialId}?populate[self_studies]=*&populate[college]=*`;
     http: console.log(strapiEndpoint);
     const response = await fetch(strapiEndpoint, {
       method: "DELETE",
@@ -94,6 +94,42 @@ export async function DELETE(request) {
     }
 
     return NextResponse.json({ message: "Deleted successfully" });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// PUT request handler
+export async function PUT(request) {
+  try {
+    const strapiApiUrl = process.env.STRAPI_API_URL;
+    if (!strapiApiUrl) {
+      return NextResponse.json(
+        { error: "STRAPI_API_URL is not defined in environment variables" },
+        { status: 500 }
+      );
+    }
+
+    const { materialId, data } = await request.json();
+    if (!materialId) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges/${materialId}?populate[self_studies]=*&populate[college]=*`;
+    const response = await fetch(strapiEndpoint, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ data }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error updating data: ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    return NextResponse.json(responseData);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

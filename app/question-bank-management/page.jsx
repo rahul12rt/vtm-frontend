@@ -36,6 +36,8 @@ const QuestionBank = () => {
     years: [],
   });
 
+  console.log(questions);
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -147,19 +149,44 @@ const QuestionBank = () => {
     fetchData();
   }, []);
 
-  const handleEdit = (index) => {
-    const material = materials[index];
+  const handleEdit = (question) => {
+    if (!question) return;
+    const questionEdit = questions.find((q) => q.id === question);
+    console.log(questionEdit, data);
+    const selectedClassOption = data.classes.find(
+      (cls) => cls.name === questionEdit.class
+    );
+
+    const selectedAcademicYearOption = data.years.find(
+      (cls) => cls.year === questionEdit.academicYear
+    );
+
+    console.log(selectedAcademicYearOption);
+
+    const selectedSubjectOption = data.subjects.find(
+      (sub) => sub.name === questionEdit.subject
+    );
+    console.log(questionEdit);
+    const selectedChaptersWithIds = data.chapters
+      .filter((chapter) => questionEdit.chapter.includes(chapter.name))
+      .map((chapter) => chapter.id);
+
+    const selectedTopicsWithIds = data.topics
+      .filter((chapter) => questionEdit.topic.includes(chapter.name))
+      .map((chapter) => chapter.id);
+    const correctAnswerIndex = parseInt(questionEdit.correctAnswer);
     setFormData({
-      selectedClass: material.className,
-      selectedSubject: material.subjectName,
-      selectedChapters: material.chapterNames,
-      selectedTopics: material.topicNames,
-      selectedYear: material.year,
-      question: material.question,
-      answers: material.answers,
-      correctAnswer: material.correctAnswer, // Set the correct answer value
+      selectedClass: selectedClassOption.id || "", // Default to an empty string
+      selectedSubject: selectedSubjectOption.id || "",
+      selectedChapters: selectedChaptersWithIds || [], // Set defaults as empty
+      selectedTopics: selectedTopicsWithIds || [], // Set defaults as empty
+      question: questionEdit.question || "", // Ensure this exists
+      answers: questionEdit.answers || ["", "", "", ""], // Ensure answers are set
+      selectedYear: selectedAcademicYearOption.id,
+      correctAnswerIndex: correctAnswerIndex,
     });
-    setEditIndex(index);
+
+    setEditIndex(question);
   };
 
   const handleInputChange = (field, value) => {
@@ -248,12 +275,13 @@ const QuestionBank = () => {
             ],
             correctAnswer: result.data.attributes.correct_answer,
             subject: result.data.attributes.subject.data.attributes.name,
-            chapter: result.data.attributes.chapters.data
-              .map((chap) => chap.attributes.name)
-              .join(", "),
-            topic: result.data.attributes.topics.data
-              .map((top) => top.attributes.name)
-              .join(", "),
+            chapter: result.data.attributes.chapters.data.map(
+              (chap) => chap.attributes.name
+            ),
+
+            topic: result.data.attributes.topics.data.map(
+              (top) => top.attributes.name
+            ),
             class: result.data.attributes.class.data.attributes.name,
             academicYear:
               result.data.attributes.academic_year.data.attributes.year,
@@ -288,6 +316,7 @@ const QuestionBank = () => {
       }
     );
   };
+  console.log(formData);
 
   const handleDelete = async (id) => {
     toast.promise(
@@ -318,6 +347,110 @@ const QuestionBank = () => {
         loading: "Deleting question...",
         success: <b>Question deleted successfully!</b>,
         error: <b>Failed to delete question. Please try again.</b>,
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
+  };
+  const handleUpdate = async () => {
+    if (!editIndex) {
+      toast.error("Please select a question to update");
+      return;
+    }
+
+    const payload = {
+      data: {
+        subject: formData.selectedSubject,
+        chapters: formData.selectedChapters,
+        topics: formData.selectedTopics,
+        class: formData.selectedClass,
+        academic_year: formData.selectedYear,
+        question: formData.question,
+        answer_1: formData.answers[0],
+        answer_2: formData.answers[1],
+        answer_3: formData.answers[2],
+        answer_4: formData.answers[3],
+        correct_answer:
+          formData.correctAnswerIndex !== null
+            ? formData.correctAnswerIndex.toString()
+            : null,
+      },
+    };
+
+    toast.promise(
+      fetch("/api/question-bank", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          qbId: editIndex,
+          payload: payload,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((data) => {
+              throw new Error(
+                data.error || "Failed to update question. Please try again."
+              );
+            });
+          }
+          return response.json();
+        })
+        .then((result) => {
+          // Update the questions state
+          setQuestions((prevQuestions) =>
+            prevQuestions.map((question) =>
+              question.id === editIndex
+                ? {
+                    id: result.data.id,
+                    question: result.data.attributes.question,
+                    answers: [
+                      result.data.attributes.answer_1,
+                      result.data.attributes.answer_2,
+                      result.data.attributes.answer_3,
+                      result.data.attributes.answer_4,
+                    ],
+                    correctAnswer: result.data.attributes.correct_answer,
+                    subject:
+                      result.data.attributes.subject.data.attributes.name,
+                    chapter: result.data.attributes.chapters.data.map(
+                      (chap) => chap.attributes.name
+                    ),
+                    topic: result.data.attributes.topics.data.map(
+                      (top) => top.attributes.name
+                    ),
+                    class: result.data.attributes.class.data.attributes.name,
+                    academicYear:
+                      result.data.attributes.academic_year.data.attributes.year,
+                  }
+                : question
+            )
+          );
+
+          // Reset form and editIndex
+          setFormData({
+            selectedClass: "",
+            selectedSubject: "",
+            selectedChapters: [],
+            selectedTopics: [],
+            selectedYear: "",
+            question: "",
+            answers: ["", "", "", ""],
+            correctAnswerIndex: null,
+          });
+          setEditIndex(null);
+        }),
+      {
+        loading: "Updating question...",
+        success: <b>Question updated successfully!</b>,
+        error: <b>Failed to update question. Please try again.</b>,
       },
       {
         style: {
@@ -413,8 +546,11 @@ const QuestionBank = () => {
           </div>
         ))}
       </div>
-      <button className="addButton" onClick={handleAdd}>
-        Add
+      <button
+        className="addButton"
+        onClick={editIndex ? handleUpdate : handleAdd}
+      >
+        {editIndex ? "Update" : "Add"}
       </button>
 
       {loading ? (
@@ -458,7 +594,7 @@ const QuestionBank = () => {
                 </div>
                 <div className="buttonContainer">
                   <button
-                    onClick={() => handleEditQuestion(question.id)}
+                    onClick={() => handleEdit(question.id)}
                     className="editButton"
                   >
                     <FaEdit /> Edit
