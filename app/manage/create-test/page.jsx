@@ -425,7 +425,7 @@ const CreateTest = () => {
             {selectedQuestions.map((qId, id) => {
               const question = questions.find((q) => q.id === qId);
               return (
-                <div className="questionItem">
+                <div className="questionItem" key={id}>
                   <div className="questionList">
                     {/* <strong>
                       Subject: {question.subject} | Chapter: {question.chapter}{" "}
