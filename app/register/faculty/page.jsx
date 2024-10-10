@@ -84,10 +84,11 @@ const Faculty = () => {
   }, []); // Fetch qualifications and subjects only on component mount
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
+    // Validation logic for faculty registration
     if (!formData.name) newErrors.name = "Name is required";
     if (!formData.username) newErrors.username = "Username is required";
     if (!formData.email) newErrors.email = "Email is required";
@@ -99,7 +100,6 @@ const Faculty = () => {
     else if (formData.contactNumber.length !== 10)
       newErrors.contactNumber = "Contact Number must be 10 digits";
     if (!formData.subjects) newErrors.subjects = "Subject is required";
-    // if (!formData.cv) newErrors.cv = "CV is required";
     if (!formData.qualification)
       newErrors.qualification = "Qualification is required";
     if (!formData.aadhar) newErrors.aadhar = "Aadhar Number is required";
@@ -112,56 +112,108 @@ const Faculty = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-    } else {
-      setErrors({});
+      return; // Exit if there are validation errors
+    }
 
-      const payload = {
-        data: {
-          name: formData.name,
-          user_name: formData.username,
-          email: formData.email,
-          password: formData.password,
-          contact_number: formData.contactNumber,
-          subject: parseInt(formData.subjects),
-          qualification: parseInt(formData.qualification),
-          aadhar_number: formData.aadhar,
-          pan_number: formData.pan,
-          bank_account: formData.bankAccount,
-          ifsc_code: formData.ifsc,
+    setErrors({}); // Clear previous errors
+
+    // Step 1: Prepare the payload for user registration
+    const registerPayload = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+    };
+
+    // Use toast.promise to handle the API request for user registration
+    toast.promise(
+      fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      };
-      toast.promise(
-        fetch("/api/register/faculty", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }).then((response) => {
+        body: JSON.stringify(registerPayload),
+      })
+        .then((response) => {
           if (!response.ok) {
             return response.json().then((data) => {
-              throw new Error(data.error || "An error occurred");
+              throw new Error(
+                data.error || "An error occurred during user registration"
+              );
             });
           }
           return response.json();
+        })
+        .then(async (data) => {
+          // Step 2: If user registration is successful, proceed to register the faculty
+          const facultyPayload = {
+            data: {
+              name: formData.name,
+              user_name: formData.username,
+              email: formData.email,
+              password: formData.password, // If needed
+              contact_number: formData.contactNumber,
+              subject: parseInt(formData.subjects), // Ensure subject is a number
+              qualification: parseInt(formData.qualification), // Ensure qualification is a number
+              aadhar_number: formData.aadhar,
+              pan_number: formData.pan,
+              bank_account: formData.bankAccount,
+              ifsc_code: formData.ifsc,
+            },
+          };
+
+          // Call the faculty registration API
+          const facultyResponse = await fetch("/api/register/faculty", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(facultyPayload),
+          });
+
+          if (!facultyResponse.ok) {
+            const errorData = await facultyResponse.json();
+            throw new Error(
+              errorData.error || "An error occurred during faculty registration"
+            );
+          }
+
+          // If faculty registration is successful
+          // Step 3: Change the role of the user using the ChangeRole API
+          const changeRoleResponse = await fetch("/api/change-role", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: data.user.id,
+              roleId: 5, // Assuming 3 is the role ID for students
+            }),
+          });
+
+          if (!changeRoleResponse.ok) {
+            const roleErrorData = await changeRoleResponse.json();
+            throw new Error(
+              roleErrorData.error || "An error occurred while updating the role"
+            );
+          }
+          setFormData(initialFormState); // Reset form data
+          return <b>Faculty registered successfully!</b>;
         }),
-        {
-          loading: "Saving...",
-          success: async () => {
-            setFormData(initialFormState);
-            return <b>Faculty registered successfully!</b>;
-          },
-          error: <b>Could not save. Please try again.</b>,
+      {
+        loading: "Registering...",
+        success: async () => {
+          return <b>Faculty registered successfully!</b>;
         },
-        {
-          style: {
-            borderRadius: "10px",
-            background: "#333",
-            color: "#fff",
-          },
-        }
-      );
-    }
+        error: <b>Registration failed. UserName or Email already taken</b>,
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
   };
 
   // Validate email

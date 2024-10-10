@@ -66,10 +66,11 @@ const College = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
+    // Validation logic
     if (!formData.name) newErrors.name = "Name is required";
     if (!formData.address) newErrors.address = "Address is required";
     if (!formData.city) newErrors.city = "City is required";
@@ -86,57 +87,107 @@ const College = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-    } else {
-      setErrors({});
+      return;
+    }
 
-      // Creating the payload
-      const payload = {
-        data: {
-          name: formData.name,
-          address: formData.address,
-          pincode: parseInt(formData.pincode, 10),
-          contact_person: formData.contactPerson,
-          contact_number: formData.contactNumber1,
-          secoundary_number: formData.contactNumber2,
-          email: formData.email,
-          user_name: formData.username,
-          password: formData.password,
-          city: Number(formData.city),
+    setErrors({});
+
+    // Step 1: Prepare the payload for the user registration API
+    const registerPayload = {
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+    };
+
+    // Use toast.promise to handle the API request for user registration
+    toast.promise(
+      fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      };
-
-      toast.promise(
-        fetch("/api/register/college", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }).then((response) => {
+        body: JSON.stringify(registerPayload),
+      })
+        .then((response) => {
           if (!response.ok) {
             return response.json().then((data) => {
-              throw new Error(data.error || "An error occurred");
+              throw new Error(
+                data.error || "An error occurred during user registration"
+              );
             });
           }
           return response.json();
+        })
+        .then(async (data) => {
+          // Step 2: If user registration is successful, proceed to register the college
+          const payload = {
+            data: {
+              name: formData.name,
+              address: formData.address,
+              pincode: parseInt(formData.pincode, 10),
+              contact_person: formData.contactPerson,
+              contact_number: formData.contactNumber1,
+              secoundary_number: formData.contactNumber2 || "", // Default to empty if not provided
+              email: formData.email,
+              user_name: formData.username,
+              password: formData.password,
+              city: Number(formData.city), // Ensure city is a number
+            },
+          };
+
+          // Call the college registration API
+          const collegeResponse = await fetch("/api/register/college", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!collegeResponse.ok) {
+            const errorData = await collegeResponse.json();
+            throw new Error(
+              errorData.error || "An error occurred during college registration"
+            );
+          }
+
+          // If college registration is successful
+          // Step 3: Change the role of the user using the ChangeRole API
+          const changeRoleResponse = await fetch("/api/change-role", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: data.user.id,
+              roleId: 4, // Assuming 3 is the role ID for students
+            }),
+          });
+
+          if (!changeRoleResponse.ok) {
+            const roleErrorData = await changeRoleResponse.json();
+            throw new Error(
+              roleErrorData.error || "An error occurred while updating the role"
+            );
+          }
+          setFormData(initialFormState); // Reset form data
+          return <b>College registered successfully!</b>;
         }),
-        {
-          loading: "Saving...",
-          success: async () => {
-            setFormData(initialFormState);
-            return <b>College registered successfully!</b>;
-          },
-          error: <b>Could not save. Please try again.</b>,
+      {
+        loading: "Registering...",
+        success: async () => {
+          return <b>User and College registered successfully!</b>;
         },
-        {
-          style: {
-            borderRadius: "10px",
-            background: "#333",
-            color: "#fff",
-          },
-        }
-      );
-    }
+        error: <b>Registration failed. UserName or Email already taken</b>,
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
   };
 
   return (

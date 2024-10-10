@@ -17,6 +17,8 @@ const CreateTest = () => {
   const [showTestInputs, setShowTestInputs] = useState(false); // State to track whether to show inputs
   const [testTitle, setTestTitle] = useState(""); // State to track test title
   const [testDuration, setTestDuration] = useState(""); // State to track test duration
+  const [testDate, setTestDate] = useState("");
+  const [examName, setExamName] = useState("");
   const [data, setData] = useState({
     subjects: [],
     chapters: [],
@@ -251,6 +253,8 @@ const CreateTest = () => {
           topics: filters.topic,
           class: Number(filters.class),
           academic_year: Number(filters.academicYear),
+          date: testDate,
+          exam_name: examName,
         },
       };
 
@@ -278,6 +282,8 @@ const CreateTest = () => {
             setSelectedQuestions([]);
             setTestTitle("");
             setTestDuration("");
+            setTestDate("");
+            setExamName("");
           }),
         {
           loading: "Creating test...",
@@ -394,6 +400,7 @@ const CreateTest = () => {
                       <label>Test Title:</label>
                       <input
                         type="text"
+                        placeholder="Physics Kinematics & Vector"
                         value={testTitle}
                         onChange={(e) => setTestTitle(e.target.value)}
                       />
@@ -404,9 +411,37 @@ const CreateTest = () => {
                   </div>
                   <div className="inputContainer">
                     <div className="formGroup">
+                      <label>Exam Name:</label>
+                      <input
+                        type="text"
+                        value={examName}
+                        onChange={(e) => setExamName(e.target.value)}
+                        placeholder="JEE / NEET"
+                      />
+                      {errors.examName && (
+                        <div className="errorText">{errors.examName}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="inputContainer">
+                    <div className="formGroup">
+                      <label>Date:</label>
+                      <input
+                        type="date"
+                        value={testDate}
+                        onChange={(e) => setTestDate(e.target.value)}
+                      />
+                      {errors.date && (
+                        <div className="errorText">{errors.date}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="inputContainer">
+                    <div className="formGroup">
                       <label>Test Duration (in minutes):</label>
                       <input
                         type="text"
+                        placeholder="20"
                         value={testDuration}
                         onChange={(e) => setTestDuration(e.target.value)}
                       />
@@ -445,10 +480,12 @@ const CreateTest = () => {
                         <div
                           key={index}
                           className={`answer ${
-                            question.correctOption == index ? "highlight" : ""
+                            question.correctOption == `answer_${index + 1}`
+                              ? "highlight"
+                              : ""
                           }`}
                         >
-                          {console.log(question.correctOption)}
+                          {console.log(question.correctOption, index)}
                           {index + 1}. {answer}
                         </div>
                       ))}

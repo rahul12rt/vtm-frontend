@@ -1,0 +1,155 @@
+.tabList {
+  background-color: #f8f9fa; /* Background for tabs */
+  border-radius: 5px 0 0 5px; /* Rounded corners */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e6ea;
+}
+
+.tab {
+  padding: 15px;
+  cursor: pointer;
+  text-align: start;
+  transition: background-color 0.3s, color 0.3s;
+  font-size: 15px;
+}
+
+.tab:hover {
+  background-color: #e2e6ea; /* Light hover effect */
+}
+
+.selectedTab {
+  background-color: #007bff; /* Selected tab background */
+  color: white; /* Selected tab text color */
+  font-weight: bold; /* Highlight selected tab */
+}
+
+.instruction {
+  padding: 20px;
+  flex: 1; /* Takes up the rest of the space */
+}
+
+.instruction h3 {
+  margin: 0;
+}
+
+.proctoringInstructions {
+  border: 2px solid #007bff; /* Border color */
+  padding: 15px;
+  border-radius: 5px; /* Rounded corners */
+  background-color: #ffffff; /* White background for instructions */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.warning {
+  color: #007bff;
+  font-weight: bold;
+  border: 1px solid #007bff;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.info,
+.li,
+.infoData {
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.checkItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #e2e6ea;
+  width: fit-content;
+  padding: 40px 50px;
+  font-size: 14px;
+}
+.checkItem span {
+  display: inline;
+}
+
+.icon {
+  margin-bottom: 8px;
+  font-size: 40px;
+}
+
+.greenDot {
+  color: #66bb6a; /* Green color for dots */
+  margin-right: 10px; /* Space between dot and text */
+  font-size: 10px; /* Adjust the size of the green dot */
+}
+.infoData {
+  background-color: #e2e6ea;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 20px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+/* Style for active tabs */
+.activeTab {
+  border-bottom: 3px solid #007bff; /* Light-medium green underline for active tabs */
+  font-weight: bold;
+  color: #007bff;
+}
+
+.error {
+  color: red;
+  font-weight: 600;
+}
+.success {
+  color: #66bb6a;
+}
+
+.checkContainer {
+  display: flex;
+  gap: 10px;
+  align-items: self-start;
+}
+
+.disclaimer {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  margin-left: 8px;
+}
+
+@media only screen and (max-width: 768px) {
+  .checkContainer {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .checkItem {
+    margin: 0;
+  }
+  .disclaimer,
+  .tab {
+    font-size: 12px;
+  }
+  .instruction {
+    padding: 0;
+  }
+  .instruction h3 {
+    font-size: 16px;
+  }
+  .warning,
+  .instruction li,
+  .info {
+    font-size: 14px;
+  }
+}

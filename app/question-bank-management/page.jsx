@@ -174,7 +174,10 @@ const QuestionBank = () => {
     const selectedTopicsWithIds = data.topics
       .filter((chapter) => questionEdit.topic.includes(chapter.name))
       .map((chapter) => chapter.id);
-    const correctAnswerIndex = parseInt(questionEdit.correctAnswer);
+    console.log(questionEdit.correctAnswer);
+    const answerIndex = questionEdit.correctAnswer.split("_")[1];
+    console.log(answerIndex);
+    const correctAnswerIndex = parseInt(answerIndex - 1);
     setFormData({
       selectedClass: selectedClassOption.id || "", // Default to an empty string
       selectedSubject: selectedSubjectOption.id || "",
@@ -239,7 +242,7 @@ const QuestionBank = () => {
         answer_4: formData.answers[3],
         correct_answer:
           formData.correctAnswerIndex !== null
-            ? formData.correctAnswerIndex.toString() // Convert index to string
+            ? `answer_${formData.correctAnswerIndex + 1}`
             : null,
       },
     };
@@ -316,7 +319,6 @@ const QuestionBank = () => {
       }
     );
   };
-  console.log(formData);
 
   const handleDelete = async (id) => {
     toast.promise(
@@ -377,10 +379,12 @@ const QuestionBank = () => {
         answer_4: formData.answers[3],
         correct_answer:
           formData.correctAnswerIndex !== null
-            ? formData.correctAnswerIndex.toString()
+            ? `answer_${formData.correctAnswerIndex + 1}`
             : null,
       },
     };
+
+    console.log(payload, "----");
 
     toast.promise(
       fetch("/api/question-bank", {
@@ -582,10 +586,11 @@ const QuestionBank = () => {
                         <div
                           key={index}
                           className={`answer ${
-                            question.correctAnswer == index ? "highlight" : ""
+                            question.correctAnswer == `answer_${index + 1}`
+                              ? "highlight"
+                              : ""
                           }`}
                         >
-                          {console.log(question.correctAnswer)}
                           {index + 1}. {answer}
                         </div>
                       ))}

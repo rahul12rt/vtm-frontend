@@ -21,6 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/register/student/page.jsx", "app/register/faculty/page.jsx", "app/register/college/page.jsx", "app/login/page.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/register/student/page.jsx", "app/register/faculty/page.jsx", "app/register/college/page.jsx", "app/login/page.jsx", "app/test-list/page.jsx"],
   "exclude": ["node_modules"]
 }

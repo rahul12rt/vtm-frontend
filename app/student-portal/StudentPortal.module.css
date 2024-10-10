@@ -1,0 +1,84 @@
+.studentCards {
+  width: 100%;
+}
+
+.studentCard {
+  background-color: #fff;
+  /* border: 1px solid #e0e0e0;
+  border-radius: 8px; */
+  /* padding: 15px; */
+  /* transition: box-shadow 0.3s; */
+}
+
+/* .studentCard:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+} */
+
+.studentName {
+  font-size: 1.5rem;
+  color: #007bff;
+}
+
+.studentInfo {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0 0;
+  color: #555;
+}
+
+.studentInfo li {
+  margin-bottom: 5px;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #007bff;
+}
+
+.error {
+  text-align: center;
+  font-size: 1.5rem;
+  color: red;
+}
+
+.studentTableContainer {
+  overflow-x: auto; /* For horizontal scrolling if the table overflows */
+}
+
+.studentTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.studentTable th,
+.studentTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.studentTable th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+.studentTable td button.submitButton {
+  padding: 6px 12px;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.studentTable td button.submitButton:hover {
+  background-color: #0056b3;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
