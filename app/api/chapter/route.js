@@ -11,7 +11,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate=subject`;
+    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate=subject&populate=class`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export async function POST(request) {
 
     const payload = await request.json();
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters`;
+    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate=subject&populate=class`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
       headers: {
@@ -113,15 +113,18 @@ export async function PUT(request) {
       );
     }
 
-    const { chapterId, name, subject } = await request.json();
+    // Destructuring request body to get chapterId, name, className, and subject
+    const { chapterId, name, className, subject } = await request.json();
 
-    if (!chapterId || !name) {
+    // Validation for required fields
+    if (!chapterId || !name || !className) {
       return NextResponse.json(
-        { error: "Chapter ID and name are required" },
+        { error: "Chapter ID, name, and class are required" },
         { status: 400 }
       );
     }
 
+    // Strapi API endpoint for updating chapter
     const strapiEndpoint = `${strapiApiUrl}/api/chapters/${chapterId}`;
     const response = await fetch(strapiEndpoint, {
       method: "PUT",
@@ -129,17 +132,20 @@ export async function PUT(request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        data: { name, subject }, // Adjust the payload to match Strapi's expected format
+        data: { name, subject, class: className }, // Passing className as class
       }),
     });
 
+    // Check if the response from Strapi is successful
     if (!response.ok) {
       throw new Error(`Error updating chapter: ${response.statusText}`);
     }
 
+    // Returning the successful response
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
+    // Error handling for any failure in the process
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

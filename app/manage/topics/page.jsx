@@ -33,6 +33,7 @@ const ManageTopic = () => {
         const subjectName = item.attributes.subject.data.attributes.name;
         const chapterId = item.id;
         const chapterName = item.attributes.name;
+        const chapterClass = item.attributes.class;
 
         subjectsSet.add(subjectName);
 
@@ -40,7 +41,11 @@ const ManageTopic = () => {
           chaptersMap[subjectName] = [];
         }
 
-        chaptersMap[subjectName].push({ id: chapterId, name: chapterName });
+        chaptersMap[subjectName].push({
+          id: chapterId,
+          name: chapterName,
+          class: chapterClass,
+        });
       });
 
       setSubjects(Array.from(subjectsSet));
@@ -292,12 +297,13 @@ const ManageTopic = () => {
             onChange={(e) => setSelectedChapterId(e.target.value)}
             className="selectTopics"
           >
+            {console.log(chapters[selectedSubject])}
             {loading ? (
               <option>Loading...</option>
             ) : (
               chapters[selectedSubject]?.map((chapter) => (
                 <option key={chapter.id} value={chapter.id}>
-                  {chapter.name}
+                  {chapter.name} ({chapter.class.data.attributes.name})
                 </option>
               ))
             )}

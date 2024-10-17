@@ -12,6 +12,7 @@ const QuestionBank = () => {
     selectedChapters: [],
     selectedTopics: [],
     selectedYear: "",
+    selectedLevel: "",
     question: "",
     answers: ["", "", "", ""],
     correctAnswerIndex: null, // Store the correct answer as an index
@@ -27,6 +28,7 @@ const QuestionBank = () => {
     chapters: false,
     topics: false,
     years: false,
+    levels: false,
   });
   const [data, setData] = useState({
     classes: [],
@@ -34,6 +36,7 @@ const QuestionBank = () => {
     chapters: [],
     topics: [],
     years: [],
+    levels: [],
   });
 
   console.log(questions);
@@ -45,6 +48,7 @@ const QuestionBank = () => {
         ...prevState,
         classes: true,
         years: true,
+        levels: true,
       }));
 
       try {
@@ -53,17 +57,26 @@ const QuestionBank = () => {
           chaptersResponse,
           yearsResponse,
           questionsResponse,
+          levelsResponse,
         ] = await Promise.all([
           fetch("/api/class"),
           fetch("/api/chapter"),
           fetch("/api/academic"),
           fetch("/api/question-bank"),
+          fetch("/api/levels"),
         ]);
 
         const classesResult = await classesResponse.json();
         const chaptersResult = await chaptersResponse.json();
         const yearsResult = await yearsResponse.json();
         const questionsResult = await questionsResponse.json();
+        const levelsResult = await levelsResponse.json();
+
+        const levelsData = levelsResult.data.map((level) => ({
+          id: level.id,
+          name: level.attributes.name, // Adjust this based on your API response structure
+        }));
+        setData((prevState) => ({ ...prevState, levels: levelsData }));
 
         const classesData = classesResult.data.map((classItem) => ({
           id: classItem.id,
@@ -131,6 +144,9 @@ const QuestionBank = () => {
             .join(", "),
           class: item.attributes.class.data.attributes.name,
           academicYear: item.attributes.academic_year.data.attributes.year,
+          level: item.attributes.level
+            ? item.attributes.level.data.attributes.name
+            : "N/A",
         }));
         console.log(mappedQuestions);
         setQuestions(mappedQuestions);
@@ -142,6 +158,7 @@ const QuestionBank = () => {
           ...prevState,
           classes: false,
           years: false,
+          levels: false,
         }));
       }
     };
@@ -155,6 +172,12 @@ const QuestionBank = () => {
     console.log(questionEdit, data);
     const selectedClassOption = data.classes.find(
       (cls) => cls.name === questionEdit.class
+    );
+
+    console.log(data.levels, questionEdit);
+
+    const selectedLevelOption = data.levels.find(
+      (cls) => cls.name === questionEdit.level
     );
 
     const selectedAcademicYearOption = data.years.find(
@@ -187,6 +210,7 @@ const QuestionBank = () => {
       answers: questionEdit.answers || ["", "", "", ""], // Ensure answers are set
       selectedYear: selectedAcademicYearOption.id,
       correctAnswerIndex: correctAnswerIndex,
+      selectedLevel: selectedLevelOption.id,
     });
 
     setEditIndex(question);
@@ -235,6 +259,7 @@ const QuestionBank = () => {
         topics: formData.selectedTopics,
         class: formData.selectedClass,
         academic_year: formData.selectedYear,
+        level: formData.selectedLevel,
         question: formData.question,
         answer_1: formData.answers[0],
         answer_2: formData.answers[1],
@@ -267,6 +292,7 @@ const QuestionBank = () => {
         })
         .then((result) => {
           // Map the new question and append it to existing questions
+          console.log(result);
           const newQuestion = {
             id: result.data.id,
             question: result.data.attributes.question,
@@ -288,6 +314,7 @@ const QuestionBank = () => {
             class: result.data.attributes.class.data.attributes.name,
             academicYear:
               result.data.attributes.academic_year.data.attributes.year,
+            level: result.data.attributes.level.data.attributes.name,
           };
 
           // Update the questions state with the new question
@@ -303,6 +330,7 @@ const QuestionBank = () => {
             question: "",
             answers: ["", "", "", ""],
             correctAnswerIndex: null,
+            level: "",
           });
         }),
       {
@@ -372,6 +400,7 @@ const QuestionBank = () => {
         topics: formData.selectedTopics,
         class: formData.selectedClass,
         academic_year: formData.selectedYear,
+        level: formData.selectedLevel,
         question: formData.question,
         answer_1: formData.answers[0],
         answer_2: formData.answers[1],
@@ -430,6 +459,7 @@ const QuestionBank = () => {
                     topic: result.data.attributes.topics.data.map(
                       (top) => top.attributes.name
                     ),
+                    level: result.data.attributes.level.data.attributes.name,
                     class: result.data.attributes.class.data.attributes.name,
                     academicYear:
                       result.data.attributes.academic_year.data.attributes.year,
@@ -522,6 +552,15 @@ const QuestionBank = () => {
             isLoading={dropdownLoading.years}
           />
         </div>
+        <div className="formGroup">
+          <SearchableSingleSelect
+            options={data.levels}
+            selectedValue={formData.selectedLevel}
+            onChange={(value) => handleInputChange("selectedLevel", value)}
+            placeholder="Select Level"
+            isLoading={dropdownLoading.levels}
+          />
+        </div>
       </div>
 
       <textarea
@@ -570,7 +609,7 @@ const QuestionBank = () => {
                 <div className="questionText">
                   <strong>
                     Subject: {question.subject} | Chapter: {question.chapter} |
-                    Topic: {question.topic}{" "}
+                    Topic: {question.topic} | Level: {question.level}{" "}
                   </strong>
 
                   <strong>

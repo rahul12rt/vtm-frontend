@@ -17,16 +17,46 @@ const Chapters = () => {
   const [subjects, setSubjects] = useState([]);
   const [loadingChapters, setLoadingChapters] = useState(true);
   const [loadingSubjects, setLoadingSubjects] = useState(true);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [classes, setClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+
   const inputRef = useRef(null);
 
   useEffect(() => {
     fetchSubjects();
     fetchChapters();
+    fetchClasses();
   }, []);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [itemsPerPage]);
+
+  const fetchClasses = async () => {
+    setLoadingClasses(true);
+    try {
+      const response = await fetch("/api/class", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch classes");
+      }
+
+      const data = await response.json();
+      setClasses(data.data || []);
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      setError("Failed to load classes. Please try again later.");
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
 
   const fetchSubjects = async () => {
     setLoadingSubjects(true);
@@ -79,8 +109,12 @@ const Chapters = () => {
   };
 
   const handleAddOrUpdateChapter = async () => {
-    if (inputValue.trim() && selectedSubject) {
-      const newChapter = { name: inputValue, subject: selectedSubject };
+    if (inputValue.trim() && selectedSubject && selectedClass) {
+      const newChapter = {
+        name: inputValue,
+        subject: selectedSubject,
+        class: parseInt(selectedClass, 10),
+      };
 
       if (editIndex !== null) {
         const chapterId = todos[editIndex]?.id;
@@ -106,6 +140,7 @@ const Chapters = () => {
               chapterId,
               name: inputValue,
               subject: selectedSubject,
+              className: parseInt(selectedClass, 10),
             }),
           }).then((response) => {
             if (!response.ok) {
@@ -126,6 +161,7 @@ const Chapters = () => {
                         ...todo.attributes,
                         name: inputValue,
                         subject: { data: { id: selectedSubject } },
+                        class: { data: { id: selectedClass } },
                       },
                     }
                   : todo
@@ -134,6 +170,7 @@ const Chapters = () => {
               setEditIndex(null);
               setInputValue("");
               setSelectedSubject("");
+              setSelectedClass("");
               fetchChapters();
               if (inputRef.current) {
                 inputRef.current.focus();
@@ -172,6 +209,7 @@ const Chapters = () => {
               setTodos([...todos, newChapter]);
               setInputValue("");
               setSelectedSubject("");
+              setSelectedClass("");
               fetchChapters();
               if (inputRef.current) {
                 inputRef.current.focus();
@@ -202,10 +240,12 @@ const Chapters = () => {
 
   const handleEditTodo = (index) => {
     const todo = filteredTodos[index];
+    console.log(todo.attributes.class?.data?.id);
     const originalIndex = todos.findIndex((t) => t.id === todo.id); // Find the original index in the todos array
     setEditIndex(originalIndex);
     setInputValue(todo.attributes.name); // Set the name correctly
     setSelectedSubject(todo.attributes.subject?.data?.id || ""); // Set the subject id if available
+    setSelectedClass(todo.attributes.class?.data?.id || "");
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -282,6 +322,8 @@ const Chapters = () => {
   const endIndex = Math.min(startIndex + itemsPerPage, filteredTodos.length);
   const displayedTodos = filteredTodos.slice(startIndex, endIndex);
 
+  console.log(displayedTodos);
+
   return (
     <div className="container">
       <div className="sectionHeader">Manage Chapters</div>
@@ -324,6 +366,31 @@ const Chapters = () => {
           </select>
         </div>
       </div>
+      <div className="formGroup">
+        <div>
+          <select
+            id="classes"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="select"
+            disabled={loadingClasses} // Disable the select while loading
+          >
+            <option value="">Select Class</option>
+            {loadingClasses ? (
+              <option value="" disabled>
+                Loading...
+              </option>
+            ) : (
+              classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.attributes?.name}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      </div>
+
       {loadingChapters ? (
         <div className="loadingText">Loading...</div>
       ) : (
@@ -356,7 +423,8 @@ const Chapters = () => {
                   <span className={styles.chapter}>
                     {startIndex + index + 1}.{" "}
                     <span className="highlight">{todo?.attributes?.name}</span>{" "}
-                    - {todo?.attributes?.subject?.data?.attributes?.name}
+                    - {todo?.attributes?.subject?.data?.attributes?.name} -{" "}
+                    {todo?.attributes?.class?.data?.attributes?.name}
                   </span>
                 </span>
                 <div className="buttonContainer">

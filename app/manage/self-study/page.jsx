@@ -11,6 +11,8 @@ const SelfStudy = () => {
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedChapters, setSelectedChapters] = useState([]);
   const [selectedTopics, setSelectedTopics] = useState([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState("");
+  const [academicYears, setAcademicYears] = useState([]);
   const [file, setFile] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
@@ -21,22 +23,38 @@ const SelfStudy = () => {
     chapters: [],
     topics: [],
     classes: [],
+    academicYears: [],
   });
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [chaptersResponse, classesResponse, selfStudyResponse] =
-          await Promise.all([
-            fetch("/api/chapter"),
-            fetch("/api/class"),
-            fetch("/api/self-study"),
-          ]);
+        const [
+          chaptersResponse,
+          classesResponse,
+          selfStudyResponse,
+          academicResponse,
+        ] = await Promise.all([
+          fetch("/api/chapter"),
+          fetch("/api/class"),
+          fetch("/api/self-study"),
+          fetch("/api/academic"),
+        ]);
 
         const chaptersResult = await chaptersResponse.json();
         const classesResult = await classesResponse.json();
         const selfStudyResult = await selfStudyResponse.json();
+        const academicResult = await academicResponse.json();
+
+        const academicYearsData = academicResult.data.map((item) => ({
+          id: item.id,
+          name: item.attributes.year,
+        }));
+        setData((prevState) => ({
+          ...prevState,
+          academicYears: academicYearsData,
+        }));
 
         // Extract chapters and subjects from the chapters data
         const chaptersData = chaptersResult.data.map((chapter) => ({
@@ -45,7 +63,6 @@ const SelfStudy = () => {
           subjectId: chapter.attributes.subject.data.id,
           subjectName: chapter.attributes.subject.data.attributes.name,
         }));
-        console.log(chaptersData);
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
         // Extract unique subjects from chapters
@@ -81,9 +98,12 @@ const SelfStudy = () => {
         }));
         setData((prevState) => ({ ...prevState, topics: topicsData }));
         const mappedMaterials = selfStudyResult.data.map((item) => {
+          console.log(item);
           const materialName = item.attributes.name;
           const subjectName = item.attributes.subject.data.attributes.name;
           const className = item.attributes.class.data.attributes.name;
+          const academic_year =
+            item.attributes.academic_year.data.attributes.year;
           const chapterNames = item.attributes.chapters.data.map(
             (chapter) => chapter.attributes.name
           );
@@ -98,9 +118,10 @@ const SelfStudy = () => {
             className,
             chapterNames,
             topicNames,
+            academic_year,
           };
         });
-        console.log(data);
+
         setMaterials(mappedMaterials);
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -117,6 +138,7 @@ const SelfStudy = () => {
     const numericClass = Number(selectedClass);
     const numericChapters = selectedChapters.map((chapter) => Number(chapter));
     const numericTopics = selectedTopics.map((topic) => Number(topic));
+    const numericAcademicYear = Number(selectedAcademicYear);
 
     const payload = {
       data: {
@@ -125,6 +147,7 @@ const SelfStudy = () => {
         class: numericClass,
         chapters: numericChapters,
         topics: numericTopics,
+        academic_year: numericAcademicYear,
       },
     };
 
@@ -156,7 +179,6 @@ const SelfStudy = () => {
           }
 
           const result = await response.json();
-          console.log("Server Response:", result);
 
           const materialData = result.data;
           const newMaterial = {
@@ -170,6 +192,8 @@ const SelfStudy = () => {
             topicNames: materialData.attributes.topics.data.map(
               (topic) => topic.attributes.name
             ),
+            academic_year:
+              materialData.attributes.academic_year.data.attributes.year,
           };
 
           if (editIndex === null) {
@@ -213,6 +237,7 @@ const SelfStudy = () => {
   const handleEdit = (index) => {
     const material = materials[index];
     setName(material.name);
+    console.log(data.academicYears);
     const selectedSubjectOption = data.subjects.find(
       (sub) => sub.name === material.subjectName
     );
@@ -228,14 +253,16 @@ const SelfStudy = () => {
     const selectedTopicsWithIds = data.topics
       .filter((topic) => material.topicNames.includes(topic.name))
       .map((topic) => topic.id);
+    const selectedAcademicYearOption = data.academicYears.find(
+      (year) => year.name === material.academic_year
+    );
+    setSelectedAcademicYear(selectedAcademicYearOption.id);
     setSelectedTopics(selectedTopicsWithIds);
     setFile(material.file);
     setEditIndex(index);
   };
 
   const handleDelete = async (id) => {
-    console.log(id);
-
     const action = toast.promise(
       (async () => {
         const response = await fetch("/api/self-study", {
@@ -295,14 +322,13 @@ const SelfStudy = () => {
             body: JSON.stringify(payload),
           });
 
-          console.log(response);
-
           if (!response.status === 200) {
             throw new Error("Failed to update study material.");
           }
 
           const result = await response.json();
-          console.log("Update Response:", result);
+
+          console.log(result);
 
           const updatedMaterial = {
             id: payload.studyId,
@@ -315,6 +341,8 @@ const SelfStudy = () => {
             topicNames: result.data.attributes.topics.data.map(
               (topic) => topic.attributes.name
             ),
+            academic_year:
+              result.data.attributes.academic_year.data.attributes.year,
           };
 
           // Update the materials list with the newly updated material
@@ -412,6 +440,15 @@ const SelfStudy = () => {
         </div>
 
         <div className="formGroup">
+          <SearchableSingleSelect
+            options={data.academicYears}
+            selectedValue={selectedAcademicYear}
+            onChange={(value) => setSelectedAcademicYear(value)}
+            placeholder="Select academic year"
+          />
+        </div>
+
+        <div className="formGroup">
           {/* <input
             type="file"
             onChange={handleFileChange}
@@ -434,6 +471,7 @@ const SelfStudy = () => {
         <ul className="todoList">
           {materials.map((material, index) => (
             <li key={material.id} className="todoItem">
+              {console.log(material)}
               <div>
                 <strong>Name:</strong> {material.name}
               </div>
@@ -449,6 +487,10 @@ const SelfStudy = () => {
               <div>
                 <strong>Topics:</strong> {material.topicNames.join(", ")}
               </div>
+              <div>
+                <strong>Academic Year:</strong> {material.academic_year}
+              </div>
+
               <div className="buttonContainer">
                 <button
                   onClick={() => handleEdit(index)}

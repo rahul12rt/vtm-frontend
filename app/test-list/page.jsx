@@ -41,16 +41,18 @@ const TestList = () => {
           }
 
           const data = await response.json();
+          console.log(data.data);
           setStudentData(data.data);
 
           await Promise.all(
             data.data.map(async (student) => {
               const classInfo = student.attributes.class.data;
               const academicYear = student.attributes.academic_year;
+              const collegeId = student.attributes.college.data.id;
 
               if (classInfo && academicYear) {
                 await Promise.all([
-                  fetchAssignedTests(classInfo.id, academicYear),
+                  fetchAssignedTests(classInfo.id, academicYear, collegeId),
                   fetchCompletedTests(student.id),
                 ]);
               }
@@ -65,10 +67,10 @@ const TestList = () => {
       }
     };
 
-    const fetchAssignedTests = async (classId, academicYear) => {
+    const fetchAssignedTests = async (classId, academicYear, collegeId) => {
       try {
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&populate[create_test][populate]=class,academic_year,duration,subject`;
+        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&filters&populate[create_test][populate]=class,academic_year,duration,subject&filters[colleges][id][$eq]=${collegeId}`;
 
         const bearerToken = Cookies.get("token");
         const response = await fetch(testsEndpoint, {
@@ -84,6 +86,7 @@ const TestList = () => {
         }
 
         const testsData = await response.json();
+        console.log(testsData);
 
         setAssignedTests(testsData.data);
       } catch (error) {

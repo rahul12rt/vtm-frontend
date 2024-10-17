@@ -15,20 +15,22 @@ const initialFormState = {
   username: "",
   password: "",
   rollNo: "",
-  college: "", // Store the id of the selected college
-  collegeName: "", // Display name in the dropdown
-  class: "", // This will store the id of the selected class
-  className: "", // Display name in the dropdown
+  college: "",
+  collegeName: "",
+  class: "",
+  className: "",
   academicYear: AcademicYearEnum["2024-25"],
   contactNumber1: "",
   contactNumber2: "",
+  stream: "",
 };
 
 const StudentRegister = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
-  const [classes, setClasses] = useState([]); // State to store classes
-  const [colleges, setColleges] = useState([]); // State to store colleges
+  const [classes, setClasses] = useState([]);
+  const [colleges, setColleges] = useState([]);
+  const [streams, setStreams] = useState([]);
 
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,8 +61,8 @@ const StudentRegister = () => {
 
     setFormData({
       ...formData,
-      class: selectedClassId ? Number(selectedClassId) : "", // Convert to number
-      className: selectedClass ? selectedClass.attributes.name : "", // Display the name in the dropdown
+      class: selectedClassId ? Number(selectedClassId) : "",
+      className: selectedClass ? selectedClass.attributes.name : "",
     });
   };
 
@@ -72,8 +74,16 @@ const StudentRegister = () => {
 
     setFormData({
       ...formData,
-      college: selectedCollegeId ? Number(selectedCollegeId) : "", // Convert to number
-      collegeName: selectedCollege ? selectedCollege.attributes.name : "", // Display the name in the dropdown
+      college: selectedCollegeId ? Number(selectedCollegeId) : "",
+      collegeName: selectedCollege ? selectedCollege.attributes.name : "",
+    });
+  };
+
+  const handleStreamChange = (e) => {
+    const selectedStreamId = e.target.value;
+    setFormData({
+      ...formData,
+      stream: selectedStreamId,
     });
   };
 
@@ -81,7 +91,6 @@ const StudentRegister = () => {
     e.preventDefault();
     const newErrors = {};
 
-    // Validation logic
     if (!formData.name) newErrors.name = "Name is required";
     if (!formData.email) newErrors.email = "Email is required";
     else if (!validateEmail(formData.email))
@@ -97,22 +106,21 @@ const StudentRegister = () => {
       newErrors.contactNumber1 = "Contact Number1 is required";
     else if (!/^\d{10}$/.test(formData.contactNumber1))
       newErrors.contactNumber1 = "Contact Number1 must be 10 digits";
+    if (!formData.stream) newErrors.stream = "Stream is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return; // Exit if there are validation errors
+      return;
     }
 
-    setErrors({}); // Clear previous errors
+    setErrors({});
 
-    // Step 1: Prepare the payload for the user registration API
     const registerPayload = {
       username: formData.username,
       email: formData.email,
       password: formData.password,
     };
 
-    // Use toast.promise to handle the API request for user registration
     toast.promise(
       fetch("/api/auth/register", {
         method: "POST",
@@ -129,27 +137,25 @@ const StudentRegister = () => {
               );
             });
           }
-
           return response.json();
         })
         .then(async (data) => {
-          // Step 2: If user registration is successful, proceed to register the student
           const studentPayload = {
             data: {
               name: formData.name,
               roll_number: formData.rollNo,
               email: formData.email,
               user_name: formData.username,
-              password: formData.password, // If needed
-              college: Number(formData.college), // Ensure college is a number
-              class: Number(formData.class), // Ensure class is a number
+              password: formData.password,
+              college: Number(formData.college),
+              class: Number(formData.class),
               academic_year: formData.academicYear,
               contact_number: formData.contactNumber1,
-              secoundary_number: formData.contactNumber2 || "", // Default to empty if not provided
+              secoundary_number: formData.contactNumber2 || "",
+              stream: formData.stream,
             },
           };
 
-          // Call the student registration API
           const studentResponse = await fetch("/api/register/student", {
             method: "POST",
             headers: {
@@ -165,8 +171,6 @@ const StudentRegister = () => {
             );
           }
 
-          // If student registration is successful
-          // Step 3: Change the role of the user using the ChangeRole API
           const changeRoleResponse = await fetch("/api/change-role", {
             method: "PUT",
             headers: {
@@ -174,7 +178,7 @@ const StudentRegister = () => {
             },
             body: JSON.stringify({
               userId: data.user.id,
-              roleId: 3, // Assuming 3 is the role ID for students
+              roleId: 3,
             }),
           });
 
@@ -184,7 +188,7 @@ const StudentRegister = () => {
               roleErrorData.error || "An error occurred while updating the role"
             );
           }
-          setFormData(initialFormState); // Reset form data
+          setFormData(initialFormState);
           return <b>Student registered successfully!</b>;
         }),
       {
@@ -207,12 +211,12 @@ const StudentRegister = () => {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [classResult, collegeResult] = await Promise.all([
+        const [classResult, collegeResult, streamResult] = await Promise.all([
           axios.get("/api/class", { cache: "no-store" }),
           axios.get("/api/colleges", { cache: "no-store" }),
+          axios.get("/api/streams", { cache: "no-store" }),
         ]);
 
-        // Remove duplicate colleges based on the name
         const uniqueColleges = Array.from(
           new Set(
             collegeResult.data.data.map((college) => college.attributes.name)
@@ -223,21 +227,23 @@ const StudentRegister = () => {
           )
         );
 
-        setClasses(classResult.data.data); // Set the fetched classes
-        setColleges(uniqueColleges); // Set the unique colleges
+        console.log(streamResult);
+
+        setClasses(classResult.data.data);
+        setColleges(uniqueColleges);
+        setStreams(streamResult.data.data);
       } catch (error) {
         console.log("Error fetching data:", error.message);
       }
     }
 
     fetchData();
-  }, []); // Fetch classes and colleges only on component mount
+  }, []);
 
   return (
     <div className="container">
       <div className="sectionHeader">Student Registration</div>
       <form className="form">
-        {/* Form Fields */}
         <div className="formGroup">
           <label htmlFor="name">
             Name<span className={styles.required}>*</span>
@@ -359,6 +365,27 @@ const StudentRegister = () => {
             ))}
           </select>
           {errors.class && <p className="errorText">{errors.class}</p>}
+        </div>
+        <div className="formGroup">
+          <label htmlFor="stream">
+            Stream<span className={styles.required}>*</span>
+          </label>
+          <select
+            id="stream"
+            name="stream"
+            value={formData.stream}
+            onChange={handleStreamChange}
+            onFocus={handleFocus}
+            className={errors.stream ? "errorInput" : ""}
+          >
+            <option value="">Select Stream</option>
+            {streams.map((stream) => (
+              <option key={stream.id} value={stream.id}>
+                {stream.attributes.name}
+              </option>
+            ))}
+          </select>
+          {errors.stream && <p className="errorText">{errors.stream}</p>}
         </div>
         <div className="formGroup">
           <label htmlFor="academicYear">

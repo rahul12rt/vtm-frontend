@@ -11,6 +11,7 @@ const CreateTest = () => {
     class: null,
     academicYear: null,
     question: "",
+    level: null,
   });
   const [questions, setQuestions] = useState([]);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
@@ -25,6 +26,7 @@ const CreateTest = () => {
     topics: [],
     classes: [],
     years: [],
+    levels: [],
   });
   const [loading, setLoading] = useState(false);
   const [dropdownLoading, setDropdownLoading] = useState({
@@ -77,6 +79,9 @@ const CreateTest = () => {
               `filters[question][$containsi]=${filters.question}`
             );
           }
+          if (filters.level) {
+            filtersArray.push(`filters[level][id][$eq]=${filters.level}`); // Add level filter
+          }
 
           return filtersArray.join("&");
         };
@@ -88,11 +93,13 @@ const CreateTest = () => {
           chaptersResponse,
           yearsResponse,
           questionsResponse,
+          levelsResponse,
         ] = await Promise.all([
           fetch("/api/class"),
           fetch("/api/chapter"),
           fetch("/api/academic"),
           fetch(`/api/filter-questions${queryString ? `?${queryString}` : ""}`),
+          fetch("/api/levels"),
         ]);
 
         console.log(queryString);
@@ -101,6 +108,7 @@ const CreateTest = () => {
         const chaptersResult = await chaptersResponse.json();
         const yearsResult = await yearsResponse.json();
         const questionsResult = await questionsResponse.json();
+        const levelsResult = await levelsResponse.json();
 
         console.log(questionsResult);
 
@@ -124,6 +132,12 @@ const CreateTest = () => {
           subjectName: chapter.attributes.subject.data.attributes.name,
         }));
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
+
+        const levelsData = levelsResult.data.map((level) => ({
+          id: level.id,
+          name: level.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, levels: levelsData }));
 
         // Extract unique subjects from chapters data
         const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
@@ -358,6 +372,16 @@ const CreateTest = () => {
           {data.years.map((year) => (
             <option key={year.id} value={year.id}>
               {year.name}
+            </option>
+          ))}
+        </select>
+        <select
+          onChange={(e) => handleFilterChange("level", e.target.value || null)} // Handle level change
+        >
+          <option value="">Select Level</option>
+          {data.levels.map((level) => (
+            <option key={level.id} value={level.id}>
+              {level.name}
             </option>
           ))}
         </select>

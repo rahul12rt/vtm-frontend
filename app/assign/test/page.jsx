@@ -19,6 +19,7 @@ const AssignTest = () => {
     classes: [],
     years: [],
     assessments: [],
+    colleges: [],
   });
 
   const [loading, setLoading] = useState(false);
@@ -27,8 +28,9 @@ const AssignTest = () => {
     years: false,
   });
 
-  // New state to track assigned assessments
   const [assignedTests, setAssignedTests] = useState({});
+  const [selectedColleges, setSelectedColleges] = useState({});
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,7 +42,6 @@ const AssignTest = () => {
       }));
 
       try {
-        // Build query string for filters
         const buildQueryString = () => {
           const filtersArray = [];
 
@@ -91,6 +92,7 @@ const AssignTest = () => {
           topicsResponse,
           assessmentsResponse,
           assignTestResponse,
+          collegesResponse,
         ] = await Promise.all([
           fetch("/api/class"),
           fetch("/api/chapter"),
@@ -98,6 +100,7 @@ const AssignTest = () => {
           fetch("/api/topics"),
           fetch(`/api/create-test${queryString ? `?${queryString}` : ""}`),
           fetch("/api/assign-tests"),
+          fetch("/api/colleges"),
         ]);
 
         const classesResult = await classesResponse.json();
@@ -106,78 +109,74 @@ const AssignTest = () => {
         const topicsResult = await topicsResponse.json();
         const assessmentsResult = await assessmentsResponse.json();
         const assignTestResult = await assignTestResponse.json();
-        // Map the API data to your component's structure
+        const collegesResult = await collegesResponse.json();
+
         const mappedAssignedTests = {};
         assignTestResult.data.forEach((test) => {
           const testId = test.attributes.create_test.data.id;
-          mappedAssignedTests[testId] = test.attributes.Assign;
-        });
-        setAssignedTests(mappedAssignedTests);
-
-        const classesData = classesResult.data.map((classItem) => ({
-          id: classItem.id,
-          name: classItem.attributes.name,
-        }));
-        setData((prevState) => ({ ...prevState, classes: classesData }));
-
-        const yearsData = yearsResult.data.map((year) => ({
-          id: year.id,
-          name: year.attributes.year,
-        }));
-        setData((prevState) => ({ ...prevState, years: yearsData }));
-
-        const chaptersData = chaptersResult.data.map((chapter) => ({
-          id: chapter.id,
-          name: chapter.attributes.name,
-          subjectId: chapter.attributes.subject.data.id,
-          subjectName: chapter.attributes.subject.data.attributes.name,
-        }));
-        setData((prevState) => ({ ...prevState, chapters: chaptersData }));
-
-        const topicsData = topicsResult.data.map((topic) => ({
-          id: topic.id,
-          name: topic.attributes.name,
-          chapterId: topic.attributes.chapter.data.id,
-        }));
-        setData((prevState) => ({ ...prevState, topics: topicsData }));
-
-        // Extract unique subjects from chapters data
-        const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
-          if (!acc.find((subject) => subject.id === chapter.subjectId)) {
-            acc.push({
-              id: chapter.subjectId,
-              name: chapter.subjectName,
-            });
-          }
-          return acc;
-        }, []);
-        setData((prevState) => ({ ...prevState, subjects: uniqueSubjects }));
-
-        // Map the assessments to the required format
-        const mappedAssessments = assessmentsResult.data.map((assessment) => {
-          const chapterNames = assessment.attributes.chapters.data.map(
-            (c) => c.attributes.name
-          );
-          const topicNames = assessment.attributes.topics.data.map(
-            (c) => c.attributes.name
-          );
-
-          return {
-            id: assessment.id,
-            name: assessment.attributes.name,
-            subject: assessment.attributes.subject.data.attributes.name,
-            chapter: chapterNames.join(", "),
-            topic: topicNames.join(", "),
-            class: assessment.attributes.class.data.attributes.name,
-            academicYear:
-              assessment.attributes.academic_year.data.attributes.year,
+          mappedAssignedTests[testId] = {
+            assigned: test.attributes.Assign,
+            colleges: test.attributes.colleges.data.map(
+              (college) => college.id
+            ),
+            assignTestId: test.id,
           };
         });
 
+        setAssignedTests(mappedAssignedTests);
+
         setData((prevState) => ({
           ...prevState,
-          assessments: mappedAssessments,
+          classes: classesResult.data.map((classItem) => ({
+            id: classItem.id,
+            name: classItem.attributes.name,
+          })),
+          years: yearsResult.data.map((year) => ({
+            id: year.id,
+            name: year.attributes.year,
+          })),
+          chapters: chaptersResult.data.map((chapter) => ({
+            id: chapter.id,
+            name: chapter.attributes.name,
+            subjectId: chapter.attributes.subject.data.id,
+            subjectName: chapter.attributes.subject.data.attributes.name,
+          })),
+          topics: topicsResult.data.map((topic) => ({
+            id: topic.id,
+            name: topic.attributes.name,
+            chapterId: topic.attributes.chapter.data.id,
+          })),
+          assessments: assessmentsResult.data.map((assessment) => {
+            const chapterNames = assessment.attributes.chapters.data.map(
+              (c) => c.attributes.name
+            );
+            const topicNames = assessment.attributes.topics.data.map(
+              (c) => c.attributes.name
+            );
+
+            return {
+              id: assessment.id,
+              name: assessment.attributes.name,
+              subject: assessment.attributes.subject.data.attributes.name,
+              chapter: chapterNames.join(", "),
+              topic: topicNames.join(", "),
+              class: assessment.attributes.class.data.attributes.name,
+              academicYear:
+                assessment.attributes.academic_year.data.attributes.year,
+            };
+          }),
+          colleges: collegesResult.data.map((college) => ({
+            id: college.id,
+            name: college.attributes.name,
+          })),
         }));
+
+        const initialSelectedColleges = {};
+        Object.keys(mappedAssignedTests).forEach((testId) => {
+          initialSelectedColleges[testId] =
+            mappedAssignedTests[testId].colleges || [];
+        });
+        setSelectedColleges(initialSelectedColleges);
       } catch (error) {
         console.error("Failed to fetch data", error);
       } finally {
@@ -205,35 +204,157 @@ const AssignTest = () => {
     assessment.name.toLowerCase().includes(filters.question.toLowerCase())
   );
 
-  const handleAssignClick = async (assessmentId) => {
-    const isCurrentlyAssigned = assignedTests[assessmentId];
-
-    console.log(assessmentId);
-
+  const assignTest = async (
+    assessmentId,
+    selectedCollegeIds,
+    isReassign = false
+  ) => {
     try {
-      const response = await fetch("/api/assign-tests", {
-        method: "POST",
+      const url = "/api/assign-tests";
+      const method = isReassign ? "PUT" : "POST";
+
+      let body;
+
+      if (isReassign) {
+        body = {
+          materialId: assignedTests[assessmentId].assignTestId,
+          payload: {
+            data: {
+              create_test: assessmentId,
+              colleges: selectedCollegeIds,
+              Assign: true,
+            },
+          },
+        };
+      } else {
+        body = {
+          data: {
+            create_test: assessmentId,
+            Assign: true,
+            colleges: selectedCollegeIds,
+          },
+        };
+      }
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          data: {
-            create_test: assessmentId,
-            Assign: !isCurrentlyAssigned, // Toggle assign/unassign
-          },
-        }),
+        body: JSON.stringify(body),
       });
 
-      if (response.ok) {
-        setAssignedTests((prevState) => ({
+      if (!response.ok) {
+        throw new Error("Failed to assign test");
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error assigning test", error);
+      throw error;
+    }
+  };
+
+  const unassignTest = async (assignTestId, assessmentId) => {
+    try {
+      const payload = {
+        materialId: assignTestId,
+        payload: {
+          data: {
+            create_test: assessmentId,
+            colleges: [],
+            Assign: false,
+          },
+        },
+      };
+
+      const response = await fetch(`/api/assign-tests`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to unassign test");
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error unassigning test", error);
+      throw error;
+    }
+  };
+
+  const handleAssignClick = async (assessmentId) => {
+    const isCurrentlyAssigned = assignedTests[assessmentId]?.assigned;
+    const selectedCollegeIds = selectedColleges[assessmentId] || [];
+
+    if (!isCurrentlyAssigned && selectedCollegeIds.length === 0) {
+      setErrorMessage("Please select at least one college before assigning.");
+      return;
+    } else {
+      setErrorMessage("");
+    }
+
+    try {
+      let result;
+      if (isCurrentlyAssigned) {
+        const assignTestId = assignedTests[assessmentId].assignTestId;
+        result = await unassignTest(assignTestId, assessmentId);
+      } else {
+        if (selectedCollegeIds.length > 0) {
+          const isReassign =
+            assignedTests[assessmentId]?.assignTestId !== undefined;
+          result = await assignTest(
+            assessmentId,
+            selectedCollegeIds,
+            isReassign
+          );
+        } else {
+          setErrorMessage(
+            "Please select at least one college before assigning."
+          );
+          return;
+        }
+      }
+
+      setAssignedTests((prevState) => ({
+        ...prevState,
+        [assessmentId]: {
+          assigned: !isCurrentlyAssigned,
+          colleges: !isCurrentlyAssigned ? selectedCollegeIds : [],
+          assignTestId: result.data.id,
+        },
+      }));
+      if (isCurrentlyAssigned) {
+        setSelectedColleges((prevState) => ({
           ...prevState,
-          [assessmentId]: !isCurrentlyAssigned, // Toggle the assigned state
+          [assessmentId]: [],
         }));
       }
     } catch (error) {
-      console.error("Error assigning/unassigning test", error);
+      setErrorMessage("Failed to assign/unassign test. Please try again.");
     }
   };
+
+  const handleCollegeChange = (assessmentId, values) => {
+    setSelectedColleges((prevState) => ({
+      ...prevState,
+      [assessmentId]: values,
+    }));
+  };
+
+  useEffect(() => {
+    const initialSelectedColleges = {};
+    Object.keys(assignedTests).forEach((testId) => {
+      initialSelectedColleges[testId] = assignedTests[testId].colleges || [];
+    });
+    setSelectedColleges(initialSelectedColleges);
+  }, [assignedTests]);
 
   return (
     <div className="container">
@@ -260,100 +381,66 @@ const AssignTest = () => {
             placeholder="Select Chapters"
           />
         </div>
-        {/* Uncomment if needed */}
-        {/* <div className="formGroup">
-          <MultiSelectDropDown
-            options={data.topics.filter((topic) =>
-              filters.chapter.includes(topic.chapterId)
-            )}
-            selectedValues={filters.topic}
-            onChange={(values) => handleFilterChange("topic", values)}
-            placeholder="Select Topics"
-          />
-        </div> */}
         <div className="formGroup">
-          <select
-            value={filters.class}
-            onChange={(e) => handleFilterChange("class", e.target.value)}
-          >
-            <option value="">Select Class</option>
-            {data.classes.map((classItem) => (
-              <option key={classItem.id} value={classItem.id}>
-                {classItem.name}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            placeholder="Search Question"
+            value={filters.question}
+            onChange={(e) => handleFilterChange("question", e.target.value)}
+          />
         </div>
-        {/* Uncomment if needed */}
-        {/* <div className="formGroup">
-          <select
-            value={filters.academicYear}
-            onChange={(e) => handleFilterChange("academicYear", e.target.value)}
-          >
-            <option value="">Select Academic Year</option>
-            {data.years.map((year) => (
-              <option key={year.id} value={year.id}>
-                {year.name}
-              </option>
-            ))}
-          </select>
-        </div> */}
       </div>
-      <div className="formGroup">
-        <input
-          type="text"
-          value={filters.question}
-          onChange={(e) => handleFilterChange("question", e.target.value)}
-          placeholder="Search by assessment"
-        />
-      </div>
-      <div>
-        <h2>Assessments</h2>
+      {errorMessage && <div className="errorText">{errorMessage}</div>}
+      <div className="table">
         {loading ? (
-          <p>Loading...</p>
+          <div>Loading...</div>
         ) : (
-          <div className="questionList">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th style={{ width: "40%" }}>Name</th>
-                  <th>Subject</th>
-                  <th>Chapter</th>
-                  {/* <th>Topic</th> */}
-                  <th>Class</th>
-                  {/* <th>Academic Year</th> */}
-                  <th>Action</th>
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: "30%" }}>Assessment</th>
+                <th style={{ width: "10%" }}>Subject</th>
+                <th style={{ width: "10%" }}>Class</th>
+                <th style={{ width: "10%" }}>Academic Year</th>
+                <th style={{ width: "30%" }}>College</th>
+                <th style={{ width: "10%" }}>Assign</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAssessments.map((assessment) => (
+                <tr key={assessment.id}>
+                  <td>{assessment.name}</td>
+                  <td>{assessment.subject}</td>
+                  <td>{assessment.class}</td>
+                  <td>{assessment.academicYear}</td>
+                  <td>
+                    <MultiSelectDropDown
+                      options={data.colleges}
+                      selectedValues={selectedColleges[assessment.id] || []}
+                      onChange={(values) =>
+                        handleCollegeChange(assessment.id, values)
+                      }
+                      placeholder="Select Colleges"
+                    />
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => handleAssignClick(assessment.id)}
+                      className={
+                        assignedTests[assessment.id]?.assigned
+                          ? "editButton"
+                          : "submitButton"
+                      }
+                    >
+                      {assignedTests[assessment.id]?.assigned
+                        ? "Unassign"
+                        : "Assign"}
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredAssessments.map((assessment) => (
-                  <tr key={assessment.id}>
-                    <td>{assessment.name}</td>
-                    <td>{assessment.subject}</td>
-                    <td>{assessment.chapter}</td>
-
-                    {/* Uncomment if needed */}
-                    {/* <td>{assessment.topic}</td> */}
-                    <td>{assessment.class}</td>
-                    {/* <td>{assessment.academicYear}</td> */}
-                    <td>
-                      <button
-                        className={
-                          assignedTests[assessment.id]
-                            ? "editButton"
-                            : "submitButton"
-                        }
-                        onClick={() => handleAssignClick(assessment.id)}
-                        disabled={assignedTests[assessment.id]}
-                      >
-                        {assignedTests[assessment.id] ? "Assigned" : "Assign"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
