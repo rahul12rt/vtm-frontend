@@ -9,6 +9,7 @@ const CreateTest = () => {
     chapter: [],
     topic: [],
     class: null,
+    stream: null,
     academicYear: null,
     question: "",
     level: null,
@@ -25,6 +26,7 @@ const CreateTest = () => {
     chapters: [],
     topics: [],
     classes: [],
+    streams: [],
     years: [],
     levels: [],
   });
@@ -32,6 +34,7 @@ const CreateTest = () => {
   const [dropdownLoading, setDropdownLoading] = useState({
     classes: false,
     years: false,
+    streams: false,
   });
 
   const [errors, setErrors] = useState({
@@ -46,6 +49,7 @@ const CreateTest = () => {
         ...prevState,
         classes: true,
         years: true,
+        streams: true,
       }));
 
       try {
@@ -65,6 +69,9 @@ const CreateTest = () => {
             filtersArray.push(
               ...filters.topic.map((tp) => `filters[topics][id][$eq]=${tp}`)
             );
+          }
+          if (filters.stream) {
+            filtersArray.push(`filters[stream][id][$eq]=${filters.stream}`);
           }
           if (filters.class) {
             filtersArray.push(`filters[class][id][$eq]=${filters.class}`);
@@ -94,23 +101,36 @@ const CreateTest = () => {
           yearsResponse,
           questionsResponse,
           levelsResponse,
+          streamsResponse,
         ] = await Promise.all([
           fetch("/api/class"),
           fetch("/api/chapter"),
           fetch("/api/academic"),
           fetch(`/api/filter-questions${queryString ? `?${queryString}` : ""}`),
           fetch("/api/levels"),
+          fetch("/api/streams"),
+        ]);
+        const [
+          classesResult,
+          chaptersResult,
+          yearsResult,
+          questionsResult,
+          levelsResult,
+          streamsResult,
+        ] = await Promise.all([
+          classesResponse.json(),
+          chaptersResponse.json(),
+          yearsResponse.json(),
+          questionsResponse.json(),
+          levelsResponse.json(),
+          streamsResponse.json(),
         ]);
 
-        console.log(queryString);
-
-        const classesResult = await classesResponse.json();
-        const chaptersResult = await chaptersResponse.json();
-        const yearsResult = await yearsResponse.json();
-        const questionsResult = await questionsResponse.json();
-        const levelsResult = await levelsResponse.json();
-
-        console.log(questionsResult);
+        const streamsData = streamsResult.data.map((stream) => ({
+          id: stream.id,
+          name: stream.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, streams: streamsData }));
 
         // Map the API data to your component's structure
         const classesData = classesResult.data.map((classItem) => ({
@@ -323,6 +343,16 @@ const CreateTest = () => {
       <Toaster position="top-right" reverseOrder={true} />
       <div className="sectionHeader">Create Test</div>
       <div className="inputContainer">
+        <select
+          onChange={(e) => handleFilterChange("stream", e.target.value || null)}
+        >
+          <option value="">Select Stream</option>
+          {data.streams.map((stream) => (
+            <option key={stream.id} value={stream.id}>
+              {stream.name}
+            </option>
+          ))}
+        </select>
         <select
           onChange={(e) =>
             handleFilterChange("subject", e.target.value || null)

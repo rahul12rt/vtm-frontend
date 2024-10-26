@@ -11,7 +11,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/subjects`;
+    const strapiEndpoint = `${strapiApiUrl}/api/subjects?populate[class]=*`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",
@@ -113,7 +113,7 @@ export async function PUT(request) {
       );
     }
 
-    const { subjectId, name } = await request.json();
+    const { subjectId, name, className } = await request.json();
 
     if (!subjectId || !name) {
       return NextResponse.json(
@@ -128,7 +128,7 @@ export async function PUT(request) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ data: { name } }), // Payload for Strapi
+      body: JSON.stringify({ data: { name, class: className } }), // Payload for Strapi
     });
 
     if (!response.ok) {

@@ -1,0 +1,56 @@
+.headerTitle {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.infoSection {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.infoTitle {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.infoDetails {
+  color: #d21b1b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tableContainer {
+  overflow-x: auto;
+}
+
+.resultsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.resultsTable th,
+.resultsTable td {
+  border: 1px solid #0f9dd9;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+  color: #1d1d1d;
+}
+
+.resultsTable th {
+  background-color: #e0f7ff;
+  font-weight: bold;
+}
+
+.resultsTable td {
+  background-color: #ffffff;
+}
+
+.resultsTable tr:nth-child(even) td {
+  background-color: #f2f2f2;
+}
+.exportButton {
+  text-align: right;
+  margin-bottom: 20px;
+}

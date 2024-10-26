@@ -163,6 +163,7 @@ const AssignTest = () => {
               class: assessment.attributes.class.data.attributes.name,
               academicYear:
                 assessment.attributes.academic_year.data.attributes.year,
+              exam_name: assessment.attributes.exam_name,
             };
           }),
           colleges: collegesResult.data.map((college) => ({
@@ -400,7 +401,7 @@ const AssignTest = () => {
               <tr>
                 <th style={{ width: "30%" }}>Assessment</th>
                 <th style={{ width: "10%" }}>Subject</th>
-                <th style={{ width: "10%" }}>Class</th>
+                <th style={{ width: "10%" }}>Name</th>
                 <th style={{ width: "10%" }}>Academic Year</th>
                 <th style={{ width: "30%" }}>College</th>
                 <th style={{ width: "10%" }}>Assign</th>
@@ -411,7 +412,7 @@ const AssignTest = () => {
                 <tr key={assessment.id}>
                   <td>{assessment.name}</td>
                   <td>{assessment.subject}</td>
-                  <td>{assessment.class}</td>
+                  <td>{assessment.exam_name}</td>
                   <td>{assessment.academicYear}</td>
                   <td>
                     <MultiSelectDropDown

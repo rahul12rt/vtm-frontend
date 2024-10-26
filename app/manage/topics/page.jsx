@@ -33,18 +33,19 @@ const ManageTopic = () => {
         const subjectName = item.attributes.subject.data.attributes.name;
         const chapterId = item.id;
         const chapterName = item.attributes.name;
-        const chapterClass = item.attributes.class;
+        const className =
+          item.attributes.subject.data.attributes.class.data.attributes.name;
+        const subjectWithClass = `${subjectName} (${className})`;
 
-        subjectsSet.add(subjectName);
+        subjectsSet.add(subjectWithClass);
 
-        if (!chaptersMap[subjectName]) {
-          chaptersMap[subjectName] = [];
+        if (!chaptersMap[subjectWithClass]) {
+          chaptersMap[subjectWithClass] = [];
         }
 
-        chaptersMap[subjectName].push({
+        chaptersMap[subjectWithClass].push({
           id: chapterId,
           name: chapterName,
-          class: chapterClass,
         });
       });
 
@@ -53,7 +54,7 @@ const ManageTopic = () => {
 
       const firstSubject = Array.from(subjectsSet)[0];
       setSelectedSubject(firstSubject);
-      setSelectedChapterId(chaptersMap[firstSubject][0]?.id || "");
+      setSelectedChapterId(chaptersMap[firstSubject]?.[0]?.id || "");
     } catch (error) {
       console.error("Error fetching chapters:", error);
       toast.error("Failed to fetch chapters.");
@@ -70,7 +71,6 @@ const ManageTopic = () => {
         throw new Error("Failed to fetch topics");
       }
       const data = await response.json();
-      console.log(data);
       const formattedTopics = data.data.map((item) => {
         const chapter = item.attributes.chapter.data;
         const subject = chapter.attributes.subject.data.attributes.name;
@@ -85,6 +85,7 @@ const ManageTopic = () => {
           topic: topicName,
         };
       });
+      console.log(formattedTopics);
       setTopics(formattedTopics);
     } catch (error) {
       console.error("Error fetching topics:", error);
@@ -97,7 +98,12 @@ const ManageTopic = () => {
   const handleEditTopic = (topic) => {
     setEditingTopic(topic);
     setInputValue(topic.topic);
-    setSelectedSubject(topic.subject);
+
+    const subjectWithClass = subjects.find((subject) => {
+      const subjectName = subject.split(" (")[0];
+      return subjectName === topic.subject;
+    });
+    setSelectedSubject(subjectWithClass);
     const chapterId = Object.keys(chapters).find((subject) =>
       chapters[subject].some((chap) => chap.name === topic.chapter)
     );
@@ -297,13 +303,12 @@ const ManageTopic = () => {
             onChange={(e) => setSelectedChapterId(e.target.value)}
             className="selectTopics"
           >
-            {console.log(chapters[selectedSubject])}
             {loading ? (
               <option>Loading...</option>
             ) : (
               chapters[selectedSubject]?.map((chapter) => (
                 <option key={chapter.id} value={chapter.id}>
-                  {chapter.name} ({chapter.class.data.attributes.name})
+                  {chapter.name}
                 </option>
               ))
             )}

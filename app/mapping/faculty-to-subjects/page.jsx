@@ -152,18 +152,30 @@ const FacultyToSubject = () => {
           }))
         );
 
+        console.log(subjectData);
+
         setSubjectOptions(
           subjectData.data.map((subject) => ({
             id: subject.id,
-            name: subject.attributes.name,
+            name: `${subject.attributes.name} (${subject.attributes.class.data.attributes.name})`,
+            originalName: subject.attributes.name,
+            className: subject.attributes.class.data.attributes.name,
           }))
         );
+
+        console.log(mappingData);
 
         setMappingOptions(
           mappingData.data.map((mapping) => ({
             id: mapping.id,
             name: mapping.attributes.faculty.data.attributes.name,
-            subjects: mapping.attributes.subjects.data,
+            subjects: mapping.attributes.subjects.data.map((subject) => ({
+              id: subject.id,
+              attributes: {
+                name: subject.attributes.name,
+                class: subject.attributes.class?.data?.attributes?.name,
+              },
+            })),
           }))
         );
       } catch (error) {
@@ -226,7 +238,7 @@ const FacultyToSubject = () => {
         }
 
         const data = await response.json();
-
+        console.log(data);
         const updatedMapping = {
           id: data.data.id,
           name: data.data.attributes.faculty.data.attributes.name,
@@ -234,6 +246,7 @@ const FacultyToSubject = () => {
             id: subject.id,
             attributes: {
               name: subject.attributes.name,
+              class: subject.attributes.class?.data?.attributes?.name,
             },
           })),
         };
@@ -307,9 +320,15 @@ const FacultyToSubject = () => {
                   {index + 1}. {subject?.name} -{" "}
                   <span className="highlight">
                     {subject.subjects
-                      .map((res) => res?.attributes?.name)
+                      .map(
+                        (res) =>
+                          `${res?.attributes?.name} (${
+                            res?.attributes?.class || "N/A"
+                          })`
+                      )
                       .join(", ")}
                   </span>
+                  {console.log(subject.subjects)}
                 </span>
 
                 <div className="buttonContainer">

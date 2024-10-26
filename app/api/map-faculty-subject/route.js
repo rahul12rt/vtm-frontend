@@ -11,7 +11,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/map-faculty-to-subjects?populate[faculty]=*&populate[subjects]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/map-faculty-to-subjects?populate[faculty]=*&populate[subjects][populate]=class`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",
@@ -87,7 +87,7 @@ export async function PUT(request) {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/map-faculty-to-subjects/${id}?populate[faculty]=*&populate[subjects]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/map-faculty-to-subjects/${id}?populate[faculty]=*&populate[subjects][populate]=class`;
     const response = await fetch(strapiEndpoint, {
       method: "PUT",
       headers: {

@@ -13,6 +13,7 @@ const QuestionBank = () => {
     selectedTopics: [],
     selectedYear: "",
     selectedLevel: "",
+    selectedStream: "",
     question: "",
     answers: ["", "", "", ""],
     correctAnswerIndex: null, // Store the correct answer as an index
@@ -37,6 +38,7 @@ const QuestionBank = () => {
     topics: [],
     years: [],
     levels: [],
+    streams: [],
   });
 
   console.log(questions);
@@ -58,12 +60,14 @@ const QuestionBank = () => {
           yearsResponse,
           questionsResponse,
           levelsResponse,
+          streamResponse,
         ] = await Promise.all([
           fetch("/api/class"),
           fetch("/api/chapter"),
           fetch("/api/academic"),
           fetch("/api/question-bank"),
           fetch("/api/levels"),
+          fetch("/api/streams"),
         ]);
 
         const classesResult = await classesResponse.json();
@@ -71,6 +75,13 @@ const QuestionBank = () => {
         const yearsResult = await yearsResponse.json();
         const questionsResult = await questionsResponse.json();
         const levelsResult = await levelsResponse.json();
+        const streamResult = await streamResponse.json();
+        console.log(streamResult);
+        const streamData = streamResult.data.map((stream) => ({
+          id: stream.id,
+          name: stream.attributes.name,
+        }));
+        setData((prevState) => ({ ...prevState, streams: streamData }));
 
         const levelsData = levelsResult.data.map((level) => ({
           id: level.id,
@@ -147,6 +158,9 @@ const QuestionBank = () => {
           level: item.attributes.level
             ? item.attributes.level.data.attributes.name
             : "N/A",
+          stream: item.attributes.stream
+            ? item.attributes.stream.data.attributes.name
+            : "N/A",
         }));
         console.log(mappedQuestions);
         setQuestions(mappedQuestions);
@@ -184,7 +198,9 @@ const QuestionBank = () => {
       (cls) => cls.year === questionEdit.academicYear
     );
 
-    console.log(selectedAcademicYearOption);
+    const selectedStreamOption = data.streams.find(
+      (str) => str.name === questionEdit.stream
+    );
 
     const selectedSubjectOption = data.subjects.find(
       (sub) => sub.name === questionEdit.subject
@@ -211,6 +227,7 @@ const QuestionBank = () => {
       selectedYear: selectedAcademicYearOption.id,
       correctAnswerIndex: correctAnswerIndex,
       selectedLevel: selectedLevelOption.id,
+      selectedStream: selectedStreamOption ? selectedStreamOption.id : "",
     });
 
     setEditIndex(question);
@@ -269,6 +286,7 @@ const QuestionBank = () => {
           formData.correctAnswerIndex !== null
             ? `answer_${formData.correctAnswerIndex + 1}`
             : null,
+        stream: formData.selectedStream,
       },
     };
 
@@ -315,6 +333,7 @@ const QuestionBank = () => {
             academicYear:
               result.data.attributes.academic_year.data.attributes.year,
             level: result.data.attributes.level.data.attributes.name,
+            stream: result.data.attributes.stream.data.attributes.name,
           };
 
           // Update the questions state with the new question
@@ -410,6 +429,7 @@ const QuestionBank = () => {
           formData.correctAnswerIndex !== null
             ? `answer_${formData.correctAnswerIndex + 1}`
             : null,
+        stream: formData.selectedStream,
       },
     };
 
@@ -463,6 +483,7 @@ const QuestionBank = () => {
                     class: result.data.attributes.class.data.attributes.name,
                     academicYear:
                       result.data.attributes.academic_year.data.attributes.year,
+                    stream: result.data.attributes.stream.data.attributes.name,
                   }
                 : question
             )
@@ -542,6 +563,16 @@ const QuestionBank = () => {
         </div>
         <div className="formGroup">
           <SearchableSingleSelect
+            options={data.streams}
+            selectedValue={formData.selectedStream}
+            onChange={(value) => handleInputChange("selectedStream", value)}
+            placeholder="Select Stream"
+            isLoading={dropdownLoading.streams}
+          />
+        </div>
+
+        <div className="formGroup">
+          <SearchableSingleSelect
             options={data.years.map((year) => ({
               id: year.id,
               name: year.year,
@@ -609,7 +640,8 @@ const QuestionBank = () => {
                 <div className="questionText">
                   <strong>
                     Subject: {question.subject} | Chapter: {question.chapter} |
-                    Topic: {question.topic} | Level: {question.level}{" "}
+                    Topic: {question.topic} | Level: {question.level} | Stream:{" "}
+                    {question.stream}
                   </strong>
 
                   <strong>

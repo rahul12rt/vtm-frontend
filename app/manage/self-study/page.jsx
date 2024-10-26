@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from "react";
 import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
 import SearchableSingleSelect from "../../_components/searchAbleDropDownv2";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
+import axios from "axios";
+import { Modal } from "antd";
 
 const SelfStudy = () => {
   const [name, setName] = useState("");
@@ -16,7 +18,11 @@ const SelfStudy = () => {
   const [file, setFile] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
-  const [loading, setLoading] = useState(false); // Added loading state
+  const [loading, setLoading] = useState(false);
+  const [isFileUploaded, setIsFileUploaded] = useState(false);
+  const [viewFileUrl, setViewFileUrl] = useState("");
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState("");
 
   const [data, setData] = useState({
     subjects: [],
@@ -56,7 +62,6 @@ const SelfStudy = () => {
           academicYears: academicYearsData,
         }));
 
-        // Extract chapters and subjects from the chapters data
         const chaptersData = chaptersResult.data.map((chapter) => ({
           id: chapter.id,
           name: chapter.attributes.name,
@@ -65,7 +70,6 @@ const SelfStudy = () => {
         }));
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
-        // Extract unique subjects from chapters
         const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
           if (!acc.find((subject) => subject.id === chapter.subjectId)) {
             acc.push({
@@ -97,8 +101,8 @@ const SelfStudy = () => {
           chapterId: topic.attributes.chapter.data.id,
         }));
         setData((prevState) => ({ ...prevState, topics: topicsData }));
+
         const mappedMaterials = selfStudyResult.data.map((item) => {
-          console.log(item);
           const materialName = item.attributes.name;
           const subjectName = item.attributes.subject.data.attributes.name;
           const className = item.attributes.class.data.attributes.name;
@@ -110,6 +114,7 @@ const SelfStudy = () => {
           const topicNames = item.attributes.topics.data.map(
             (topic) => topic.attributes.name
           );
+          const fileUrl = item.attributes.material.data.attributes.url;
 
           return {
             id: item.id,
@@ -119,6 +124,7 @@ const SelfStudy = () => {
             chapterNames,
             topicNames,
             academic_year,
+            fileUrl,
           };
         });
 
@@ -126,7 +132,7 @@ const SelfStudy = () => {
       } catch (error) {
         console.error("Failed to fetch data", error);
       } finally {
-        setLoading(false); // Set loading to false when fetching is done
+        setLoading(false);
       }
     };
 
@@ -148,10 +154,82 @@ const SelfStudy = () => {
         chapters: numericChapters,
         topics: numericTopics,
         academic_year: numericAcademicYear,
+        material: Number(file),
       },
     };
 
     return payload;
+  };
+
+  const resetForm = () => {
+    setName("");
+    setSelectedSubject("");
+    setSelectedClass("");
+    setSelectedChapters([]);
+    setSelectedTopics([]);
+    setSelectedAcademicYear("");
+    setFile(null);
+    setIsFileUploaded(false);
+  };
+
+  const handleFileChange = async (event) => {
+    const selectedFile = event.target.files[0];
+    if (!selectedFile) {
+      return;
+    }
+
+    let formData = new FormData();
+    formData.append("files", selectedFile);
+    const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+
+    const action = toast.promise(
+      (async () => {
+        try {
+          const response = await axios.post(
+            `${strapiApiUrl}/api/upload`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (!response.status === 200) {
+            throw new Error("Failed to upload file.");
+          }
+
+          const result = response.data;
+          setFile(result[0].id);
+          setIsFileUploaded(true);
+          setViewFileUrl(result[0].url);
+        } catch (error) {
+          console.error("Upload error:", error);
+          throw error;
+        }
+      })(),
+      {
+        loading: "Uploading file...",
+        success: "File uploaded successfully.",
+        error: "Failed to upload file.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
+
+    try {
+      await action;
+    } catch (error) {
+      event.target.value = "";
+      setIsFileUploaded(false);
+      setFile(null);
+      setViewFileUrl("");
+    }
   };
 
   const handleSubmit = async () => {
@@ -194,6 +272,7 @@ const SelfStudy = () => {
             ),
             academic_year:
               materialData.attributes.academic_year.data.attributes.year,
+            fileUrl: viewFileUrl,
           };
 
           if (editIndex === null) {
@@ -206,13 +285,7 @@ const SelfStudy = () => {
             );
           }
 
-          // Reset the form
-          setName("");
-          setSelectedSubject("");
-          setSelectedClass("");
-          setSelectedChapters([]);
-          setSelectedTopics([]);
-          setFile(null);
+          resetForm();
         })(),
         {
           loading: "Submitting study material...",
@@ -234,10 +307,16 @@ const SelfStudy = () => {
     }
   };
 
+  const handleViewFile = (url) => {
+    const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+    const fullUrl = `${strapiApiUrl}${url}`;
+    setCurrentPdfUrl(fullUrl);
+    setIsPdfModalOpen(true);
+  };
+
   const handleEdit = (index) => {
     const material = materials[index];
     setName(material.name);
-    console.log(data.academicYears);
     const selectedSubjectOption = data.subjects.find(
       (sub) => sub.name === material.subjectName
     );
@@ -258,7 +337,7 @@ const SelfStudy = () => {
     );
     setSelectedAcademicYear(selectedAcademicYearOption.id);
     setSelectedTopics(selectedTopicsWithIds);
-    setFile(material.file);
+    setFile(material.fileUrl);
     setEditIndex(index);
   };
 
@@ -306,9 +385,8 @@ const SelfStudy = () => {
       selectedChapters.length &&
       selectedTopics.length
     ) {
-      // Define the request payload to include studyId and updatedData
       const payload = {
-        studyId: materials[editIndex].id, // Pass the ID of the study material being edited
+        studyId: materials[editIndex].id,
         updatedData: createPayload(),
       };
 
@@ -328,8 +406,6 @@ const SelfStudy = () => {
 
           const result = await response.json();
 
-          console.log(result);
-
           const updatedMaterial = {
             id: payload.studyId,
             name: result.data.attributes.name,
@@ -343,22 +419,16 @@ const SelfStudy = () => {
             ),
             academic_year:
               result.data.attributes.academic_year.data.attributes.year,
+            fileUrl: viewFileUrl,
           };
 
-          // Update the materials list with the newly updated material
           setMaterials((prevMaterials) =>
             prevMaterials.map((material, index) =>
               index === editIndex ? updatedMaterial : material
             )
           );
 
-          // Reset form and exit edit mode
-          setName("");
-          setSelectedSubject("");
-          setSelectedClass("");
-          setSelectedChapters([]);
-          setSelectedTopics([]);
-          setFile(null);
+          resetForm();
           setEditIndex(null);
         })(),
         {
@@ -376,15 +446,16 @@ const SelfStudy = () => {
       );
 
       await action;
+      setIsFileUploaded(false);
     } else {
       toast.error("Please fill out all fields before updating.");
     }
   };
 
-  // Filter chapters based on the selected subject
   const filteredChapters = data.chapters.filter(
     (chapter) => chapter.subjectId === Number(selectedSubject)
   );
+
   return (
     <div className="container">
       <Toaster position="top-right" reverseOrder={false} />
@@ -449,20 +520,22 @@ const SelfStudy = () => {
         </div>
 
         <div className="formGroup">
-          {/* <input
+          <input
             type="file"
             onChange={handleFileChange}
             className="file-input"
             accept=".pdf"
-          /> */}
+          />
         </div>
       </div>
+
       <button
         onClick={editIndex !== null ? handleUpdateChange : handleSubmit}
         className="submitButton"
       >
         {editIndex !== null ? "Update Study Material" : "Create Study Material"}
       </button>
+
       {loading ? (
         <div className="loader" style={{ marginTop: 30 }}>
           Loading...
@@ -471,9 +544,8 @@ const SelfStudy = () => {
         <ul className="todoList">
           {materials.map((material, index) => (
             <li key={material.id} className="todoItem">
-              {console.log(material)}
               <div>
-                <strong>Name:</strong> {material.name}
+                {index + 1}. {material.name}
               </div>
               <div>
                 <strong>Subject:</strong> {material.subjectName}
@@ -481,17 +553,25 @@ const SelfStudy = () => {
               <div>
                 <strong>Class:</strong> {material.className}
               </div>
-              <div>
+              {/* <div>
                 <strong>Chapters:</strong> {material.chapterNames.join(", ")}
               </div>
               <div>
                 <strong>Topics:</strong> {material.topicNames.join(", ")}
-              </div>
+              </div> */}
               <div>
                 <strong>Academic Year:</strong> {material.academic_year}
               </div>
 
               <div className="buttonContainer">
+                {material.fileUrl && (
+                  <button
+                    onClick={() => handleViewFile(material.fileUrl)}
+                    className="viewButton"
+                  >
+                    <FaEye />
+                  </button>
+                )}
                 <button
                   onClick={() => handleEdit(index)}
                   className="editButton"
@@ -509,6 +589,20 @@ const SelfStudy = () => {
           ))}
         </ul>
       )}
+      <Modal
+        title="PDF Viewer"
+        open={isPdfModalOpen}
+        onCancel={() => setIsPdfModalOpen(false)}
+        footer={null}
+        width="80%"
+        bodyStyle={{ height: "80vh" }}
+      >
+        <iframe
+          src={currentPdfUrl}
+          style={{ width: "100%", height: "100%", border: "none" }}
+          title="PDF Viewer"
+        />
+      </Modal>
     </div>
   );
 };

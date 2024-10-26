@@ -161,6 +161,7 @@ const FilterQuestionsComponent = () => {
             class: assessment.attributes.class.data.attributes.name,
             academicYear:
               assessment.attributes.academic_year.data.attributes.year,
+            exam_name: assessment.attributes.exam_name,
           };
         });
 
@@ -278,7 +279,7 @@ const FilterQuestionsComponent = () => {
                 <tr>
                   <th style={{ width: "50%" }}>Name</th>
                   <th>Subject</th>
-                  <th>Chapter</th>
+                  <th>Name</th>
                   {/* Uncomment if needed */}
                   {/* <th>Topic</th> */}
                   <th>Class</th>
@@ -290,7 +291,7 @@ const FilterQuestionsComponent = () => {
                   <tr key={assessment.id}>
                     <td>{assessment.name}</td>
                     <td>{assessment.subject}</td>
-                    <td>{assessment.chapter}</td>
+                    <td>{assessment.exam_name}</td>
                     {/* Uncomment if needed */}
                     {/* <td>{assessment.topic}</td> */}
                     <td>{assessment.class}</td>

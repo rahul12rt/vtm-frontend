@@ -6,7 +6,9 @@ import toast, { Toaster } from "react-hot-toast";
 
 const Subject = () => {
   const [subjects, setSubjects] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [inputValue, setInputValue] = useState("");
+  const [selectedClass, setSelectedClass] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -19,6 +21,7 @@ const Subject = () => {
 
   useEffect(() => {
     fetchSubjects();
+    fetchClasses();
   }, []);
 
   const fetchSubjects = async () => {
@@ -52,9 +55,42 @@ const Subject = () => {
     }
   };
 
+  const fetchClasses = async () => {
+    try {
+      const response = await fetch("/api/class", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch classes");
+      }
+
+      const data = await response.json();
+      setClasses(data.data || []);
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      toast.error("Failed to load classes. Please try again later.", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
+    }
+  };
+
   const handleAddOrUpdateSubject = async () => {
-    if (inputValue.trim()) {
-      const newSubject = { name: inputValue };
+    if (inputValue.trim() && selectedClass) {
+      const payload = {
+        data: {
+          name: inputValue,
+          class: parseInt(selectedClass, 10),
+        },
+      };
 
       if (editIndex !== null) {
         // Handle Update
@@ -71,13 +107,20 @@ const Subject = () => {
           return;
         }
 
+        payload.data.id = subjectId;
+        console.log(selectedClass);
+
         toast.promise(
           fetch("/api/subjects", {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ subjectId, name: inputValue }), // Payload for updating
+            body: JSON.stringify({
+              subjectId,
+              name: inputValue,
+              className: parseInt(selectedClass, 10),
+            }),
           }).then((response) => {
             if (!response.ok) {
               return response.json().then((data) => {
@@ -89,18 +132,10 @@ const Subject = () => {
           {
             loading: "Updating...",
             success: async () => {
-              const updatedSubjects = subjects.map((subject, index) =>
-                index === editIndex
-                  ? {
-                      ...subject,
-                      attributes: { ...subject.attributes, name: inputValue },
-                    }
-                  : subject
-              );
-              setSubjects(updatedSubjects);
+              await fetchSubjects();
               setEditIndex(null);
               setInputValue("");
-              fetchSubjects();
+              setSelectedClass("");
               if (inputRef.current) {
                 inputRef.current.focus();
               }
@@ -124,7 +159,7 @@ const Subject = () => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ data: newSubject }),
+            body: JSON.stringify(payload),
           }).then((response) => {
             if (!response.ok) {
               return response.json().then((data) => {
@@ -136,9 +171,9 @@ const Subject = () => {
           {
             loading: "Saving...",
             success: async () => {
-              setSubjects([...subjects, newSubject]);
+              await fetchSubjects();
               setInputValue("");
-              fetchSubjects();
+              setSelectedClass("");
               if (inputRef.current) {
                 inputRef.current.focus();
               }
@@ -155,12 +190,22 @@ const Subject = () => {
           }
         );
       }
+    } else {
+      toast.error("Please enter a subject name and select a class", {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
     }
   };
 
   const handleEditSubject = (index) => {
+    const subject = subjects[index];
     setEditIndex(index);
-    setInputValue(subjects[index].attributes.name);
+    setInputValue(subject.attributes.name);
+    setSelectedClass(subject.attributes.class?.data?.id || "");
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -186,21 +231,14 @@ const Subject = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ subjectId }), // Send subjectId in the request body
+        body: JSON.stringify({ subjectId }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to delete subject");
       }
 
-      const updatedSubjects = subjects.filter((_, i) => i !== index);
-      setSubjects(updatedSubjects);
-      const totalItems = updatedSubjects.length;
-      const totalPages = Math.ceil(totalItems / itemsPerPage);
-      if (currentPage > totalPages) {
-        setCurrentPage(totalPages);
-      }
-
+      await fetchSubjects();
       toast.success("Subject deleted successfully!", {
         style: {
           borderRadius: "10px",
@@ -230,6 +268,8 @@ const Subject = () => {
   const endIndex = Math.min(startIndex + itemsPerPage, subjects.length);
   const displayedSubjects = subjects.slice(startIndex, endIndex);
 
+  console.log(displayedSubjects);
+
   return (
     <div className="container">
       <div className="sectionHeader">Manage Subjects</div>
@@ -242,6 +282,18 @@ const Subject = () => {
           placeholder="Enter a new subject"
           ref={inputRef}
         />
+        <select
+          value={selectedClass}
+          onChange={(e) => setSelectedClass(e.target.value)}
+          className="classSelect"
+        >
+          <option value="">Select Class</option>
+          {classes.map((cls) => (
+            <option key={cls.id} value={cls.id}>
+              {cls.attributes.name}
+            </option>
+          ))}
+        </select>
         <button
           onClick={handleAddOrUpdateSubject}
           className={editIndex !== null ? "addButton" : "addButton"}
@@ -259,7 +311,8 @@ const Subject = () => {
             {displayedSubjects.map((subject, index) => (
               <li key={subject.id || index} className="todoItem">
                 <span>
-                  {startIndex + index + 1}. {subject?.attributes?.name}
+                  {startIndex + index + 1}. {subject?.attributes?.name} - Class:{" "}
+                  {subject?.attributes?.class?.data?.attributes?.name || "N/A"}
                 </span>
                 <div className="buttonContainer">
                   <button

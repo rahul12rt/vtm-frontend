@@ -10,7 +10,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/self-studies?populate[class]=*&populate[subject]=*&populate[chapters]=*&populate[topics]=*&populate[academic_year]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/self-studies?populate[class]=*&populate[subject]=*&populate[chapters]=*&populate[topics]=*&populate[academic_year]=*&populate[material]=*`;
     const response = await fetch(`${strapiEndpoint}`, {
       headers: {
         "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export async function POST(request) {
 
     const formData = await request.json();
 
-    const strapiEndpoint = `${strapiApiUrl}/api/self-studies?populate[class]=*&populate[subject]=*&populate[chapters]=*&populate[topics]=*&populate[academic_year]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/self-studies?populate[class]=*&populate[subject]=*&populate[chapters]=*&populate[topics]=*&populate[academic_year]=*&populate[material]=*`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
       headers: {

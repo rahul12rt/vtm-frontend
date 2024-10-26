@@ -11,7 +11,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate=subject&populate=class`;
+    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate[subject][populate]=class`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export async function POST(request) {
 
     const payload = await request.json();
 
-    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate=subject&populate=class`;
+    const strapiEndpoint = `${strapiApiUrl}/api/chapters?populate[subject][populate]=class`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
       headers: {
@@ -117,7 +117,7 @@ export async function PUT(request) {
     const { chapterId, name, className, subject } = await request.json();
 
     // Validation for required fields
-    if (!chapterId || !name || !className) {
+    if (!chapterId || !name) {
       return NextResponse.json(
         { error: "Chapter ID, name, and class are required" },
         { status: 400 }
@@ -132,7 +132,7 @@ export async function PUT(request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        data: { name, subject, class: className }, // Passing className as class
+        data: { name, subject }, // Passing className as class
       }),
     });
 

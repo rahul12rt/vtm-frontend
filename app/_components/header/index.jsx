@@ -71,7 +71,7 @@ const Header = () => {
           <option value="/manage/create-test">Create Test</option>
           <option value="/list/test">Test List</option>
           <option value="/assign/test">Assign Test</option>
-          <option value="/results">Test Results</option>
+          <option value="/result">Test Results</option>
           <option value="/reports/Aprameya">
             Student wise reports for APRAMEYA AR
           </option>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaEdit, FaTrash, FaPlus, FaSyncAlt } from "react-icons/fa";
 import Pagination from "../../_components/pagination";
 import styles from "../../styles/manage.module.css";
@@ -11,14 +11,14 @@ const Chapters = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
+  const [filterClass, setFilterClass] = useState(""); // New state for class filter
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [subjects, setSubjects] = useState([]);
   const [loadingChapters, setLoadingChapters] = useState(true);
   const [loadingSubjects, setLoadingSubjects] = useState(true);
-  const [selectedClass, setSelectedClass] = useState("");
-  const [classes, setClasses] = useState([]);
+  const [classes, setClasses] = useState([]); // New state for classes
   const [loadingClasses, setLoadingClasses] = useState(true);
 
   const inputRef = useRef(null);
@@ -31,7 +31,7 @@ const Chapters = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [itemsPerPage]);
+  }, [itemsPerPage, filterSubject, filterClass]);
 
   const fetchClasses = async () => {
     setLoadingClasses(true);
@@ -109,11 +109,10 @@ const Chapters = () => {
   };
 
   const handleAddOrUpdateChapter = async () => {
-    if (inputValue.trim() && selectedSubject && selectedClass) {
+    if (inputValue.trim() && selectedSubject) {
       const newChapter = {
         name: inputValue,
         subject: selectedSubject,
-        class: parseInt(selectedClass, 10),
       };
 
       if (editIndex !== null) {
@@ -139,8 +138,7 @@ const Chapters = () => {
             body: JSON.stringify({
               chapterId,
               name: inputValue,
-              subject: selectedSubject,
-              className: parseInt(selectedClass, 10),
+              subject: Number(selectedSubject),
             }),
           }).then((response) => {
             if (!response.ok) {
@@ -161,7 +159,6 @@ const Chapters = () => {
                         ...todo.attributes,
                         name: inputValue,
                         subject: { data: { id: selectedSubject } },
-                        class: { data: { id: selectedClass } },
                       },
                     }
                   : todo
@@ -170,7 +167,7 @@ const Chapters = () => {
               setEditIndex(null);
               setInputValue("");
               setSelectedSubject("");
-              setSelectedClass("");
+
               fetchChapters();
               if (inputRef.current) {
                 inputRef.current.focus();
@@ -205,18 +202,32 @@ const Chapters = () => {
           }),
           {
             loading: "Saving...",
-            success: async () => {
-              setTodos([...todos, newChapter]);
+            success: async (responseData) => {
+              // Create a new chapter object with the correct structure
+              const addedChapter = {
+                id: responseData.data.id,
+                attributes: {
+                  name: responseData.data.attributes.name,
+                  subject: {
+                    data: {
+                      id: Number(selectedSubject),
+                      attributes: subjects.find(
+                        (sub) => sub.id === Number(selectedSubject)
+                      )?.attributes,
+                    },
+                  },
+                },
+              };
+
+              setTodos((prevTodos) => [...prevTodos, addedChapter]);
               setInputValue("");
               setSelectedSubject("");
-              setSelectedClass("");
-              fetchChapters();
               if (inputRef.current) {
                 inputRef.current.focus();
               }
               return <b>Chapter added successfully!</b>;
             },
-            error: <b>Could not save. Please try again.</b>,
+            error: <b>Chapter already exists.</b>,
           },
           {
             style: {
@@ -228,24 +239,26 @@ const Chapters = () => {
         );
       }
     } else {
-      toast.error("Please enter chapter name and select a subject", {
-        style: {
-          borderRadius: "10px",
-          background: "#333",
-          color: "#fff",
-        },
-      });
+      toast.error(
+        "Please enter chapter name, select a subject, and select a class",
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }
+      );
     }
   };
 
   const handleEditTodo = (index) => {
     const todo = filteredTodos[index];
-    console.log(todo.attributes.class?.data?.id);
-    const originalIndex = todos.findIndex((t) => t.id === todo.id); // Find the original index in the todos array
+    const originalIndex = todos.findIndex((t) => t.id === todo.id);
     setEditIndex(originalIndex);
-    setInputValue(todo.attributes.name); // Set the name correctly
-    setSelectedSubject(todo.attributes.subject?.data?.id || ""); // Set the subject id if available
-    setSelectedClass(todo.attributes.class?.data?.id || "");
+    setInputValue(todo.attributes.name);
+    setSelectedSubject(todo.attributes.subject?.data?.id || "");
+
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -272,13 +285,11 @@ const Chapters = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ chapterId }), // Send chapterId in the request body
+          body: JSON.stringify({ chapterId }),
         }).then(() => {
-          // Update the UI
           const updatedTodos = todos.filter((_, i) => i !== index);
           setTodos(updatedTodos);
 
-          // Adjust pagination if needed
           const totalItems = updatedTodos.length;
           const totalPages = Math.ceil(totalItems / itemsPerPage);
           if (currentPage > totalPages) {
@@ -309,20 +320,32 @@ const Chapters = () => {
     }
   };
 
-  const filteredTodos = filterSubject
-    ? todos.filter((todo) => todo.subject === filterSubject)
-    : todos;
+  const getSubjectWithClass = (subjectId) => {
+    return subjects.find((sub) => sub.id === subjectId);
+  };
+
+  const filteredTodos = todos.filter((todo) => {
+    console.log(filterSubject, "---p");
+    const subjectMatches = filterSubject
+      ? todo.attributes.subject.data.id === Number(filterSubject)
+      : true;
+    const classMatches = filterClass
+      ? todo.attributes.subject.data.attributes.class.data.id ===
+        Number(filterClass)
+      : true;
+    return subjectMatches && classMatches;
+  });
+
+  console.log(filteredTodos);
 
   const uniqueSubjects = Array.from(
-    new Set(filteredTodos.map((todo) => todo.subject))
+    new Set(filteredTodos.map((todo) => todo.attributes.subject.data.id))
   );
 
   // Pagination logic
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, filteredTodos.length);
   const displayedTodos = filteredTodos.slice(startIndex, endIndex);
-
-  console.log(displayedTodos);
 
   return (
     <div className="container">
@@ -349,7 +372,7 @@ const Chapters = () => {
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
             className="select"
-            disabled={loadingSubjects} // Disable the select while loading
+            disabled={loadingSubjects}
           >
             <option value="">Select Subject</option>
             {loadingSubjects ? (
@@ -359,90 +382,105 @@ const Chapters = () => {
             ) : (
               subjects.map((sub) => (
                 <option key={sub.id} value={sub.id}>
-                  {sub.attributes?.name}
+                  {sub.attributes?.name}&nbsp;({" "}
+                  {sub.attributes?.class?.data?.attributes?.name} )
                 </option>
               ))
             )}
           </select>
         </div>
       </div>
-      <div className="formGroup">
-        <div>
-          <select
-            id="classes"
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="select"
-            disabled={loadingClasses} // Disable the select while loading
-          >
-            <option value="">Select Class</option>
-            {loadingClasses ? (
-              <option value="" disabled>
-                Loading...
-              </option>
-            ) : (
-              classes.map((cls) => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.attributes?.name}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
-      </div>
-
       {loadingChapters ? (
         <div className="loadingText">Loading...</div>
       ) : (
         <>
-          {uniqueSubjects.length > 1 && (
-            <div className="formGroup">
-              <div>
-                <label htmlFor="filter">Filter by Subject:</label>
-                <select
-                  id="filter"
-                  value={filterSubject}
-                  onChange={(e) => setFilterSubject(e.target.value)}
-                  className="select"
-                  style={{ marginTop: 4, width: "100%" }}
-                >
-                  <option value="">All</option>
-                  {uniqueSubjects.map((subject) => (
-                    <option key={subject} value={subject}>
-                      {subject}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div
+            className="formGroup"
+            style={{ display: "flex", flexDirection: "row", gap: 10 }}
+          >
+            <div>
+              <label htmlFor="filterClass">Filter by Class:</label>
+              <select
+                id="filterClass"
+                value={filterClass}
+                onChange={(e) => setFilterClass(e.target.value)}
+                className="select"
+                style={{ marginTop: 4, width: "100%" }}
+              >
+                <option value="">All</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.attributes?.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+            <div>
+              <label htmlFor="filterSubject">Filter by Subject:</label>
+              <select
+                id="filterSubject"
+                value={filterSubject}
+                onChange={(e) => setFilterSubject(e.target.value)}
+                className="select"
+                style={{ marginTop: 4, width: "100%" }}
+              >
+                <option value="">All</option>
+                {uniqueSubjects.map((subjectId) => {
+                  const subject = subjects.find((sub) => sub.id === subjectId);
+                  return (
+                    <option key={subjectId} value={subjectId}>
+                      {subject?.attributes?.name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
           <ul className="todoList">
-            {displayedTodos.map((todo, index) => (
-              <li key={index} className="todoItem">
-                <span>
-                  <span className={styles.chapter}>
-                    {startIndex + index + 1}.{" "}
-                    <span className="highlight">{todo?.attributes?.name}</span>{" "}
-                    - {todo?.attributes?.subject?.data?.attributes?.name} -{" "}
-                    {todo?.attributes?.class?.data?.attributes?.name}
+            {displayedTodos.map((todo, index) => {
+              const subjectWithClass = getSubjectWithClass(
+                todo.attributes.subject?.data?.id
+              );
+              return (
+                <li key={index} className="todoItem">
+                  <span>
+                    <span className={styles.chapter}>
+                      {startIndex + index + 1}.{" "}
+                      <span className="highlight">
+                        {todo?.attributes?.name}
+                      </span>{" "}
+                      - {todo?.attributes?.subject?.data?.attributes?.name}
+                      {subjectWithClass?.attributes?.class?.data?.attributes
+                        ?.name && (
+                        <span className={styles.classInfo}>
+                          {" "}
+                          (
+                          {
+                            subjectWithClass.attributes.class.data.attributes
+                              .name
+                          }
+                          )
+                        </span>
+                      )}
+                    </span>
                   </span>
-                </span>
-                <div className="buttonContainer">
-                  <button
-                    onClick={() => handleEditTodo(startIndex + index)}
-                    className="editButton"
-                  >
-                    <FaEdit /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteTodo(startIndex + index)}
-                    className="deleteButton"
-                  >
-                    <FaTrash /> Delete
-                  </button>
-                </div>
-              </li>
-            ))}
+                  <div className="buttonContainer">
+                    <button
+                      onClick={() => handleEditTodo(startIndex + index)}
+                      className="editButton"
+                    >
+                      <FaEdit /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTodo(startIndex + index)}
+                      className="deleteButton"
+                    >
+                      <FaTrash /> Delete
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
           <Pagination
             totalItems={filteredTodos.length}
