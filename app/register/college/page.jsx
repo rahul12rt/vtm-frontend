@@ -160,7 +160,7 @@ const College = () => {
             },
             body: JSON.stringify({
               userId: data.user.id,
-              roleId: 4, // Assuming 3 is the role ID for students
+              roleId: 4,
             }),
           });
 

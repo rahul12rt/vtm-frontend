@@ -2,53 +2,74 @@
 import React, { useState, useEffect } from "react";
 import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
 import SearchableSingleSelect from "../../_components/searchAbleDropDownv2";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
+import axios from "axios";
+import { Modal } from "antd";
 
-const CreateDpp = () => {
+const CreateDPP = () => {
   const [name, setName] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedChapters, setSelectedChapters] = useState([]);
   const [selectedTopics, setSelectedTopics] = useState([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState("");
+  const [academicYears, setAcademicYears] = useState([]);
   const [file, setFile] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
-  const [loading, setLoading] = useState(false); // Added loading state
+  const [loading, setLoading] = useState(false);
+  const [isFileUploaded, setIsFileUploaded] = useState(false);
+  const [viewFileUrl, setViewFileUrl] = useState("");
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState("");
 
   const [data, setData] = useState({
     subjects: [],
     chapters: [],
     topics: [],
     classes: [],
+    academicYears: [],
   });
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [chaptersResponse, classesResponse, selfStudyResponse] =
-          await Promise.all([
-            fetch("/api/chapter"),
-            fetch("/api/class"),
-            fetch("/api/create-dpp"),
-          ]);
+        const [
+          chaptersResponse,
+          classesResponse,
+          selfStudyResponse,
+          academicResponse,
+        ] = await Promise.all([
+          fetch("/api/chapter"),
+          fetch("/api/class"),
+          fetch("/api/create-dpp"),
+          fetch("/api/academic"),
+        ]);
 
         const chaptersResult = await chaptersResponse.json();
         const classesResult = await classesResponse.json();
         const selfStudyResult = await selfStudyResponse.json();
+        const academicResult = await academicResponse.json();
 
-        // Extract chapters and subjects from the chapters data
+        const academicYearsData = academicResult.data.map((item) => ({
+          id: item.id,
+          name: item.attributes.year,
+        }));
+        setData((prevState) => ({
+          ...prevState,
+          academicYears: academicYearsData,
+        }));
+
         const chaptersData = chaptersResult.data.map((chapter) => ({
           id: chapter.id,
           name: chapter.attributes.name,
           subjectId: chapter.attributes.subject.data.id,
           subjectName: chapter.attributes.subject.data.attributes.name,
         }));
-        console.log(chaptersData);
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
-        // Extract unique subjects from chapters
         const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
           if (!acc.find((subject) => subject.id === chapter.subjectId)) {
             acc.push({
@@ -80,16 +101,22 @@ const CreateDpp = () => {
           chapterId: topic.attributes.chapter.data.id,
         }));
         setData((prevState) => ({ ...prevState, topics: topicsData }));
+
+        console.log(selfStudyResult);
+
         const mappedMaterials = selfStudyResult.data.map((item) => {
           const materialName = item.attributes.name;
           const subjectName = item.attributes.subject.data.attributes.name;
           const className = item.attributes.class.data.attributes.name;
+          const academic_year =
+            item.attributes.academic_year.data.attributes.year;
           const chapterNames = item.attributes.chapters.data.map(
             (chapter) => chapter.attributes.name
           );
           const topicNames = item.attributes.topics.data.map(
             (topic) => topic.attributes.name
           );
+          const fileUrl = item.attributes.material.data.attributes.url;
 
           return {
             id: item.id,
@@ -98,14 +125,16 @@ const CreateDpp = () => {
             className,
             chapterNames,
             topicNames,
+            academic_year,
+            fileUrl,
           };
         });
-        console.log(data);
+
         setMaterials(mappedMaterials);
       } catch (error) {
         console.error("Failed to fetch data", error);
       } finally {
-        setLoading(false); // Set loading to false when fetching is done
+        setLoading(false);
       }
     };
 
@@ -117,6 +146,7 @@ const CreateDpp = () => {
     const numericClass = Number(selectedClass);
     const numericChapters = selectedChapters.map((chapter) => Number(chapter));
     const numericTopics = selectedTopics.map((topic) => Number(topic));
+    const numericAcademicYear = Number(selectedAcademicYear);
 
     const payload = {
       data: {
@@ -125,10 +155,83 @@ const CreateDpp = () => {
         class: numericClass,
         chapters: numericChapters,
         topics: numericTopics,
+        academic_year: numericAcademicYear,
+        material: Number(file),
       },
     };
 
     return payload;
+  };
+
+  const resetForm = () => {
+    setName("");
+    setSelectedSubject("");
+    setSelectedClass("");
+    setSelectedChapters([]);
+    setSelectedTopics([]);
+    setSelectedAcademicYear("");
+    setFile(null);
+    setIsFileUploaded(false);
+  };
+
+  const handleFileChange = async (event) => {
+    const selectedFile = event.target.files[0];
+    if (!selectedFile) {
+      return;
+    }
+
+    let formData = new FormData();
+    formData.append("files", selectedFile);
+    const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+
+    const action = toast.promise(
+      (async () => {
+        try {
+          const response = await axios.post(
+            `${strapiApiUrl}/api/upload`,
+            formData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+
+          if (!response.status === 200) {
+            throw new Error("Failed to upload file.");
+          }
+
+          const result = response.data;
+          setFile(result[0].id);
+          setIsFileUploaded(true);
+          setViewFileUrl(result[0].url);
+        } catch (error) {
+          console.error("Upload error:", error);
+          throw error;
+        }
+      })(),
+      {
+        loading: "Uploading file...",
+        success: "File uploaded successfully.",
+        error: "Failed to upload file.",
+      },
+      {
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      }
+    );
+
+    try {
+      await action;
+    } catch (error) {
+      event.target.value = "";
+      setIsFileUploaded(false);
+      setFile(null);
+      setViewFileUrl("");
+    }
   };
 
   const handleSubmit = async () => {
@@ -156,7 +259,6 @@ const CreateDpp = () => {
           }
 
           const result = await response.json();
-          console.log("Server Response:", result);
 
           const materialData = result.data;
           const newMaterial = {
@@ -170,7 +272,12 @@ const CreateDpp = () => {
             topicNames: materialData.attributes.topics.data.map(
               (topic) => topic.attributes.name
             ),
+            academic_year:
+              materialData.attributes.academic_year.data.attributes.year,
+            fileUrl: viewFileUrl,
           };
+
+          console.log(materialData);
 
           if (editIndex === null) {
             setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
@@ -182,13 +289,7 @@ const CreateDpp = () => {
             );
           }
 
-          // Reset the form
-          setName("");
-          setSelectedSubject("");
-          setSelectedClass("");
-          setSelectedChapters([]);
-          setSelectedTopics([]);
-          setFile(null);
+          resetForm();
         })(),
         {
           loading: "Submitting DPP...",
@@ -210,6 +311,14 @@ const CreateDpp = () => {
     }
   };
 
+  const handleViewFile = (url) => {
+    const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+    const fullUrl = `${strapiApiUrl}${url}`;
+    window.open(fullUrl, "_blank");
+    setCurrentPdfUrl(fullUrl);
+    setIsPdfModalOpen(true);
+  };
+
   const handleEdit = (index) => {
     const material = materials[index];
     setName(material.name);
@@ -228,14 +337,16 @@ const CreateDpp = () => {
     const selectedTopicsWithIds = data.topics
       .filter((topic) => material.topicNames.includes(topic.name))
       .map((topic) => topic.id);
+    const selectedAcademicYearOption = data.academicYears.find(
+      (year) => year.name === material.academic_year
+    );
+    setSelectedAcademicYear(selectedAcademicYearOption.id);
     setSelectedTopics(selectedTopicsWithIds);
-    setFile(material.file);
+    setFile(material.fileUrl);
     setEditIndex(index);
   };
 
   const handleDelete = async (id) => {
-    console.log(id);
-
     const action = toast.promise(
       (async () => {
         const response = await fetch("/api/create-dpp", {
@@ -279,9 +390,8 @@ const CreateDpp = () => {
       selectedChapters.length &&
       selectedTopics.length
     ) {
-      // Define the request payload to include studyId and updatedData
       const payload = {
-        studyId: materials[editIndex].id, // Pass the ID of the study material being edited
+        studyId: materials[editIndex].id,
         updatedData: createPayload(),
       };
 
@@ -295,14 +405,11 @@ const CreateDpp = () => {
             body: JSON.stringify(payload),
           });
 
-          console.log(response);
-
           if (!response.status === 200) {
             throw new Error("Failed to update DPP.");
           }
 
           const result = await response.json();
-          console.log("Update Response:", result);
 
           const updatedMaterial = {
             id: payload.studyId,
@@ -315,22 +422,18 @@ const CreateDpp = () => {
             topicNames: result.data.attributes.topics.data.map(
               (topic) => topic.attributes.name
             ),
+            academic_year:
+              result.data.attributes.academic_year.data.attributes.year,
+            fileUrl: viewFileUrl,
           };
 
-          // Update the materials list with the newly updated material
           setMaterials((prevMaterials) =>
             prevMaterials.map((material, index) =>
               index === editIndex ? updatedMaterial : material
             )
           );
 
-          // Reset form and exit edit mode
-          setName("");
-          setSelectedSubject("");
-          setSelectedClass("");
-          setSelectedChapters([]);
-          setSelectedTopics([]);
-          setFile(null);
+          resetForm();
           setEditIndex(null);
         })(),
         {
@@ -348,15 +451,16 @@ const CreateDpp = () => {
       );
 
       await action;
+      setIsFileUploaded(false);
     } else {
       toast.error("Please fill out all fields before updating.");
     }
   };
 
-  // Filter chapters based on the selected subject
   const filteredChapters = data.chapters.filter(
     (chapter) => chapter.subjectId === Number(selectedSubject)
   );
+
   return (
     <div className="container">
       <Toaster position="top-right" reverseOrder={false} />
@@ -412,20 +516,31 @@ const CreateDpp = () => {
         </div>
 
         <div className="formGroup">
-          {/* <input
+          <SearchableSingleSelect
+            options={data.academicYears}
+            selectedValue={selectedAcademicYear}
+            onChange={(value) => setSelectedAcademicYear(value)}
+            placeholder="Select academic year"
+          />
+        </div>
+
+        <div className="formGroup">
+          <input
             type="file"
             onChange={handleFileChange}
             className="file-input"
             accept=".pdf"
-          /> */}
+          />
         </div>
       </div>
+
       <button
         onClick={editIndex !== null ? handleUpdateChange : handleSubmit}
         className="submitButton"
       >
         {editIndex !== null ? "Update DPP" : "Create DPP"}
       </button>
+
       {loading ? (
         <div className="loader" style={{ marginTop: 30 }}>
           Loading...
@@ -435,7 +550,7 @@ const CreateDpp = () => {
           {materials.map((material, index) => (
             <li key={material.id} className="todoItem">
               <div>
-                <strong>Name:</strong> {material.name}
+                {index + 1}. {material.name}
               </div>
               <div>
                 <strong>Subject:</strong> {material.subjectName}
@@ -443,13 +558,25 @@ const CreateDpp = () => {
               <div>
                 <strong>Class:</strong> {material.className}
               </div>
-              <div>
+              {/* <div>
                 <strong>Chapters:</strong> {material.chapterNames.join(", ")}
               </div>
               <div>
                 <strong>Topics:</strong> {material.topicNames.join(", ")}
+              </div> */}
+              <div>
+                <strong>Academic Year:</strong> {material.academic_year}
               </div>
+
               <div className="buttonContainer">
+                {material.fileUrl && (
+                  <button
+                    onClick={() => handleViewFile(material.fileUrl)}
+                    className="viewButton"
+                  >
+                    <FaEye />
+                  </button>
+                )}
                 <button
                   onClick={() => handleEdit(index)}
                   className="editButton"
@@ -467,8 +594,22 @@ const CreateDpp = () => {
           ))}
         </ul>
       )}
+      {/* <Modal
+        title="PDF Viewer"
+        open={isPdfModalOpen}
+        onCancel={() => setIsPdfModalOpen(false)}
+        footer={null}
+        width="80%"
+        bodyStyle={{ height: "80vh" }}
+      >
+        <iframe
+          src={currentPdfUrl}
+          style={{ width: "100%", height: "100%", border: "none" }}
+          title="PDF Viewer"
+        />
+      </Modal> */}
     </div>
   );
 };
 
-export default CreateDpp;
+export default CreateDPP;

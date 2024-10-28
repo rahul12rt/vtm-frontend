@@ -5,6 +5,7 @@ import { decrypt } from "../_utils/encryptionUtils";
 import styles from "./TestList.module.css";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
+import Item from "antd/es/list/Item";
 
 const TestList = () => {
   const [studentData, setStudentData] = useState([]);
@@ -19,7 +20,6 @@ const TestList = () => {
   useEffect(() => {
     const encryptedUser = Cookies.get("user");
     const username = decrypt(encryptedUser);
-
     const fetchStudentData = async () => {
       if (username) {
         try {
@@ -115,7 +115,6 @@ const TestList = () => {
         }
 
         const resultsData = await response.json();
-        console.log("---", resultsData);
         const completedIds = resultsData.data
           .filter(
             (result) =>
@@ -191,16 +190,19 @@ const TestList = () => {
             const testAttributes = test.attributes.create_test.data.attributes;
             const testId = test.attributes.create_test.data.id;
             const isCompleted = completedTestIds.includes(testId);
-
+            console.log(test);
             return (
               <div key={test.id} className={styles.testItem}>
                 <div className={styles.testParentInfo}>
-                  <h3>{testAttributes.name}</h3>
+                  <h3>
+                    {testAttributes.exam_name} - {testAttributes.name}
+                  </h3>
                   <div className={styles.testInfo}>
                     <p>
                       Subject: {testAttributes.subject.data.attributes.name}
                     </p>
                     <p>Duration: {testAttributes.duration} minutes</p>
+                    {/* <p>Exam Name: {testAttributes.exam_name}</p> */}
                   </div>
                 </div>
                 {isCompleted ? (

@@ -310,6 +310,7 @@ const SelfStudy = () => {
   const handleViewFile = (url) => {
     const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
     const fullUrl = `${strapiApiUrl}${url}`;
+    window.open(fullUrl, "_blank");
     setCurrentPdfUrl(fullUrl);
     setIsPdfModalOpen(true);
   };
@@ -589,20 +590,22 @@ const SelfStudy = () => {
           ))}
         </ul>
       )}
-      <Modal
+      {console.log(currentPdfUrl)}
+      {/* <Modal
         title="PDF Viewer"
         open={isPdfModalOpen}
         onCancel={() => setIsPdfModalOpen(false)}
         footer={null}
-        width="80%"
+        width="90%"
         bodyStyle={{ height: "80vh" }}
       >
-        <iframe
-          src={currentPdfUrl}
-          style={{ width: "100%", height: "100%", border: "none" }}
-          title="PDF Viewer"
-        />
-      </Modal>
+        <object
+          class="pdf"
+          data={currentPdfUrl}
+          width="100%"
+          height="100%"
+        ></object>
+      </Modal> */}
     </div>
   );
 };
