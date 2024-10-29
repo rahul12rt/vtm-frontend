@@ -5,7 +5,7 @@ function DPP() {
     <div className="container">
       <div className="sectionHeader">DPP Materials</div>
       <div style={{ padding: "50px" }}>
-        <h1>We'll be back soon!</h1>
+        <h1>We&apos;ll be back soon!</h1>
         <p style={{ fontSize: "18px", maxWidth: "600px", margin: "auto" }}>
           Our team is currently working on updates to improve your experience.
           Thank you for your patience!
