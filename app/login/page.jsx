@@ -49,6 +49,7 @@ const Login = () => {
           identifier: formData.username, // username is mapped to identifier
           password: formData.password,
         };
+        setDisable(true);
 
         // Making the POST request
         const response = await fetch("/api/auth/login", {
@@ -83,7 +84,7 @@ const Login = () => {
           throw new Error("Failed to fetch user data");
         }
         const userData = await userResponse.json();
-        setDisable(true);
+
         toast.success("Login successful!");
         if (userData.role.type === "student") {
           const encryptedUsername = CryptoJS.AES.encrypt(
@@ -95,6 +96,16 @@ const Login = () => {
             secure: true,
           });
           router.push(`/student-portal`);
+        } else if (userData.role.type === "college") {
+          const encryptedUsername = CryptoJS.AES.encrypt(
+            userData.username,
+            encryptionKey
+          ).toString();
+          Cookies.set("user", encryptedUsername, {
+            expires: 7,
+            secure: true,
+          });
+          router.push(`/college-portal`);
         }
       } catch (error) {
         toast.error(error.message || "An error occurred during login"); // Show error message
