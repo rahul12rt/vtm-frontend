@@ -200,8 +200,8 @@ const FilterQuestionsComponent = () => {
     <div className="container">
       <div className="sectionHeader">List of Tests</div>
       <div className="inputContainer">
-        <div className="formGroup">
-          <select
+        {/* <div className="formGroup"> */}
+        {/* <select
             value={filters.subject}
             onChange={(e) => handleFilterChange("subject", e.target.value)}
           >
@@ -211,16 +211,16 @@ const FilterQuestionsComponent = () => {
                 {subject.name}
               </option>
             ))}
-          </select>
-        </div>
-        <div className="formGroup">
+          </select> */}
+        {/* </div> */}
+        {/* <div className="formGroup">
           <MultiSelectDropDown
             options={filteredChapters}
             selectedValues={filters.chapter}
             onChange={(values) => handleFilterChange("chapter", values)}
             placeholder="Select Chapters"
           />
-        </div>
+        </div> */}
         {/* Uncomment if needed */}
         {/* <div className="formGroup">
           <MultiSelectDropDown
@@ -232,7 +232,7 @@ const FilterQuestionsComponent = () => {
             placeholder="Select Topics"
           />
         </div> */}
-        <div className="formGroup">
+        {/* <div className="formGroup">
           <select
             value={filters.class}
             onChange={(e) => handleFilterChange("class", e.target.value)}
@@ -244,7 +244,7 @@ const FilterQuestionsComponent = () => {
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
         {/* Uncomment if needed */}
         {/* <div className="formGroup">
           <select

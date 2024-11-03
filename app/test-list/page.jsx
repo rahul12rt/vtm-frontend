@@ -31,7 +31,7 @@ const TestList = () => {
           const response = await fetch(userEndpoint, {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${bearerToken}`, // Set Bearer token in the header
+              Authorization: `Bearer ${bearerToken}`,
               "Content-Type": "application/json",
             },
           });
@@ -70,7 +70,7 @@ const TestList = () => {
     const fetchAssignedTests = async (classId, academicYear, collegeId) => {
       try {
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&filters&populate[create_test][populate]=class,academic_year,duration,subject&filters[colleges][id][$eq]=${collegeId}`;
+        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&filters[create_test][exam_type][$eq]=1&filters[colleges][id][$eq]=${collegeId}&populate=create_test.class,create_test.academic_year,create_test.duration,create_test.subject,create_test.exam_type`;
 
         const bearerToken = Cookies.get("token");
         const response = await fetch(testsEndpoint, {
@@ -81,6 +81,7 @@ const TestList = () => {
           },
         });
 
+        console.log(response);
         if (!response.ok) {
           throw new Error("Failed to fetch assigned tests");
         }

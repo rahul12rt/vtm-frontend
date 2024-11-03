@@ -2,10 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
 import toast, { Toaster } from "react-hot-toast";
+import { Modal } from "antd";
 
 const ListOfSelfStudies = () => {
   const [filter, setFilter] = useState("");
   const [data, setData] = useState([]);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -26,7 +29,8 @@ const ListOfSelfStudies = () => {
         chapter: item.attributes.chapters.data
           .map((ch) => ch.attributes.name)
           .join(", "),
-        class: item.attributes.class.data.attributes.name,
+        class:
+          item.attributes.subject.data.attributes.class.data.attributes.name,
         academic_year: item.attributes.academic_year.data.attributes.year,
       }));
 
@@ -46,8 +50,14 @@ const ListOfSelfStudies = () => {
     return material.name.toLowerCase().includes(filter.toLowerCase());
   });
 
-  const handleDelete = async (id) => {
-    console.log(id);
+  const showDeleteConfirm = (material) => {
+    setItemToDelete(material);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+
     const action = toast.promise(
       (async () => {
         const response = await fetch("/api/self-study", {
@@ -55,14 +65,16 @@ const ListOfSelfStudies = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ studyId: id }),
+          body: JSON.stringify({ studyId: itemToDelete.id }),
         });
 
         if (!response.ok) {
           throw new Error("Failed to delete study material.");
         }
 
-        setData((prevData) => prevData.filter((item) => item.id !== id));
+        setData((prevData) =>
+          prevData.filter((item) => item.id !== itemToDelete.id)
+        );
       })(),
       {
         loading: "Deleting study material...",
@@ -78,7 +90,18 @@ const ListOfSelfStudies = () => {
       }
     );
 
-    await action;
+    try {
+      await action;
+      setIsDeleteModalVisible(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error("Error deleting:", error);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalVisible(false);
+    setItemToDelete(null);
   };
 
   return (
@@ -112,14 +135,13 @@ const ListOfSelfStudies = () => {
             filteredData.map((material) => (
               <tr key={material.id}>
                 <td>{material.name}</td>
-                {console.log(material)}
                 <td>{material.subject}</td>
                 <td>{material.chapter}</td>
                 <td>{material.class}</td>
                 <td>{material.academic_year}</td>
                 <td>
                   <button
-                    onClick={() => handleDelete(material.id)}
+                    onClick={() => showDeleteConfirm(material)}
                     className="deleteButton"
                   >
                     <FaTrash /> Delete
@@ -129,11 +151,31 @@ const ListOfSelfStudies = () => {
             ))
           ) : (
             <tr>
-              <td colSpan="5">No results found</td>
+              <td colSpan="6" style={{ textAlign: "center" }}>
+                No results found
+              </td>
             </tr>
           )}
         </tbody>
       </table>
+
+      <Modal
+        title="Confirm Delete"
+        open={isDeleteModalVisible}
+        onOk={handleDelete}
+        onCancel={handleCancelDelete}
+        okText="Yes"
+        cancelText="No"
+        okButtonProps={{
+          style: {
+            backgroundColor: "#ff4d4f",
+            borderColor: "#ff4d4f",
+          },
+        }}
+      >
+        <p>Are you sure you want to delete &quot;{itemToDelete?.name}&quot;?</p>
+        <p>This action cannot be undone.</p>
+      </Modal>
     </div>
   );
 };

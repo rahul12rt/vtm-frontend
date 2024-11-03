@@ -37,7 +37,6 @@ const QuestionsList = () => {
       }));
 
       try {
-        // Build query string for filters
         const buildQueryString = () => {
           const filtersArray = [];
 
@@ -54,9 +53,6 @@ const QuestionsList = () => {
               ...filters.topic.map((tp) => `filters[topics][id][$eq]=${tp}`)
             );
           }
-          if (filters.class) {
-            filtersArray.push(`filters[class][id][$eq]=${filters.class}`);
-          }
           if (filters.academicYear) {
             filtersArray.push(
               `filters[academic_year][id][$eq]=${filters.academicYear}`
@@ -72,58 +68,53 @@ const QuestionsList = () => {
         };
 
         const queryString = buildQueryString();
-        console.log(queryString);
 
-        const [
-          classesResponse,
-          chaptersResponse,
-          yearsResponse,
-          questionsResponse,
-        ] = await Promise.all([
-          fetch("/api/class"),
-          fetch("/api/chapter"),
-          fetch("/api/academic"),
-          fetch(`/api/filter-questions${queryString ? `?${queryString}` : ""}`),
-        ]);
+        const [chaptersResponse, yearsResponse, questionsResponse] =
+          await Promise.all([
+            fetch("/api/chapter?populate[subject][populate][class]=*"),
+            fetch("/api/academic"),
+            fetch(
+              `/api/filter-questions${queryString ? `?${queryString}` : ""}`
+            ),
+          ]);
 
-        const classesResult = await classesResponse.json();
         const chaptersResult = await chaptersResponse.json();
         const yearsResult = await yearsResponse.json();
         const questionsResult = await questionsResponse.json();
 
-        console.log(questionsResult);
-
-        const classesData = classesResult.data.map((classItem) => ({
-          id: classItem.id,
-          name: classItem.attributes.name,
-        }));
-        setData((prevState) => ({ ...prevState, classes: classesData }));
-
+        // Process years data
         const yearsData = yearsResult.data.map((year) => ({
           id: year.id,
           name: year.attributes.year,
         }));
         setData((prevState) => ({ ...prevState, years: yearsData }));
 
+        // Process chapters data
         const chaptersData = chaptersResult.data.map((chapter) => ({
           id: chapter.id,
           name: chapter.attributes.name,
           subjectId: chapter.attributes.subject.data.id,
           subjectName: chapter.attributes.subject.data.attributes.name,
+          className:
+            chapter.attributes.subject.data.attributes.class.data.attributes
+              .name,
         }));
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
+        // Create subjects data with class information
         const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
           if (!acc.find((subject) => subject.id === chapter.subjectId)) {
             acc.push({
               id: chapter.subjectId,
-              name: chapter.subjectName,
+              // Format: "Physics (PUC-1)"
+              name: `${chapter.subjectName} (${chapter.className})`,
             });
           }
           return acc;
         }, []);
         setData((prevState) => ({ ...prevState, subjects: uniqueSubjects }));
 
+        // Fetch and process topics
         const chapterIds = chaptersData.map((chapter) => chapter.id);
         const topicQueryString = chapterIds
           .map((id) => `filters[chapter][id][$eq]=${id}`)
@@ -139,6 +130,7 @@ const QuestionsList = () => {
         }));
         setData((prevState) => ({ ...prevState, topics: topicsData }));
 
+        // Process questions data
         const mappedQuestions = questionsResult.data.map((item) => ({
           id: item.id,
           question: item.attributes.question,
@@ -149,17 +141,15 @@ const QuestionsList = () => {
             item.attributes.answer_4,
           ],
           correctOption: item.attributes.correct_answer,
-          subject: item.attributes.subject.data.attributes.name,
+          subject: `${item.attributes.subject.data.attributes.name} (${item.attributes.subject.data.attributes.class.data.attributes.name})`,
           chapter: item.attributes.chapters.data
             .map((chap) => chap.attributes.name)
             .join(", "),
           topic: item.attributes.topics.data
             .map((top) => top.attributes.name)
             .join(", "),
-          class: item.attributes.class.data.attributes.name,
           academicYear: item.attributes.academic_year.data.attributes.year,
         }));
-        console.log(mappedQuestions);
         setQuestions(mappedQuestions);
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -261,14 +251,6 @@ const QuestionsList = () => {
         </div>
         <div className="formGroup">
           <SearchableSingleSelect
-            options={data.classes}
-            selectedValue={filters.class}
-            onChange={(value) => handleFilterChange("class", value)}
-            placeholder="Select Class"
-          />
-        </div>
-        <div className="formGroup">
-          <SearchableSingleSelect
             options={data.years}
             selectedValue={filters.academicYear}
             onChange={(value) => handleFilterChange("academicYear", value)}
@@ -295,7 +277,6 @@ const QuestionsList = () => {
               <th>Subject</th>
               <th>Chapter</th>
               <th>Topic</th>
-              <th>Class</th>
               <th>Academic Year</th>
             </tr>
           </thead>
@@ -321,7 +302,6 @@ const QuestionsList = () => {
                 <td>{question.subject}</td>
                 <td>{question.chapter}</td>
                 <td>{question.topic}</td>
-                <td>{question.class}</td>
                 <td>{question.academicYear}</td>
               </tr>
             ))}

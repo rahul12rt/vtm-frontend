@@ -37,6 +37,8 @@ const AssignedDPPList = () => {
     )
   );
 
+  console.log(data);
+
   return (
     <div className="container">
       <div className="sectionHeader">Assigned DPPs</div>
@@ -63,13 +65,19 @@ const AssignedDPPList = () => {
               <th className="collegeColumn">College</th>
             </tr>
           </thead>
+          {console.log(filteredData)}
           <tbody>
             {filteredData.length > 0 ? (
               filteredData.map((item) =>
                 item.attributes.creat_dpps.data.map((dpp) => (
                   <tr key={dpp.id}>
                     <td>{dpp.attributes.name}</td>
-                    <td>{dpp.attributes.class.data.attributes.name}</td>
+                    <td>
+                      {
+                        dpp.attributes.subject.data.attributes.class.data
+                          .attributes.name
+                      }
+                    </td>
                     <td>{item.attributes.college.data.attributes.name}</td>
                   </tr>
                 ))

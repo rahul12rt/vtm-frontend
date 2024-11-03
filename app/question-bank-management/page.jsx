@@ -48,21 +48,18 @@ const QuestionBank = () => {
       setLoading(true);
       setDropdownLoading((prevState) => ({
         ...prevState,
-        classes: true,
         years: true,
         levels: true,
       }));
 
       try {
         const [
-          classesResponse,
           chaptersResponse,
           yearsResponse,
           questionsResponse,
           levelsResponse,
           streamResponse,
         ] = await Promise.all([
-          fetch("/api/class"),
           fetch("/api/chapter"),
           fetch("/api/academic"),
           fetch("/api/question-bank"),
@@ -70,13 +67,12 @@ const QuestionBank = () => {
           fetch("/api/streams"),
         ]);
 
-        const classesResult = await classesResponse.json();
         const chaptersResult = await chaptersResponse.json();
         const yearsResult = await yearsResponse.json();
         const questionsResult = await questionsResponse.json();
         const levelsResult = await levelsResponse.json();
         const streamResult = await streamResponse.json();
-        console.log(streamResult);
+
         const streamData = streamResult.data.map((stream) => ({
           id: stream.id,
           name: stream.attributes.name,
@@ -85,15 +81,9 @@ const QuestionBank = () => {
 
         const levelsData = levelsResult.data.map((level) => ({
           id: level.id,
-          name: level.attributes.name, // Adjust this based on your API response structure
+          name: level.attributes.name,
         }));
         setData((prevState) => ({ ...prevState, levels: levelsData }));
-
-        const classesData = classesResult.data.map((classItem) => ({
-          id: classItem.id,
-          name: classItem.attributes.name,
-        }));
-        setData((prevState) => ({ ...prevState, classes: classesData }));
 
         const yearsData = yearsResult.data.map((year) => ({
           id: year.id,
@@ -106,14 +96,20 @@ const QuestionBank = () => {
           name: chapter.attributes.name,
           subjectId: chapter.attributes.subject.data.id,
           subjectName: chapter.attributes.subject.data.attributes.name,
+          className:
+            chapter.attributes.subject.data.attributes.class.data.attributes
+              .name,
         }));
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
+        // Modified to include class information in subject name
         const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
           if (!acc.find((subject) => subject.id === chapter.subjectId)) {
             acc.push({
               id: chapter.subjectId,
-              name: chapter.subjectName,
+              name: `${chapter.subjectName} (${chapter.className})`,
+              rawName: chapter.subjectName,
+              className: chapter.className,
             });
           }
           return acc;
@@ -127,7 +123,6 @@ const QuestionBank = () => {
         const topicsResponse = await fetch(
           `/api/topics?populate[chapter]=*&${queryString}`
         );
-        console.log(queryString);
         const topicsResult = await topicsResponse.json();
         const topicsData = topicsResult.data.map((topic) => ({
           id: topic.id,
@@ -135,7 +130,7 @@ const QuestionBank = () => {
           chapterId: topic.attributes.chapter.data.id,
         }));
         setData((prevState) => ({ ...prevState, topics: topicsData }));
-
+        console.log(questionsResult);
         const mappedQuestions = questionsResult.data.map((item) => ({
           id: item.id,
           question: item.attributes.question,
@@ -146,14 +141,13 @@ const QuestionBank = () => {
             item.attributes.answer_4,
           ],
           correctAnswer: item.attributes.correct_answer,
-          subject: item.attributes.subject.data.attributes.name,
+          subject: `${item.attributes.subject.data.attributes.name} (${item.attributes.subject.data.attributes.class.data.attributes.name})`,
           chapter: item.attributes.chapters.data
             .map((chap) => chap.attributes.name)
             .join(", "),
           topic: item.attributes.topics.data
             .map((top) => top.attributes.name)
             .join(", "),
-          class: item.attributes.class.data.attributes.name,
           academicYear: item.attributes.academic_year.data.attributes.year,
           level: item.attributes.level
             ? item.attributes.level.data.attributes.name
@@ -162,7 +156,6 @@ const QuestionBank = () => {
             ? item.attributes.stream.data.attributes.name
             : "N/A",
         }));
-        console.log(mappedQuestions);
         setQuestions(mappedQuestions);
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -170,7 +163,6 @@ const QuestionBank = () => {
         setLoading(false);
         setDropdownLoading((prevState) => ({
           ...prevState,
-          classes: false,
           years: false,
           levels: false,
         }));
@@ -179,6 +171,8 @@ const QuestionBank = () => {
 
     fetchData();
   }, []);
+
+  console.log(questions);
 
   const handleEdit = (question) => {
     if (!question) return;
@@ -218,7 +212,6 @@ const QuestionBank = () => {
     console.log(answerIndex);
     const correctAnswerIndex = parseInt(answerIndex - 1);
     setFormData({
-      selectedClass: selectedClassOption.id || "", // Default to an empty string
       selectedSubject: selectedSubjectOption.id || "",
       selectedChapters: selectedChaptersWithIds || [], // Set defaults as empty
       selectedTopics: selectedTopicsWithIds || [], // Set defaults as empty
@@ -274,7 +267,7 @@ const QuestionBank = () => {
         subject: formData.selectedSubject,
         chapters: formData.selectedChapters,
         topics: formData.selectedTopics,
-        class: formData.selectedClass,
+        // class: formData.selectedClass,
         academic_year: formData.selectedYear,
         level: formData.selectedLevel,
         question: formData.question,
@@ -329,7 +322,9 @@ const QuestionBank = () => {
             topic: result.data.attributes.topics.data.map(
               (top) => top.attributes.name
             ),
-            class: result.data.attributes.class.data.attributes.name,
+            class:
+              result.data.attributes.subject.data.attributes.class.data
+                .attributes.name,
             academicYear:
               result.data.attributes.academic_year.data.attributes.year,
             level: result.data.attributes.level.data.attributes.name,
@@ -480,7 +475,9 @@ const QuestionBank = () => {
                       (top) => top.attributes.name
                     ),
                     level: result.data.attributes.level.data.attributes.name,
-                    class: result.data.attributes.class.data.attributes.name,
+                    class:
+                      result.data.attributes.subject.data.attributes.class.data
+                        .attributes.name,
                     academicYear:
                       result.data.attributes.academic_year.data.attributes.year,
                     stream: result.data.attributes.stream.data.attributes.name,
@@ -520,24 +517,15 @@ const QuestionBank = () => {
   return (
     <div className="container">
       <Toaster position="top-right" reverseOrder={false} />
-      <div className="sectionHeader">Dynamic Dropdowns</div>
+      <div className="sectionHeader">Question Bank</div>
 
       <div className="inputContainer">
-        <div className="formGroup">
-          <SearchableSingleSelect
-            options={data.classes}
-            selectedValue={formData.selectedClass}
-            onChange={(value) => handleInputChange("selectedClass", value)}
-            placeholder="Select class"
-            isLoading={dropdownLoading.classes}
-          />
-        </div>
         <div className="formGroup">
           <SearchableSingleSelect
             options={data.subjects}
             selectedValue={formData.selectedSubject}
             onChange={(value) => handleInputChange("selectedSubject", value)}
-            placeholder="Select subject"
+            placeholder="Select subject (Class)"
             isLoading={dropdownLoading.subjects}
           />
         </div>
@@ -642,12 +630,8 @@ const QuestionBank = () => {
                     Subject: {question.subject} | Chapter: {question.chapter} |
                     Topic: {question.topic} | Level: {question.level} | Stream:{" "}
                     {question.stream}
-                  </strong>
-
-                  <strong>
-                    | Class: {question.class} | Academic Year:{" "}
-                    {question.academicYear}
-                  </strong>
+                  </strong>{" "}
+                  <strong>| Academic Year: {question.academicYear}</strong>
                   <div className="questionList">
                     <div className="question">
                       {index + 1}: {question.question}

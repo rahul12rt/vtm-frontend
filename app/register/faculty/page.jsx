@@ -81,7 +81,9 @@ const Faculty = () => {
     }
 
     fetchData();
-  }, []); // Fetch qualifications and subjects only on component mount
+  }, []);
+
+  console.log(subjects);
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -329,7 +331,8 @@ const Faculty = () => {
                 <option value="">Select a subject</option>
                 {subjects.map((subject) => (
                   <option key={subject.id} value={subject.id}>
-                    {subject.attributes.name}
+                    {subject.attributes.name} (
+                    {subject.attributes.class.data.attributes.name})
                   </option>
                 ))}
               </>

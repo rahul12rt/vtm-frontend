@@ -11,7 +11,8 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/question-banks?populate=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/question-banks?populate[subject][populate][class]=*&populate[chapters]=*&populate[topics]=*&populate[class]=*&populate[academic_year]=*&populate[create_tests]=*&populate[level]=*&populate[stream]=*
+`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",
@@ -45,7 +46,7 @@ export async function POST(request) {
 
     const payload = await request.json();
 
-    const strapiEndpoint = `${strapiApiUrl}/api/question-banks?populate=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/question-banks?populate[subject][populate][class]=*&populate[chapters]=*&populate[topics]=*&populate[class]=*&populate[academic_year]=*&populate[create_tests]=*&populate[level]=*&populate[stream]=*`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
       headers: {
@@ -84,7 +85,7 @@ export async function PUT(request) {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/question-banks/${qbId}?populate=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/question-banks/${qbId}?populate[subject][populate][class]=*&populate[chapters]=*&populate[topics]=*&populate[class]=*&populate[academic_year]=*&populate[create_tests]=*&populate[level]=*&populate[stream]=*`;
     const response = await fetch(strapiEndpoint, {
       method: "PUT",
       headers: {

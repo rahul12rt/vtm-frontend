@@ -13,6 +13,7 @@ const CreateTest = () => {
     academicYear: null,
     question: "",
     level: null,
+    type: null,
   });
   const [questions, setQuestions] = useState([]);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
@@ -21,6 +22,7 @@ const CreateTest = () => {
   const [testDuration, setTestDuration] = useState(""); // State to track test duration
   const [testDate, setTestDate] = useState("");
   const [examName, setExamName] = useState("");
+  const [examType, setExamType] = useState("");
   const [data, setData] = useState({
     subjects: [],
     chapters: [],
@@ -29,6 +31,7 @@ const CreateTest = () => {
     streams: [],
     years: [],
     levels: [],
+    types: [],
   });
   const [loading, setLoading] = useState(false);
   const [dropdownLoading, setDropdownLoading] = useState({
@@ -47,13 +50,11 @@ const CreateTest = () => {
       setLoading(true);
       setDropdownLoading((prevState) => ({
         ...prevState,
-        classes: true,
         years: true,
         streams: true,
       }));
 
       try {
-        // Build query string for filters
         const buildQueryString = () => {
           const filtersArray = [];
 
@@ -73,9 +74,6 @@ const CreateTest = () => {
           if (filters.stream) {
             filtersArray.push(`filters[stream][id][$eq]=${filters.stream}`);
           }
-          if (filters.class) {
-            filtersArray.push(`filters[class][id][$eq]=${filters.class}`);
-          }
           if (filters.academicYear) {
             filtersArray.push(
               `filters[academic_year][id][$eq]=${filters.academicYear}`
@@ -87,7 +85,7 @@ const CreateTest = () => {
             );
           }
           if (filters.level) {
-            filtersArray.push(`filters[level][id][$eq]=${filters.level}`); // Add level filter
+            filtersArray.push(`filters[level][id][$eq]=${filters.level}`);
           }
 
           return filtersArray.join("&");
@@ -96,29 +94,32 @@ const CreateTest = () => {
         const queryString = buildQueryString();
 
         const [
-          classesResponse,
+          typeResponse,
+          subjectsResponse,
           chaptersResponse,
           yearsResponse,
           questionsResponse,
           levelsResponse,
           streamsResponse,
         ] = await Promise.all([
-          fetch("/api/class"),
+          fetch("/api/type"),
+          fetch("/api/subjects?populate=*"), // Modified to include class data
           fetch("/api/chapter"),
           fetch("/api/academic"),
           fetch(`/api/filter-questions${queryString ? `?${queryString}` : ""}`),
           fetch("/api/levels"),
           fetch("/api/streams"),
         ]);
+
         const [
-          classesResult,
+          subjectsResult,
           chaptersResult,
           yearsResult,
           questionsResult,
           levelsResult,
           streamsResult,
         ] = await Promise.all([
-          classesResponse.json(),
+          subjectsResponse.json(),
           chaptersResponse.json(),
           yearsResponse.json(),
           questionsResponse.json(),
@@ -126,18 +127,29 @@ const CreateTest = () => {
           streamsResponse.json(),
         ]);
 
+        const typeResult = await typeResponse.json();
+        console.log(typeResult);
+        const typesData = typeResult.data.map((type) => ({
+          id: type.id,
+          name: type.attributes.type,
+        }));
+        setData((prevState) => ({ ...prevState, types: typesData }));
+
         const streamsData = streamsResult.data.map((stream) => ({
           id: stream.id,
           name: stream.attributes.name,
         }));
         setData((prevState) => ({ ...prevState, streams: streamsData }));
 
-        // Map the API data to your component's structure
-        const classesData = classesResult.data.map((classItem) => ({
-          id: classItem.id,
-          name: classItem.attributes.name,
+        // Modified to include class information in subjects
+        const subjectsData = subjectsResult.data.map((subject) => ({
+          id: subject.id,
+          name: `${subject.attributes.name} (${subject.attributes.class.data.attributes.name})`,
+          className: subject.attributes.class.data.attributes.name,
+          classId: subject.attributes.class.data.id,
+          rawName: subject.attributes.name,
         }));
-        setData((prevState) => ({ ...prevState, classes: classesData }));
+        setData((prevState) => ({ ...prevState, subjects: subjectsData }));
 
         const yearsData = yearsResult.data.map((year) => ({
           id: year.id,
@@ -159,28 +171,13 @@ const CreateTest = () => {
         }));
         setData((prevState) => ({ ...prevState, levels: levelsData }));
 
-        // Extract unique subjects from chapters data
-        const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
-          if (!acc.find((subject) => subject.id === chapter.subjectId)) {
-            acc.push({
-              id: chapter.subjectId,
-              name: chapter.subjectName,
-            });
-          }
-          return acc;
-        }, []);
-        setData((prevState) => ({ ...prevState, subjects: uniqueSubjects }));
-
-        // Fetch topics based on the chapters
-        const chapterIds = chaptersData.map((chapter) => chapter.id);
-        const topicQueryString = chapterIds
+        const topicQueryString = chaptersData
           .map((id) => `filters[chapter][id][$eq]=${id}`)
           .join("&");
         const topicsResponse = await fetch(
           `/api/topics?populate[chapter]=*&${topicQueryString}`
         );
 
-        console.log(topicQueryString);
         const topicsResult = await topicsResponse.json();
         const topicsData = topicsResult.data.map((topic) => ({
           id: topic.id,
@@ -207,10 +204,10 @@ const CreateTest = () => {
           topic: item.attributes.topics.data
             .map((top) => top.attributes.name)
             .join(", "),
-          class: item.attributes.class.data.attributes.name,
+          class:
+            item.attributes.subject.data.attributes.class.data.attributes.name,
           academicYear: item.attributes.academic_year.data.attributes.year,
         }));
-        console.log(mappedQuestions);
         setQuestions(mappedQuestions);
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -218,7 +215,6 @@ const CreateTest = () => {
         setLoading(false);
         setDropdownLoading((prevState) => ({
           ...prevState,
-          classes: false,
           years: false,
         }));
       }
@@ -228,7 +224,18 @@ const CreateTest = () => {
   }, [filters]);
 
   const handleFilterChange = (filterName, value) => {
-    setFilters((prevFilters) => ({ ...prevFilters, [filterName]: value }));
+    if (filterName === "subject") {
+      const selectedSubject = data.subjects.find((s) => s.id === Number(value));
+      if (selectedSubject) {
+        setFilters((prevFilters) => ({
+          ...prevFilters,
+          [filterName]: value,
+          class: selectedSubject.classId, // Automatically set the class based on selected subject
+        }));
+      }
+    } else {
+      setFilters((prevFilters) => ({ ...prevFilters, [filterName]: value }));
+    }
   };
 
   const handleQuestionsChange = (selected) => {
@@ -289,6 +296,7 @@ const CreateTest = () => {
           academic_year: Number(filters.academicYear),
           date: testDate,
           exam_name: examName,
+          exam_type: Number(filters.type),
         },
       };
 
@@ -318,6 +326,7 @@ const CreateTest = () => {
             setTestDuration("");
             setTestDate("");
             setExamName("");
+            setExamType("");
           }),
         {
           loading: "Creating test...",
@@ -383,17 +392,6 @@ const CreateTest = () => {
         />
 
         <select
-          onChange={(e) => handleFilterChange("class", e.target.value || null)}
-        >
-          <option value="">Select Class</option>
-          {data.classes.map((classItem) => (
-            <option key={classItem.id} value={classItem.id}>
-              {classItem.name}
-            </option>
-          ))}
-        </select>
-
-        <select
           onChange={(e) =>
             handleFilterChange("academicYear", e.target.value || null)
           }
@@ -440,7 +438,7 @@ const CreateTest = () => {
           />
         )}
       </div>
-
+      {console.log(data)}
       {/* Display Selected Values */}
       <div className="selectedValuesContainer">
         <h3>Selected Questions:</h3>
@@ -504,6 +502,18 @@ const CreateTest = () => {
                       )}
                     </div>
                   </div>
+                  <select
+                    onChange={(e) =>
+                      handleFilterChange("type", e.target.value || null)
+                    } // Handle type change
+                  >
+                    <option value="">Select Type</option>
+                    {data.types.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <button className="submitButton" onClick={handleCreateTest}>
                   Creat Test

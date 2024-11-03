@@ -124,7 +124,7 @@ const AssignTest = () => {
         });
 
         setAssignedTests(mappedAssignedTests);
-
+        console.log(assessmentsResult);
         setData((prevState) => ({
           ...prevState,
           classes: classesResult.data.map((classItem) => ({
@@ -135,11 +135,15 @@ const AssignTest = () => {
             id: year.id,
             name: year.attributes.year,
           })),
+
           chapters: chaptersResult.data.map((chapter) => ({
             id: chapter.id,
             name: chapter.attributes.name,
             subjectId: chapter.attributes.subject.data.id,
             subjectName: chapter.attributes.subject.data.attributes.name,
+            className:
+              chapter.attributes.subject.data.attributes.class.data.attributes
+                .name,
           })),
           topics: topicsResult.data.map((topic) => ({
             id: topic.id,
@@ -201,6 +205,7 @@ const AssignTest = () => {
     (chapter) => chapter.subjectId === Number(filters.subject)
   );
 
+  console.log(data);
   const filteredAssessments = data.assessments.filter((assessment) =>
     assessment.name.toLowerCase().includes(filters.question.toLowerCase())
   );
@@ -360,7 +365,7 @@ const AssignTest = () => {
   return (
     <div className="container">
       <div className="sectionHeader">List of Tests</div>
-      <div className="inputContainer">
+      {/* <div className="inputContainer">
         <div className="formGroup">
           <select
             value={filters.subject}
@@ -390,7 +395,7 @@ const AssignTest = () => {
             onChange={(e) => handleFilterChange("question", e.target.value)}
           />
         </div>
-      </div>
+      </div> */}
       {errorMessage && <div className="errorText">{errorMessage}</div>}
       <div className="table">
         {loading ? (
@@ -407,6 +412,7 @@ const AssignTest = () => {
                 <th style={{ width: "10%" }}>Assign</th>
               </tr>
             </thead>
+            {console.log(filteredAssessments)}
             <tbody>
               {filteredAssessments.map((assessment) => (
                 <tr key={assessment.id}>

@@ -394,7 +394,7 @@ const Chapters = () => {
         <div className="loadingText">Loading...</div>
       ) : (
         <>
-          <div
+          {/* <div
             className="formGroup"
             style={{ display: "flex", flexDirection: "row", gap: 10 }}
           >
@@ -435,7 +435,7 @@ const Chapters = () => {
                 })}
               </select>
             </div>
-          </div>
+          </div> */}
           <ul className="todoList">
             {displayedTodos.map((todo, index) => {
               const subjectWithClass = getSubjectWithClass(

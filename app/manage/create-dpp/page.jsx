@@ -67,7 +67,11 @@ const CreateDPP = () => {
           name: chapter.attributes.name,
           subjectId: chapter.attributes.subject.data.id,
           subjectName: chapter.attributes.subject.data.attributes.name,
+          className:
+            chapter.attributes.subject.data.attributes.class.data.attributes
+              .name,
         }));
+
         setData((prevState) => ({ ...prevState, chapters: chaptersData }));
 
         const uniqueSubjects = chaptersData.reduce((acc, chapter) => {
@@ -75,6 +79,7 @@ const CreateDPP = () => {
             acc.push({
               id: chapter.subjectId,
               name: chapter.subjectName,
+              className: chapter.className,
             });
           }
           return acc;
@@ -102,12 +107,11 @@ const CreateDPP = () => {
         }));
         setData((prevState) => ({ ...prevState, topics: topicsData }));
 
-        console.log(selfStudyResult);
-
         const mappedMaterials = selfStudyResult.data.map((item) => {
           const materialName = item.attributes.name;
           const subjectName = item.attributes.subject.data.attributes.name;
-          const className = item.attributes.class.data.attributes.name;
+          const className =
+            item.attributes.subject.data.attributes.class.data.attributes.name;
           const academic_year =
             item.attributes.academic_year.data.attributes.year;
           const chapterNames = item.attributes.chapters.data.map(
@@ -152,7 +156,6 @@ const CreateDPP = () => {
       data: {
         name: name,
         subject: numericSubject,
-        class: numericClass,
         chapters: numericChapters,
         topics: numericTopics,
         academic_year: numericAcademicYear,
@@ -238,7 +241,6 @@ const CreateDPP = () => {
     if (
       name &&
       selectedSubject &&
-      selectedClass &&
       selectedChapters.length &&
       selectedTopics.length
     ) {
@@ -265,7 +267,9 @@ const CreateDPP = () => {
             id: materialData.id,
             name: materialData.attributes.name,
             subjectName: materialData.attributes.subject.data.attributes.name,
-            className: materialData.attributes.class.data.attributes.name,
+            className:
+              materialData.attributes.subject.data.attributes.class.data
+                .attributes.name,
             chapterNames: materialData.attributes.chapters.data.map(
               (chapter) => chapter.attributes.name
             ),
@@ -276,8 +280,6 @@ const CreateDPP = () => {
               materialData.attributes.academic_year.data.attributes.year,
             fileUrl: viewFileUrl,
           };
-
-          console.log(materialData);
 
           if (editIndex === null) {
             setMaterials((prevMaterials) => [...prevMaterials, newMaterial]);
@@ -386,7 +388,6 @@ const CreateDPP = () => {
     if (
       name &&
       selectedSubject &&
-      selectedClass &&
       selectedChapters.length &&
       selectedTopics.length
     ) {
@@ -415,7 +416,9 @@ const CreateDPP = () => {
             id: payload.studyId,
             name: result.data.attributes.name,
             subjectName: result.data.attributes.subject.data.attributes.name,
-            className: result.data.attributes.class.data.attributes.name,
+            className:
+              result.data.attributes.subject.data.attributes.class.data
+                .attributes.name,
             chapterNames: result.data.attributes.chapters.data.map(
               (chapter) => chapter.attributes.name
             ),
@@ -478,23 +481,16 @@ const CreateDPP = () => {
 
         <div className="formGroup">
           <SearchableSingleSelect
-            options={data.subjects}
+            options={data.subjects.map((subject) => ({
+              ...subject,
+              name: `${subject.name} (${subject.className})`,
+            }))}
             selectedValue={selectedSubject}
             onChange={(value) => setSelectedSubject(value)}
             placeholder="Select subject"
           />
         </div>
 
-        <div className="formGroup">
-          <SearchableSingleSelect
-            options={data.classes}
-            selectedValue={selectedClass}
-            onChange={(value) => setSelectedClass(value)}
-            placeholder="Select class"
-          />
-        </div>
-      </div>
-      <div className="inputContainer">
         <div className="formGroup">
           <MultiSelectDropDown
             options={filteredChapters}
@@ -504,6 +500,16 @@ const CreateDPP = () => {
           />
         </div>
 
+        {/* <div className="formGroup">
+          <SearchableSingleSelect
+            options={data.classes}
+            selectedValue={selectedClass}
+            onChange={(value) => setSelectedClass(value)}
+            placeholder="Select class"
+          />
+        </div> */}
+      </div>
+      <div className="inputContainer">
         <div className="formGroup">
           <MultiSelectDropDown
             options={data.topics.filter((topic) =>
@@ -553,11 +559,12 @@ const CreateDPP = () => {
                 {index + 1}. {material.name}
               </div>
               <div>
-                <strong>Subject:</strong> {material.subjectName}
+                <strong>Subject:</strong> {material.subjectName} (
+                {material.className})
               </div>
-              <div>
+              {/* <div>
                 <strong>Class:</strong> {material.className}
-              </div>
+              </div> */}
               {/* <div>
                 <strong>Chapters:</strong> {material.chapterNames.join(", ")}
               </div>
@@ -594,19 +601,21 @@ const CreateDPP = () => {
           ))}
         </ul>
       )}
+      {console.log(currentPdfUrl)}
       {/* <Modal
         title="PDF Viewer"
         open={isPdfModalOpen}
         onCancel={() => setIsPdfModalOpen(false)}
         footer={null}
-        width="80%"
+        width="90%"
         bodyStyle={{ height: "80vh" }}
       >
-        <iframe
-          src={currentPdfUrl}
-          style={{ width: "100%", height: "100%", border: "none" }}
-          title="PDF Viewer"
-        />
+        <object
+          class="pdf"
+          data={currentPdfUrl}
+          width="100%"
+          height="100%"
+        ></object>
       </Modal> */}
     </div>
   );

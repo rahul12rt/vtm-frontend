@@ -11,7 +11,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/assign-dpp-to-colleges?populate[creat_dpps][populate]=class&populate[creat_dpps]=*&populate[college]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/assign-dpp-to-colleges?populate[creat_dpps][populate][subject][populate][class]=*&populate[creat_dpps]=*&populate[college]=*`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",

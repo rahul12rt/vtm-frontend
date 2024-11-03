@@ -11,7 +11,7 @@ export async function GET() {
       );
     }
 
-    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges?populate[self_studies]=*&populate[college]=*`;
+    const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges?populate[self_studies][populate][subject][populate][class]=*&populate[college]=*`;
     const response = await fetch(strapiEndpoint, {
       headers: {
         "Content-Type": "application/json",

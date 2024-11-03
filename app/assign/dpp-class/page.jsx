@@ -234,15 +234,15 @@ const AssignDPPToClass = () => {
             const assignDppResults = await assignDppResponse.json();
 
             // Map DPPs and Classes
-
+            console.log(dppResults);
             const dppOptions = dppResults.data.map((dpp) => ({
               id: dpp.id,
               name: dpp.attributes.name,
             }));
-            const classOptions = dppResults.data.map((dpp) => ({
-              id: dpp.attributes.class.data.id,
-              name: dpp.attributes.class.data.attributes.name,
-            }));
+            // const classOptions = dppResults.data.map((dpp) => ({
+            //   id: dpp.attributes.class.data.id,
+            //   name: dpp.attributes.class.data.attributes.name,
+            // }));
 
             // Map Colleges
             const collegeOptions = collegeResults.data.map((college) => ({
@@ -251,10 +251,10 @@ const AssignDPPToClass = () => {
             }));
 
             // Remove duplicates from classOptions
-            const uniqueClassOptions = Array.from(
-              new Map(classOptions.map((item) => [item.id, item])).values()
-            );
-            console.log(assignDppResults);
+            // const uniqueClassOptions = Array.from(
+            //   new Map(classOptions.map((item) => [item.id, item])).values()
+            // );
+
             const mappedAssignments = assignDppResults.data.map(
               (assignment) => ({
                 id: assignment.id,
@@ -267,7 +267,7 @@ const AssignDPPToClass = () => {
 
             // Update state
             setDPPs(dppOptions);
-            setClasses(uniqueClassOptions);
+            // setClasses(uniqueClassOptions);
             setColleges(collegeOptions);
             setAssignedDPPs(mappedAssignments);
             setLoading(false);
