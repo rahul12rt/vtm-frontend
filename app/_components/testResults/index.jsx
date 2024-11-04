@@ -11,6 +11,7 @@ const TestResults = ({ data }) => {
   const testInfo = data[0].attributes.create_test.data.attributes;
   const collegeInfo =
     data[0].attributes.student.data.attributes.college.data.attributes;
+  const academicYear = data[0].attributes.student.data.attributes.academic_year; // Extract academic year
 
   // Sort the results based on obtained marks in descending order
   const results = data
@@ -51,12 +52,13 @@ const TestResults = ({ data }) => {
         <div className="sectionHeader">College Name - {collegeInfo.name}</div>
         <div className={styles.infoSection}>
           <h2 className={styles.infoTitle}>
-            {testInfo.class.data.attributes.name} {testInfo.exam_name} Section
+            {testInfo.subject.data.attributes.class.data.attributes.name}{" "}
+            {testInfo.exam_name} Section {academicYear}
           </h2>
           <p className={styles.infoDetails}>
-            Test Title - {testInfo.name}&nbsp;&nbsp;|&nbsp;&nbsp;Topic -{" "}
-            {testInfo.topics.data[0].attributes.name}
-            &nbsp;&nbsp;|&nbsp;&nbsp;Test Date: {testInfo.date}
+            Test - {testInfo.subject.data.attributes.name}
+            &nbsp;&nbsp;|&nbsp;&nbsp;Topic - {testInfo.name}
+            &nbsp;&nbsp;|&nbsp;&nbsp;Date: {testInfo.date}
           </p>
         </div>
 

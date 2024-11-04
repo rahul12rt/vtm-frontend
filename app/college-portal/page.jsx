@@ -85,12 +85,6 @@ const CollegePortal = () => {
         >
           Student Wise
         </div>
-        <div
-          className={styles.card}
-          onClick={() => handleNavigation("/college-portal/exam-results")}
-        >
-          Subject Wise
-        </div>
       </div>
     </div>
   );
