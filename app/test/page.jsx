@@ -24,7 +24,7 @@ const Test = () => {
       const fetchData = async () => {
         try {
           const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-          const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][id][$eq]=${id}&populate[create_test][populate]=class,academic_year,subject,question_banks`;
+          const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][id][$eq]=${id}&populate[create_test][populate]=class,academic_year,subject,question_banks,exam_type`;
           const bearerToken = Cookies.get("token");
 
           const response = await fetch(testsEndpoint, {
@@ -38,8 +38,6 @@ const Test = () => {
             throw new Error("Network response was not ok");
           }
           const result = await response.json();
-
-          // Make a deep copy of the data
           const modifiedResult = JSON.parse(JSON.stringify(result));
 
           // Shuffle questions if they exist
@@ -142,11 +140,16 @@ const Test = () => {
     setLockedQuestions((prev) => ({ ...prev, [questionId]: true }));
   };
 
+  console.log(data);
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
       const allQuestions =
         data[0].attributes.create_test.data.attributes.question_banks.data;
+      const isExamType =
+        data[0].attributes.create_test.data.attributes.exam_type.data.attributes
+          .type === "Exam";
 
       const results = allQuestions.map((question) => {
         const questionId = question.id.toString();
@@ -172,7 +175,9 @@ const Test = () => {
       let score = 0;
       results.forEach((result) => {
         if (result.selectedAnswer === result.correctAnswer) {
-          score += 1;
+          score += 1; // Correct answer: +1 point
+        } else if (isExamType && result.selectedAnswer !== null) {
+          score -= 1; // Incorrect answer in Exam type: -0.25 points
         }
       });
 
@@ -194,7 +199,7 @@ const Test = () => {
       };
 
       console.log("Payload:", payload);
-      toast.loading("Submitting your test results...");
+      toast.loading("Submitting your results...");
       const response = await fetch("/api/results", {
         method: "POST",
         headers: {
@@ -205,18 +210,18 @@ const Test = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Failed to submit the test results:", errorData);
+        console.error("Failed to submit the results:", errorData);
         toast.dismiss();
-        toast.error("Unable to submit the test results. Please try again.");
+        toast.error("Unable to submit the results. Please try again.");
       } else {
         const responseData = await response.json();
         toast.dismiss();
-        toast.success("Test results submitted successfully!");
+        toast.success("Results submitted successfully!");
         Cookies.remove("utmt_id");
         router.push("/success");
       }
     } catch (error) {
-      console.error("Error submitting test results:", error);
+      console.error("Error submitting results:", error);
       toast.dismiss();
       toast.error("An unexpected error occurred. Please try again.");
       setIsSubmitting(false);

@@ -1,7 +1,7 @@
 "use client";
 import React, { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link"; // Import Link from next/link
+import Link from "next/link";
 import styles from "./page.module.css";
 import Cookies from "js-cookie";
 import toast, { Toaster } from "react-hot-toast";
@@ -95,7 +95,7 @@ const Login = () => {
             expires: 7,
             secure: true,
           });
-          router.push(`/student-portal`);
+          window.location.href = "/student-portal";
         } else if (userData.role.type === "college") {
           const encryptedUsername = CryptoJS.AES.encrypt(
             userData.username,
@@ -105,9 +105,20 @@ const Login = () => {
             expires: 7,
             secure: true,
           });
-          router.push(`/college-portal`);
+          window.location.href = "/college-portal";
+        } else if (userData.role.type === "admin") {
+          const encryptedUsername = CryptoJS.AES.encrypt(
+            userData.username,
+            encryptionKey
+          ).toString();
+          Cookies.set("user", encryptedUsername, {
+            expires: 7,
+            secure: true,
+          });
+          window.location.href = "/register/student";
         }
       } catch (error) {
+        setDisable(false);
         toast.error(error.message || "An error occurred during login"); // Show error message
       }
     }
@@ -149,9 +160,11 @@ const Login = () => {
               className={styles["eye-icon"]}
             >
               {showPassword ? (
-                <img src="/images/icons/eye.svg" alt="hide" />
+                // <img src="/images/icons/eye.svg" alt="hide" />
+                <p style={{ margin: 0 }}>HIDE</p>
               ) : (
-                <img src="/images/icons/eyeDisable.svg" alt="show" />
+                // <img src="/images/icons/eyeDisable.svg" alt="show" />
+                <p style={{ margin: 0 }}>SHOW</p>
               )}
             </button>
           </div>
