@@ -139,8 +139,8 @@ const SystemChecks = ({ onNext }) => {
       <button
         className="submitButton"
         onClick={handleStartClick}
-        // disabled={!nextEnabled}
-        // style={{ cursor: !nextEnabled ? "not-allowed" : "pointer" }}
+        disabled={!nextEnabled}
+        style={{ cursor: !nextEnabled ? "not-allowed" : "pointer" }}
       >
         Start
       </button>

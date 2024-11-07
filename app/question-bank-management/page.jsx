@@ -139,7 +139,8 @@ const QuestionBank = () => {
             item.attributes.answer_2,
             item.attributes.answer_3,
             item.attributes.answer_4,
-          ],
+            item.attributes.answer_5, // Add answer_5 to the array
+          ].filter((answer) => answer !== null),
           correctAnswer: item.attributes.correct_answer,
           subject: `${item.attributes.subject.data.attributes.name} (${item.attributes.subject.data.attributes.class.data.attributes.name})`,
           chapter: item.attributes.chapters.data
@@ -177,6 +178,18 @@ const QuestionBank = () => {
   const handleEdit = (question) => {
     if (!question) return;
     const questionEdit = questions.find((q) => q.id === question);
+
+    const answers = [
+      questionEdit.answers[0],
+      questionEdit.answers[1],
+      questionEdit.answers[2],
+      questionEdit.answers[3],
+    ];
+
+    // Add fifth answer if it exists
+    if (questionEdit.answers[4]) {
+      answers.push(questionEdit.answers[4]);
+    }
     console.log(questionEdit, data);
     const selectedClassOption = data.classes.find(
       (cls) => cls.name === questionEdit.class
@@ -216,7 +229,7 @@ const QuestionBank = () => {
       selectedChapters: selectedChaptersWithIds || [], // Set defaults as empty
       selectedTopics: selectedTopicsWithIds || [], // Set defaults as empty
       question: questionEdit.question || "", // Ensure this exists
-      answers: questionEdit.answers || ["", "", "", ""], // Ensure answers are set
+      answers: answers,
       selectedYear: selectedAcademicYearOption.id,
       correctAnswerIndex: correctAnswerIndex,
       selectedLevel: selectedLevelOption.id,
@@ -227,20 +240,32 @@ const QuestionBank = () => {
   };
 
   const handleInputChange = (field, value) => {
-    if (field === "selectedSubject") {
-      // When the subject is changed, reset the selected chapters and topics
+    if (field === "selectedStream") {
+      // When stream changes, handle the answers array
+      const isCET =
+        data.streams.find((stream) => stream.id === value)?.name === "CET";
+      const newAnswers = isCET ? ["", "", "", "", ""] : ["", "", "", ""];
+
+      setFormData((prevState) => ({
+        ...prevState,
+        [field]: value,
+        answers: newAnswers.map((newAns, idx) =>
+          idx < prevState.answers.length ? prevState.answers[idx] : newAns
+        ),
+        correctAnswerIndex: prevState.correctAnswerIndex,
+      }));
+    } else if (field === "selectedSubject") {
       setFormData((prevState) => ({
         ...prevState,
         selectedSubject: value,
-        selectedChapters: [], // Reset chapters
-        selectedTopics: [], // Reset topics
+        selectedChapters: [],
+        selectedTopics: [],
       }));
     } else if (field === "selectedChapters") {
-      // When chapters are changed, reset the topics
       setFormData((prevState) => ({
         ...prevState,
         selectedChapters: value,
-        selectedTopics: [], // Reset topics
+        selectedTopics: [],
       }));
     } else {
       setFormData((prevState) => ({ ...prevState, [field]: value }));
@@ -267,7 +292,6 @@ const QuestionBank = () => {
         subject: formData.selectedSubject,
         chapters: formData.selectedChapters,
         topics: formData.selectedTopics,
-        // class: formData.selectedClass,
         academic_year: formData.selectedYear,
         level: formData.selectedLevel,
         question: formData.question,
@@ -275,6 +299,7 @@ const QuestionBank = () => {
         answer_2: formData.answers[1],
         answer_3: formData.answers[2],
         answer_4: formData.answers[3],
+        answer_5: formData.answers[4] || null,
         correct_answer:
           formData.correctAnswerIndex !== null
             ? `answer_${formData.correctAnswerIndex + 1}`
@@ -312,13 +337,13 @@ const QuestionBank = () => {
               result.data.attributes.answer_2,
               result.data.attributes.answer_3,
               result.data.attributes.answer_4,
-            ],
+              result.data.attributes.answer_5, // Add answer_5 to the answers array
+            ].filter((answer) => answer !== null), // Filter out null answers
             correctAnswer: result.data.attributes.correct_answer,
             subject: result.data.attributes.subject.data.attributes.name,
             chapter: result.data.attributes.chapters.data.map(
               (chap) => chap.attributes.name
             ),
-
             topic: result.data.attributes.topics.data.map(
               (top) => top.attributes.name
             ),
@@ -420,6 +445,7 @@ const QuestionBank = () => {
         answer_2: formData.answers[1],
         answer_3: formData.answers[2],
         answer_4: formData.answers[3],
+        answer_5: formData.answers[4] || null,
         correct_answer:
           formData.correctAnswerIndex !== null
             ? `answer_${formData.correctAnswerIndex + 1}`
@@ -464,7 +490,8 @@ const QuestionBank = () => {
                       result.data.attributes.answer_2,
                       result.data.attributes.answer_3,
                       result.data.attributes.answer_4,
-                    ],
+                      result.data.attributes.answer_5, // Add answer_5 to the answers array
+                    ].filter((answer) => answer !== null), // Filter out null answers
                     correctAnswer: result.data.attributes.correct_answer,
                     subject:
                       result.data.attributes.subject.data.attributes.name,
@@ -590,23 +617,25 @@ const QuestionBank = () => {
       />
 
       <div className="inputContainer">
-        {formData.answers.map((answer, index) => (
-          <div key={index} className="checkBoxContainer">
-            <input
-              type="radio"
-              className="checkbox"
-              checked={formData.correctAnswerIndex === index}
-              onChange={() => handleCorrectAnswerChange(index)}
-            />
-            <input
-              type="text"
-              placeholder={`Answer ${index + 1}`}
-              className="answerInput"
-              value={answer}
-              onChange={(e) => handleAnswerChange(index, e.target.value)}
-            />
-          </div>
-        ))}
+        <div className="inputContainer">
+          {formData.answers.map((answer, index) => (
+            <div key={index} className="checkBoxContainer">
+              <input
+                type="radio"
+                className="checkbox"
+                checked={formData.correctAnswerIndex === index}
+                onChange={() => handleCorrectAnswerChange(index)}
+              />
+              <input
+                type="text"
+                placeholder={`Answer ${index + 1}`}
+                className="answerInput"
+                value={answer}
+                onChange={(e) => handleAnswerChange(index, e.target.value)}
+              />
+            </div>
+          ))}
+        </div>
       </div>
       <button
         className="addButton"
@@ -614,7 +643,6 @@ const QuestionBank = () => {
       >
         {editIndex ? "Update" : "Add"}
       </button>
-
       {loading ? (
         <div className="loader" style={{ marginTop: 50 }}>
           Loading...
@@ -637,18 +665,20 @@ const QuestionBank = () => {
                       {index + 1}: {question.question}
                     </div>
                     <div className="answers">
-                      {question.answers.map((answer, index) => (
-                        <div
-                          key={index}
-                          className={`answer ${
-                            question.correctAnswer == `answer_${index + 1}`
-                              ? "highlight"
-                              : ""
-                          }`}
-                        >
-                          {index + 1}. {answer}
-                        </div>
-                      ))}
+                      {question.answers
+                        .filter((answer) => answer !== null)
+                        .map((answer, index) => (
+                          <div
+                            key={index}
+                            className={`answer ${
+                              question.correctAnswer === `answer_${index + 1}`
+                                ? "highlight"
+                                : ""
+                            }`}
+                          >
+                            {index + 1}. {answer}
+                          </div>
+                        ))}
                     </div>
                   </div>
                 </div>

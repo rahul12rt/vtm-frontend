@@ -121,6 +121,46 @@
   margin-top: 10px;
 }
 
+.uploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #e8f4ff;
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #007bff;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+  height: 140px;
+}
+
+.uploadCard:hover {
+  background-color: #d0e9ff;
+  border-color: #0056b3;
+}
+
+.uploadLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.uploadInput {
+  display: none;
+}
+
+.uploadIcon {
+  font-size: 40px;
+  margin-bottom: 10px;
+  color: #007bff;
+}
+
+
 @media (max-width: 1024px) {
   .cardContainer {
     grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */

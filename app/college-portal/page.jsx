@@ -1,21 +1,23 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { decrypt } from "../_utils/encryptionUtils";
 import Cookies from "js-cookie";
+import * as XLSX from "xlsx";
 import styles from "./CollegePortal.module.css";
+import { FaFileUpload } from "react-icons/fa";
+import CollegePortalExcelUpload from "../_components/uploadFile";
 
 const CollegePortal = () => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const encryptedUser = Cookies.get("user");
     const username = decrypt(encryptedUser);
-
-    console.log(username);
 
     const fetchStudentData = async () => {
       if (username) {
@@ -23,7 +25,6 @@ const CollegePortal = () => {
           setLoading(true);
           const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
           const userEndpoint = `${strapiApiUrl}/api/colleges?filters[user_name][$eq]=${username}&populate=*`;
-
           const bearerToken = Cookies.get("token");
 
           const response = await fetch(userEndpoint, {
@@ -33,17 +34,13 @@ const CollegePortal = () => {
               "Content-Type": "application/json",
             },
           });
-          console.log(response);
           if (!response.ok) {
             throw new Error("Failed to fetch student data");
           }
+          console.log(data);
 
           const data = await response.json();
           setStudentData(data?.data);
-          //   const studentId = data?.data[0]?.id;
-          //   if (studentId) {
-          //     Cookies.set("utms_id", studentId, { expires: 1 });
-          //   }
         } catch (error) {
           setError(error.message);
         } finally {
@@ -55,14 +52,16 @@ const CollegePortal = () => {
     fetchStudentData();
   }, []);
 
-  const handleNavigation = (path) => {
-    router.push(path);
-  };
+  const handleNavigation = useCallback(
+    (path) => {
+      router.push(path);
+    },
+    [router]
+  );
 
   return (
     <div className="container">
       <div className="sectionHeader">College Information</div>
-      {/* Navigation Cards */}
       <div className={styles.cardContainer}>
         <div
           className={styles.card}
@@ -85,6 +84,7 @@ const CollegePortal = () => {
         >
           Student Wise
         </div>
+        <CollegePortalExcelUpload />
       </div>
     </div>
   );

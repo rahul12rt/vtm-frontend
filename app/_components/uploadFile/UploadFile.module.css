@@ -1,0 +1,128 @@
+.container {
+  max-width: 64rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.sectionHeader {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.cardContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition-property: background-color;
+  transition-duration: 300ms;
+}
+
+.card:hover {
+  background-color: #f3f4f6;
+}
+
+.uploadCard {
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition-property: background-color;
+  transition-duration: 300ms;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+      display: flex;
+    flex-direction: column;
+
+}
+
+.uploadLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  space-x: 0.5rem;
+  cursor: pointer;
+}
+
+.uploadIcon {
+  font-size: 1.5rem;
+  color: #6b7280;
+}
+
+.uploadInput {
+  display: none;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.excelData {
+  margin-top: 1rem;
+}
+
+.excelData h3 {
+  font-size: 1.125rem;
+  font-weight: medium;
+  margin-bottom: 0.5rem;
+}
+
+.excelData ul {
+  list-style-type: disc;
+  padding-left: 1rem;
+}
+
+
+.uploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #e8f4ff;
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #007bff;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+  height: 140px;
+}
+
+.uploadCard:hover {
+  background-color: #d0e9ff;
+  border-color: #0056b3;
+}
+
+.uploadLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.uploadInput {
+  display: none;
+}
+
+.uploadIcon {
+  font-size: 40px;
+  margin-bottom: 10px;
+  color: #007bff;
+}

@@ -30,7 +30,7 @@ const Test = () => {
           const response = await fetch(testsEndpoint, {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${bearerToken}`, // Set Bearer token in the header
+              Authorization: `Bearer ${bearerToken}`,
               "Content-Type": "application/json",
             },
           });
@@ -40,6 +40,10 @@ const Test = () => {
           const result = await response.json();
           const modifiedResult = JSON.parse(JSON.stringify(result));
 
+          const examType =
+            modifiedResult.data[0]?.attributes?.create_test?.data?.attributes
+              ?.exam_type?.data?.attributes?.type;
+
           // Shuffle questions if they exist
           if (
             modifiedResult.data[0]?.attributes?.create_test?.data?.attributes
@@ -48,7 +52,7 @@ const Test = () => {
             const questions =
               modifiedResult.data[0].attributes.create_test.data.attributes
                 .question_banks.data;
-            const shuffledQuestions = shuffleQuestions(questions);
+            const shuffledQuestions = shuffleQuestions(questions, examType);
             modifiedResult.data[0].attributes.create_test.data.attributes.question_banks.data =
               shuffledQuestions;
           }
@@ -72,13 +76,18 @@ const Test = () => {
     }
   }, [router]);
 
-  const shuffleOptions = (questionAttributes) => {
-    const originalOptions = [
-      { key: "answer_1", value: questionAttributes.answer_1 },
-      { key: "answer_2", value: questionAttributes.answer_2 },
-      { key: "answer_3", value: questionAttributes.answer_3 },
-      { key: "answer_4", value: questionAttributes.answer_4 },
-    ];
+  const shuffleOptions = (questionAttributes, examType) => {
+    const originalOptions = [];
+
+    for (let i = 1; i <= 5; i++) {
+      const answerKey = `answer_${i}`;
+      if (questionAttributes[answerKey]) {
+        originalOptions.push({
+          key: answerKey,
+          value: questionAttributes[answerKey],
+        });
+      }
+    }
 
     for (let i = originalOptions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -91,8 +100,7 @@ const Test = () => {
     return originalOptions;
   };
 
-  const shuffleQuestions = (questions) => {
-    // Make a copy of questions to avoid mutating the original
+  const shuffleQuestions = (questions, examType) => {
     const shuffledQuestions = [...questions];
 
     for (let i = shuffledQuestions.length - 1; i > 0; i--) {
@@ -102,15 +110,19 @@ const Test = () => {
         shuffledQuestions[i],
       ];
 
-      // Add shuffled options to each question
-      const shuffledOptions = shuffleOptions(shuffledQuestions[i].attributes);
+      // Add shuffled options to each question, passing the exam type
+      const shuffledOptions = shuffleOptions(
+        shuffledQuestions[i].attributes,
+        examType
+      );
       shuffledQuestions[i].attributes.shuffledOptions = shuffledOptions;
     }
 
     // Don't forget the first question
     if (shuffledQuestions.length > 0) {
       shuffledQuestions[0].attributes.shuffledOptions = shuffleOptions(
-        shuffledQuestions[0].attributes
+        shuffledQuestions[0].attributes,
+        examType
       );
     }
 
@@ -239,6 +251,7 @@ const Test = () => {
           {/* Render Test Details */}
           {data.map((item) => {
             const questionPaper = item.attributes.create_test.data.attributes;
+            const examType = questionPaper.exam_type.data.attributes.type;
             const { class: classInfo, academic_year, subject } = questionPaper;
 
             // Add the duration to the test information
@@ -299,12 +312,13 @@ const Test = () => {
                 </div>
 
                 {/* Questions Section */}
+
                 <div className={styles.questionsContainer}>
                   {questionPaper.question_banks.data.map((question, index) => (
                     <div key={question.id} className={styles.questionItem}>
                       <p>
                         <strong>
-                          Total Questions: {"  "}
+                          Total Questions:{" "}
                           {questionPaper.question_banks?.data?.length || "N/A"}
                         </strong>
                       </p>

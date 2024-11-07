@@ -195,7 +195,8 @@ const CreateTest = () => {
             item.attributes.answer_2,
             item.attributes.answer_3,
             item.attributes.answer_4,
-          ],
+            item.attributes.answer_5, // Add answer_5 to the array
+          ].filter((answer) => answer !== null),
           correctOption: item.attributes.correct_answer,
           subject: item.attributes.subject.data.attributes.name,
           chapter: item.attributes.chapters.data

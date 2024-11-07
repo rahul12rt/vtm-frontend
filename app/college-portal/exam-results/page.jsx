@@ -35,8 +35,25 @@ function Results() {
         }
 
         const data = await response.json();
-        setResults(data.data);
-        setFilteredResults(data.data); // Set initial filtered results
+
+        const uniqueResults = Array.from(
+          new Map(
+            data.data.map((item) => {
+              const examName =
+                item.attributes.create_test.data.attributes.exam_name;
+              const date = item.attributes.create_test.data.attributes.date;
+              const subject =
+                item.attributes.create_test.data.attributes.subject.data
+                  .attributes.name;
+
+              // Create a unique key based on the combination of the exam name, date, and subject
+              return [`${examName}-${date}-${subject}`, item];
+            })
+          ).values()
+        );
+
+        setResults(uniqueResults);
+        setFilteredResults(uniqueResults); // Set initial filtered results
       } catch (error) {
         setError(error.message);
       } finally {
@@ -176,7 +193,7 @@ function Results() {
       {/* Display Results or No Results Found Message */}
       {filteredResults.length === 0 && !loading ? (
         <p>
-          No tests found matching your filters. Please try different criteria.
+          No exam found matching your filters. Please try different criteria.
         </p>
       ) : (
         filteredResults.map((result, id) => (

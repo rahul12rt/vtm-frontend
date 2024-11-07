@@ -11,7 +11,8 @@ const Header = () => {
   const [selectedPage, setSelectedPage] = useState("/");
   const [userData, setUserData] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [logoPath, setLogoPath] = useState(""); // Default logo
   const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 
   useEffect(() => {
@@ -19,6 +20,14 @@ const Header = () => {
       try {
         const encryptedUser = Cookies.get("user");
         const username = decrypt(encryptedUser);
+
+        // Set logo path based on username
+        if (username === "scpuc123") {
+          setLogoPath("/images/logos/sadvidya-composite-puc.svg");
+        } else if (username === "ssrpuc") {
+          setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
+        }
+
         if (username) {
           const response = await fetch(
             `${strapiApiUrl}/api/users?filters[username]=${username}&populate=*`
@@ -42,7 +51,7 @@ const Header = () => {
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
-        setLoading(false); // Set loading to false after fetching is done
+        setLoading(false);
       }
     };
 
@@ -66,7 +75,11 @@ const Header = () => {
     <div className="container">
       <div className={styles.wrap}>
         <div className={styles.logoWrap}>
-          <h5 style={{ fontSize: 32, margin: 0 }}>VidVat</h5>
+          {pathname !== "/login" && logoPath && (
+            <>
+              <img src={logoPath} alt="Logo" className={styles.logo} />
+            </>
+          )}
         </div>
         {pathname !== "/login" && pathname !== "/test" && isAdmin && (
           <select
@@ -75,7 +88,6 @@ const Header = () => {
             style={{ padding: "10px", fontSize: "16px", width: "60%" }}
           >
             <option value="/">Select a page</option>
-            {/* <option value="/login">Login</option> */}
             <option value="/register/student">Student Register</option>
             <option value="/register/faculty">Faculty Register</option>
             <option value="/register/college">College Register</option>
@@ -123,13 +135,11 @@ const Header = () => {
             </option>
           </select>
         )}
-        {!loading &&
-          pathname !== "/test" &&
-          userData && ( // Show logout button after loading is complete
-            <button onClick={handleLogout} className="submitButton">
-              Logout
-            </button>
-          )}
+        {!loading && pathname !== "/test" && userData && (
+          <button onClick={handleLogout} className="submitButton">
+            Logout
+          </button>
+        )}
       </div>
     </div>
   );
