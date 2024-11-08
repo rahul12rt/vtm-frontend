@@ -9,6 +9,8 @@ const CollegePortalExcelUpload = () => {
   const [columnData, setColumnData] = useState([]);
   const [secondRowFirstColValue, setSecondRowFirstColValue] = useState(null);
   const [apiData, setApiData] = useState(null);
+  const [keyColumns, setKeyColumns] = useState([]);
+  const [totalMarks, setTotalMarks] = useState(0);
 
   const handleFileUpload = async (event) => {
     setIsProcessing(true);
@@ -19,7 +21,78 @@ const CollegePortalExcelUpload = () => {
 
     setColumnData(data.columnData);
     setSecondRowFirstColValue(data.secondRowFirstColValue);
+    setKeyColumns(data.keyColumns);
+
+    // Calculate total marks based on number of key columns
+    const calculatedTotal = data.keyColumns.length * 4;
+    setTotalMarks(calculatedTotal);
+
     setIsProcessing(false);
+
+    console.log("Found key columns:", data.keyColumns);
+    console.log("Total marks calculated:", calculatedTotal);
+  };
+
+  const readExcelFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const workbook = XLSX.read(e.target.result, { type: "binary" });
+        resolve(workbook);
+      };
+
+      reader.onerror = (error) => {
+        reject(error);
+      };
+
+      reader.readAsBinaryString(file);
+    });
+  };
+
+  const extractDataFromWorksheet = (workbook) => {
+    return new Promise((resolve) => {
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // Find cells containing "Key" in the first row
+      const keyColumns = [];
+      if (data.length > 0) {
+        data[0].forEach((cell, index) => {
+          if (
+            cell &&
+            typeof cell === "string" &&
+            cell.toLowerCase().includes("key")
+          ) {
+            keyColumns.push({
+              columnIndex: index,
+              value: cell,
+            });
+          }
+        });
+      }
+
+      // Extract the data from the third and fifth columns, excluding the first row and null/empty values
+      const columnData = data
+        .slice(1)
+        .map((row) => [row[2], row[4]])
+        .filter(
+          ([c, e]) =>
+            c !== null &&
+            c !== "" &&
+            c !== undefined &&
+            e !== null &&
+            e !== "" &&
+            e !== undefined
+        );
+
+      resolve({
+        columnData,
+        secondRowFirstColValue: data[1][0],
+        keyColumns,
+      });
+    });
   };
 
   useEffect(() => {
@@ -98,7 +171,7 @@ const CollegePortalExcelUpload = () => {
             data: {
               create_test: testId,
               student: studentId,
-              total: 0,
+              total: totalMarks, // Using the calculated total based on key columns
               obtained: obtainedMarks,
               test_info: "",
             },
@@ -113,50 +186,6 @@ const CollegePortalExcelUpload = () => {
     } catch (error) {
       console.error("Error submitting result:", error);
     }
-  };
-
-  const readExcelFile = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        const workbook = XLSX.read(e.target.result, { type: "binary" });
-        resolve(workbook);
-      };
-
-      reader.onerror = (error) => {
-        reject(error);
-      };
-
-      reader.readAsBinaryString(file);
-    });
-  };
-
-  const extractDataFromWorksheet = (workbook) => {
-    return new Promise((resolve) => {
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-      // Extract the data from the third and fifth columns, excluding the first row and null/empty values
-      const columnData = data
-        .slice(1)
-        .map((row) => [row[2], row[4]])
-        .filter(
-          ([c, e]) =>
-            c !== null &&
-            c !== "" &&
-            c !== undefined &&
-            e !== null &&
-            e !== "" &&
-            e !== undefined
-        );
-
-      resolve({
-        columnData,
-        secondRowFirstColValue: data[1][0],
-      });
-    });
   };
 
   return (

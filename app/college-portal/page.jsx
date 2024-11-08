@@ -78,12 +78,12 @@ const CollegePortal = () => {
       </div>
       <h1>Reports</h1>
       <div className={styles.cardContainer}>
-        <div
+        {/* <div
           className={styles.card}
           onClick={() => handleNavigation("/college-portal/test-results")}
         >
           Student Wise
-        </div>
+        </div> */}
         <CollegePortalExcelUpload />
       </div>
     </div>

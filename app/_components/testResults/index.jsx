@@ -11,10 +11,10 @@ const TestResults = ({ data }) => {
   const testInfo = data[0].attributes.create_test.data.attributes;
   const collegeInfo =
     data[0].attributes.student.data.attributes.college.data.attributes;
-  const academicYear = data[0].attributes.student.data.attributes.academic_year; // Extract academic year
+  const academicYear = data[0].attributes.student.data.attributes.academic_year;
 
-  // Sort the results based on obtained marks in descending order
-  const results = data
+  // First sort by marks obtained to calculate ranks
+  const resultsWithRanks = data
     .map((item) => ({
       id: item.id,
       rollNo: item.attributes.student.data.attributes.roll_number,
@@ -22,11 +22,18 @@ const TestResults = ({ data }) => {
       marksObtained: item.attributes.obtained,
       totalMarks: item.attributes.total,
     }))
-    .sort((a, b) => b.marksObtained - a.marksObtained) // Sorting by obtained marks
+    .sort((a, b) => b.marksObtained - a.marksObtained)
     .map((result, index) => ({
       ...result,
-      rank: index + 1, // Dynamic ranking based on sorted marks
+      rank: index + 1,
     }));
+
+  // Then sort by roll number for display while preserving ranks
+  const results = resultsWithRanks.sort((a, b) => {
+    const rollA = String(a.rollNo);
+    const rollB = String(b.rollNo);
+    return rollA.localeCompare(rollB, undefined, { numeric: true });
+  });
 
   const exportPDF = () => {
     const input = document.getElementById("pdfContent");

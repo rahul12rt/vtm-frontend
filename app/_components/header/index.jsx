@@ -42,9 +42,25 @@ const Header = () => {
             const user = data[0];
             setUserData(user);
             const role = user.role?.name;
-
             if (role === "Admin") {
               setIsAdmin(true);
+            } else if (role === "Student") {
+              const response = await fetch(
+                `${strapiApiUrl}/api/students?filters[user_name][$eq]=${username}&populate=*`
+              );
+
+              const data = await response.json();
+              if (
+                data.data[0].attributes.college.data.attributes.user_name ==
+                "scpuc123"
+              ) {
+                setLogoPath("/images/logos/sadvidya-composite-puc.svg");
+              } else if (
+                data.data[0].attributes.college.data.attributes.user_name ==
+                "ssrpuc"
+              ) {
+                setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
+              }
             }
           }
         }

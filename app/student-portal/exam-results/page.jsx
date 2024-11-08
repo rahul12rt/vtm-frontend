@@ -46,7 +46,7 @@ function ExamResults() {
       {error && <div>Error: {error}</div>}
       {results.length > 0 ? (
         results.map((result) => {
-          const testInfo = JSON.parse(result.attributes.test_info);
+          const testInfo = result.attributes;
           const createTest = result.attributes.create_test.data.attributes;
           return (
             <div key={result.id} className="examResult">
@@ -57,22 +57,24 @@ function ExamResults() {
                 {createTest.date}
               </h3> */}
               <h4>Test : {createTest.name}</h4>
-              <table>
+              <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+                <h4 style={{ margin: 0 }}>Name : {createTest.exam_name}</h4> |
+                <h4 style={{ margin: 0 }}>Date: {createTest.date}</h4>
+              </div>
+              <table style={{ marginTop: 20 }}>
                 <thead>
                   <tr>
-                    {/* <th>Student Name</th> */}
+                    <th>Subject</th>
                     <th>Obtained Marks</th>
                     <th>Total Marks</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {testInfo.map((info) => (
-                    <tr key={info.id}>
-                      {/* <td>{info.selectedText}</td> */}
-                      <td>{result.attributes.obtained}</td>
-                      <td>{result.attributes.total}</td>
-                    </tr>
-                  ))}
+                  <tr>
+                    <td>{createTest.subject.data.attributes.name}</td>
+                    <td>{testInfo.obtained}</td>
+                    <td>{testInfo.total}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
