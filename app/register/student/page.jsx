@@ -227,8 +227,6 @@ const StudentRegister = () => {
           )
         );
 
-        console.log(streamResult);
-
         setClasses(classResult.data.data);
         setColleges(uniqueColleges);
         setStreams(streamResult.data.data);

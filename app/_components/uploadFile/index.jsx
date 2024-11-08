@@ -28,9 +28,6 @@ const CollegePortalExcelUpload = () => {
     setTotalMarks(calculatedTotal);
 
     setIsProcessing(false);
-
-    console.log("Found key columns:", data.keyColumns);
-    console.log("Total marks calculated:", calculatedTotal);
   };
 
   const readExcelFile = (file) => {

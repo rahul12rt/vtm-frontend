@@ -14,8 +14,6 @@ const FacultyToSubject = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
 
-  console.log(selectedFaculty);
-
   const handleFacultyChange = (event) => {
     setSelectedFaculty(event.target.value);
   };
@@ -152,8 +150,6 @@ const FacultyToSubject = () => {
           }))
         );
 
-        console.log(subjectData);
-
         setSubjectOptions(
           subjectData.data.map((subject) => ({
             id: subject.id,
@@ -162,8 +158,6 @@ const FacultyToSubject = () => {
             className: subject.attributes.class.data.attributes.name,
           }))
         );
-
-        console.log(mappingData);
 
         setMappingOptions(
           mappingData.data.map((mapping) => ({
@@ -190,7 +184,7 @@ const FacultyToSubject = () => {
 
   const handleEditSubject = (index) => {
     const selectedMapping = mappingOptions[index];
-    console.log("Selected Mapping:", selectedMapping);
+
     const selectedFacultyOption = facultyOptions.find(
       (faculty) => faculty.name === selectedMapping.name
     );
@@ -238,7 +232,7 @@ const FacultyToSubject = () => {
         }
 
         const data = await response.json();
-        console.log(data);
+
         const updatedMapping = {
           id: data.data.id,
           name: data.data.attributes.faculty.data.attributes.name,
@@ -274,8 +268,6 @@ const FacultyToSubject = () => {
 
     await action;
   };
-
-  console.log(facultyOptions);
 
   return (
     <div className="container">
@@ -328,7 +320,6 @@ const FacultyToSubject = () => {
                       )
                       .join(", ")}
                   </span>
-                  {console.log(subject.subjects)}
                 </span>
 
                 <div className="buttonContainer">

@@ -45,8 +45,6 @@ export async function POST(request) {
 
     const payload = await request.json();
 
-    console.log(payload);
-
     const strapiEndpoint = `${strapiApiUrl}/api/map-faculty-to-colleges?populate[faculty]=*&populate[colleges]=*`;
     const response = await fetch(strapiEndpoint, {
       method: "POST",
@@ -125,8 +123,6 @@ export async function DELETE(request) {
         { status: 400 }
       );
     }
-
-    console.log(id);
 
     const strapiEndpoint = `${strapiApiUrl}/api/map-faculty-to-colleges/${id}`;
     const response = await fetch(strapiEndpoint, {

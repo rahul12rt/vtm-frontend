@@ -64,8 +64,6 @@ function Results() {
     fetchResults();
   }, []);
 
-  console.log(results);
-
   useEffect(() => {
     // Filter results based on selected filters
     const filtered = results.filter((result) => {

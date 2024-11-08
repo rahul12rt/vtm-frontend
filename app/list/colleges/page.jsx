@@ -15,7 +15,6 @@ const CollegeList = () => {
         const response = await axios.get("/api/colleges");
         const data = response.data.data;
 
-        console.log;
         // Map the API response to the structure needed for the component
         const mappedColleges = data.map((college, index) => ({
           number: index + 1,

@@ -77,7 +77,6 @@ export async function DELETE(request) {
     }
 
     const { qualificationId } = await request.json();
-    console.log(qualificationId, "----");
     if (!qualificationId) {
       return NextResponse.json(
         { error: "Qualification ID is required" },

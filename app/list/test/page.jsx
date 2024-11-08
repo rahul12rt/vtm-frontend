@@ -101,8 +101,6 @@ const FilterQuestionsComponent = () => {
         const topicsResult = await topicsResponse.json();
         const assessmentsResult = await assessmentsResponse.json();
 
-        console.log(assessmentsResult);
-
         // Map the API data to your component's structure
         const classesData = classesResult.data.map((classItem) => ({
           id: classItem.id,

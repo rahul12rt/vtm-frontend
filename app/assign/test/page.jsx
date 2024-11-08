@@ -124,7 +124,7 @@ const AssignTest = () => {
         });
 
         setAssignedTests(mappedAssignedTests);
-        console.log(assessmentsResult);
+
         setData((prevState) => ({
           ...prevState,
           classes: classesResult.data.map((classItem) => ({
@@ -205,7 +205,6 @@ const AssignTest = () => {
     (chapter) => chapter.subjectId === Number(filters.subject)
   );
 
-  console.log(data);
   const filteredAssessments = data.assessments.filter((assessment) =>
     assessment.name.toLowerCase().includes(filters.question.toLowerCase())
   );
@@ -412,7 +411,7 @@ const AssignTest = () => {
                 <th style={{ width: "10%" }}>Assign</th>
               </tr>
             </thead>
-            {console.log(filteredAssessments)}
+
             <tbody>
               {filteredAssessments.map((assessment) => (
                 <tr key={assessment.id}>

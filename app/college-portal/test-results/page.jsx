@@ -105,8 +105,6 @@ function Results() {
     setDateFilter(event.target.value);
   };
 
-  console.log(results);
-
   // Create unique lists for dropdowns
   const uniqueSubjectsAndClasses = Array.from(
     new Set(

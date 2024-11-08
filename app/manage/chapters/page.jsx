@@ -325,7 +325,6 @@ const Chapters = () => {
   };
 
   const filteredTodos = todos.filter((todo) => {
-    console.log(filterSubject, "---p");
     const subjectMatches = filterSubject
       ? todo.attributes.subject.data.id === Number(filterSubject)
       : true;
@@ -335,8 +334,6 @@ const Chapters = () => {
       : true;
     return subjectMatches && classMatches;
   });
-
-  console.log(filteredTodos);
 
   const uniqueSubjects = Array.from(
     new Set(filteredTodos.map((todo) => todo.attributes.subject.data.id))

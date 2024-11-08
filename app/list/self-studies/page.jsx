@@ -34,7 +34,6 @@ const ListOfSelfStudies = () => {
         academic_year: item.attributes.academic_year.data.attributes.year,
       }));
 
-      console.log("Fetched Data:", extractedData);
       setData(extractedData);
     } catch (error) {
       console.error("Error fetching data:", error);

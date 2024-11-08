@@ -152,7 +152,7 @@ const Qualification = () => {
 
   const handleDeleteQualification = async (index) => {
     const qualificationId = qualifications[index]?.id;
-    console.log(qualificationId, "----");
+
     if (!qualificationId) {
       toast.error("Qualification ID not found", {
         style: {
@@ -245,7 +245,6 @@ const Qualification = () => {
             {displayedQualifications.map((qualification, index) => (
               <li key={qualification.id || index} className="todoItem">
                 <span>
-                  {console.log(qualification)}
                   {startIndex + index + 1}. {qualification?.attributes?.name}
                 </span>
                 <div className="buttonContainer">

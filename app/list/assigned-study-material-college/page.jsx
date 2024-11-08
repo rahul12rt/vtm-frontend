@@ -19,7 +19,6 @@ const AssignedStudyMaterialList = () => {
         // Transform the API response to match the table data structure
         const extractedData = result.data.map((item) => {
           const collegeName = item.attributes.college.data.attributes.name;
-          console.log(item.attributes.self_studies.data);
           const selfStudies = item.attributes.self_studies.data.map(
             (study) => ({
               id: study.id,

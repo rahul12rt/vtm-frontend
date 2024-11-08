@@ -89,7 +89,6 @@ export async function DELETE(request) {
         { status: 400 }
       );
     }
-    console.log(studyId);
 
     const strapiEndpoint = `${strapiApiUrl}/api/self-studies/${studyId}`;
     const response = await fetch(strapiEndpoint, {
@@ -146,7 +145,7 @@ export async function PUT(request) {
     }
 
     const data = await response.json();
-    console.log(data);
+
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -53,8 +53,6 @@ const Result = () => {
     fetchData();
   }, []);
 
-  console.log(data);
-
   // Filter results based on search term
   const filteredResults = data.response.filter((item) =>
     item.attributes.create_test.data.attributes.name

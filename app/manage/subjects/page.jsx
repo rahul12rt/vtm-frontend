@@ -108,7 +108,6 @@ const Subject = () => {
         }
 
         payload.data.id = subjectId;
-        console.log(selectedClass);
 
         toast.promise(
           fetch("/api/subjects", {
@@ -267,8 +266,6 @@ const Subject = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, subjects.length);
   const displayedSubjects = subjects.slice(startIndex, endIndex);
-
-  console.log(displayedSubjects);
 
   return (
     <div className="container">

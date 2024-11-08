@@ -157,8 +157,6 @@ const FacultyToCollege = () => {
           }))
         );
 
-        console.log(mappingData.data);
-
         setMappingOptions(
           mappingData.data.map((mapping) => ({
             id: mapping.id,
@@ -182,7 +180,7 @@ const FacultyToCollege = () => {
       (faculty) => faculty.name === selectedMapping.name
     );
     setSelectedFaculty(selectedFacultyOption.id);
-    console.log(selectedMapping);
+
     setSelectedColleges(selectedMapping.colleges.map((college) => college.id));
     setIsEditing(true);
     setEditIndex(index);

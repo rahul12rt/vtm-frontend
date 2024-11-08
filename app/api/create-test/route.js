@@ -26,7 +26,6 @@ export async function GET(request) {
       cache: "no-store",
     });
     // Debug output for query parameters
-    console.log("Strapi Endpoint:", strapiEndpoint, "------se");
 
     if (!response.ok) {
       throw new Error(

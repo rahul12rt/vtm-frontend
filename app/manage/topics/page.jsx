@@ -85,7 +85,7 @@ const ManageTopic = () => {
           topic: topicName,
         };
       });
-      console.log(formattedTopics);
+
       setTopics(formattedTopics);
     } catch (error) {
       console.error("Error fetching topics:", error);

@@ -41,7 +41,7 @@ const ExamList = () => {
           }
 
           const data = await response.json();
-          console.log(data.data);
+
           setStudentData(data.data);
 
           await Promise.all(
@@ -81,13 +81,11 @@ const ExamList = () => {
           },
         });
 
-        console.log(response);
         if (!response.ok) {
           throw new Error("Failed to fetch assigned tests");
         }
 
         const testsData = await response.json();
-        console.log(testsData);
 
         setAssignedTests(testsData.data);
       } catch (error) {
@@ -191,7 +189,7 @@ const ExamList = () => {
             const testAttributes = test.attributes.create_test.data.attributes;
             const testId = test.attributes.create_test.data.id;
             const isCompleted = completedTestIds.includes(testId);
-            console.log(test);
+
             return (
               <div key={test.id} className={styles.testItem}>
                 <div className={styles.testParentInfo}>

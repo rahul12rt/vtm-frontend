@@ -601,7 +601,7 @@ const CreateDPP = () => {
           ))}
         </ul>
       )}
-      {console.log(currentPdfUrl)}
+
       {/* <Modal
         title="PDF Viewer"
         open={isPdfModalOpen}

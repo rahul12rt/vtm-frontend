@@ -41,8 +41,6 @@ const QuestionBank = () => {
     streams: [],
   });
 
-  console.log(questions);
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -130,7 +128,7 @@ const QuestionBank = () => {
           chapterId: topic.attributes.chapter.data.id,
         }));
         setData((prevState) => ({ ...prevState, topics: topicsData }));
-        console.log(questionsResult);
+
         const mappedQuestions = questionsResult.data.map((item) => ({
           id: item.id,
           question: item.attributes.question,
@@ -173,8 +171,6 @@ const QuestionBank = () => {
     fetchData();
   }, []);
 
-  console.log(questions);
-
   const handleEdit = (question) => {
     if (!question) return;
     const questionEdit = questions.find((q) => q.id === question);
@@ -190,12 +186,10 @@ const QuestionBank = () => {
     if (questionEdit.answers[4]) {
       answers.push(questionEdit.answers[4]);
     }
-    console.log(questionEdit, data);
+
     const selectedClassOption = data.classes.find(
       (cls) => cls.name === questionEdit.class
     );
-
-    console.log(data.levels, questionEdit);
 
     const selectedLevelOption = data.levels.find(
       (cls) => cls.name === questionEdit.level
@@ -212,7 +206,7 @@ const QuestionBank = () => {
     const selectedSubjectOption = data.subjects.find(
       (sub) => sub.name === questionEdit.subject
     );
-    console.log(questionEdit);
+
     const selectedChaptersWithIds = data.chapters
       .filter((chapter) => questionEdit.chapter.includes(chapter.name))
       .map((chapter) => chapter.id);
@@ -220,9 +214,9 @@ const QuestionBank = () => {
     const selectedTopicsWithIds = data.topics
       .filter((chapter) => questionEdit.topic.includes(chapter.name))
       .map((chapter) => chapter.id);
-    console.log(questionEdit.correctAnswer);
+
     const answerIndex = questionEdit.correctAnswer.split("_")[1];
-    console.log(answerIndex);
+
     const correctAnswerIndex = parseInt(answerIndex - 1);
     setFormData({
       selectedSubject: selectedSubjectOption.id || "",
@@ -328,7 +322,7 @@ const QuestionBank = () => {
         })
         .then((result) => {
           // Map the new question and append it to existing questions
-          console.log(result);
+
           const newQuestion = {
             id: result.data.id,
             question: result.data.attributes.question,
@@ -453,8 +447,6 @@ const QuestionBank = () => {
         stream: formData.selectedStream,
       },
     };
-
-    console.log(payload, "----");
 
     toast.promise(
       fetch("/api/question-bank", {

@@ -37,7 +37,6 @@ const AssignDPPToClass = () => {
         },
       };
 
-      console.log(payload);
       toast.promise(
         fetch(`/api/assign-dpp-college`, {
           method: "POST",
@@ -234,7 +233,7 @@ const AssignDPPToClass = () => {
             const assignDppResults = await assignDppResponse.json();
 
             // Map DPPs and Classes
-            console.log(dppResults);
+
             const dppOptions = dppResults.data.map((dpp) => ({
               id: dpp.id,
               name: dpp.attributes.name,

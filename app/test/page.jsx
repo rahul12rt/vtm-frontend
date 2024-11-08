@@ -20,7 +20,6 @@ const Test = () => {
     const encryptedId = Cookies.get("utmt_id");
     if (encryptedId) {
       const id = decrypt(encryptedId);
-      console.log(id);
       const fetchData = async () => {
         try {
           const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
@@ -152,8 +151,6 @@ const Test = () => {
     setLockedQuestions((prev) => ({ ...prev, [questionId]: true }));
   };
 
-  console.log(data);
-
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -194,7 +191,6 @@ const Test = () => {
       });
 
       const totalQuestions = allQuestions.length;
-      console.log(results);
 
       const sId = Cookies.get("utms_id");
       const encryptedId = Cookies.get("utmt_id");
@@ -210,7 +206,6 @@ const Test = () => {
         },
       };
 
-      console.log("Payload:", payload);
       toast.loading("Submitting your results...");
       const response = await fetch("/api/results", {
         method: "POST",

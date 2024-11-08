@@ -83,8 +83,6 @@ const Faculty = () => {
     fetchData();
   }, []);
 
-  console.log(subjects);
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();

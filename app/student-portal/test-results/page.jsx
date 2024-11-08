@@ -13,7 +13,7 @@ function ExamResults() {
       try {
         const encryptedUser = Cookies.get("user");
         const username = decrypt(encryptedUser);
-        console.log(username);
+
         if (!username) {
           console.error("No username found in cookies");
           return;
@@ -27,7 +27,7 @@ function ExamResults() {
         }
 
         const data = await response.json();
-        console.log(data);
+
         setResults(data.data);
       } catch (error) {
         setError(error.message);

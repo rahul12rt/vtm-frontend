@@ -18,9 +18,6 @@ export async function GET(request) {
     const filters = queryParams.join("&");
     const strapiEndpoint = `${strapiApiUrl}/api/question-banks?populate[subject][populate][class]=*&populate[chapters]=*&populate[topics]=*&populate[class]=*&populate[academic_year]=*&populate[create_tests]=*&populate[level]=*&populate[stream]=*&${filters}`;
 
-    console.log("Query Parameters:", filters, "------qp"); // Debug output for query parameters
-    console.log("Strapi Endpoint:", strapiEndpoint, "------se"); // Debug output for the final endpoint
-
     // Fetch data from Strapi
     const response = await fetch(strapiEndpoint, {
       headers: {

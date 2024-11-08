@@ -37,7 +37,6 @@ const CollegePortal = () => {
           if (!response.ok) {
             throw new Error("Failed to fetch student data");
           }
-          console.log(data);
 
           const data = await response.json();
           setStudentData(data?.data);

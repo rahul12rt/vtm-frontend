@@ -71,7 +71,7 @@ const Login = () => {
         Cookies.set("token", jwtToken, { expires: 7, secure: true });
 
         const userId = data.user.id;
-        console.log(data);
+
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
         const userEndpoint = `${strapiApiUrl}/api/users/${userId}?populate=*`;
         const userResponse = await fetch(userEndpoint, {

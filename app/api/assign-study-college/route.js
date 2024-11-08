@@ -81,7 +81,7 @@ export async function DELETE(request) {
     }
 
     const strapiEndpoint = `${strapiApiUrl}/api/assing-self-study-to-colleges/${materialId}?populate[self_studies]=*&populate[college]=*`;
-    http: console.log(strapiEndpoint);
+
     const response = await fetch(strapiEndpoint, {
       method: "DELETE",
       headers: {

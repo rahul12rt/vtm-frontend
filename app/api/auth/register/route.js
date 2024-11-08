@@ -21,7 +21,6 @@ export async function POST(request) {
       body: JSON.stringify(payload),
     });
 
-    console.log(response);
     if (!response.ok) {
       throw new Error(`Error posting data to Strapi: ${response.statusText}`);
     }

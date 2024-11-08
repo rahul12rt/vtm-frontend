@@ -15,7 +15,6 @@ const AssignedDPPList = () => {
           throw new Error("Network response was not ok");
         }
         const result = await response.json();
-        console.log("Fetched Data:", result); // Console the response data
         setData(result.data); // Update the state with fetched data
       } catch (error) {
         console.error("Fetch error:", error);
@@ -36,8 +35,6 @@ const AssignedDPPList = () => {
       dpp.attributes.name.toLowerCase().includes(searchTerm)
     )
   );
-
-  console.log(data);
 
   return (
     <div className="container">
@@ -65,7 +62,7 @@ const AssignedDPPList = () => {
               <th className="collegeColumn">College</th>
             </tr>
           </thead>
-          {console.log(filteredData)}
+
           <tbody>
             {filteredData.length > 0 ? (
               filteredData.map((item) =>

@@ -128,7 +128,7 @@ const CreateTest = () => {
         ]);
 
         const typeResult = await typeResponse.json();
-        console.log(typeResult);
+
         const typesData = typeResult.data.map((type) => ({
           id: type.id,
           name: type.attributes.type,
@@ -320,7 +320,6 @@ const CreateTest = () => {
             return response.json();
           })
           .then((responseData) => {
-            console.log("Test created successfully:", responseData);
             // Handle success: reset fields or show success message
             setSelectedQuestions([]);
             setTestTitle("");
@@ -439,7 +438,7 @@ const CreateTest = () => {
           />
         )}
       </div>
-      {console.log(data)}
+
       {/* Display Selected Values */}
       <div className="selectedValuesContainer">
         <h3>Selected Questions:</h3>
@@ -536,7 +535,7 @@ const CreateTest = () => {
                       | Class: {question.class} | Academic Year:{" "}
                       {question.academicYear}
                     </strong> */}
-                    {console.log(question)}
+
                     <div className="question">
                       {id + 1}: {question.question}
                     </div>
@@ -550,7 +549,6 @@ const CreateTest = () => {
                               : ""
                           }`}
                         >
-                          {console.log(question.correctOption, index)}
                           {index + 1}. {answer}
                         </div>
                       ))}
