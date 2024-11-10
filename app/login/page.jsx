@@ -73,7 +73,7 @@ const Login = () => {
         const userId = data.user.id;
 
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const userEndpoint = `${strapiApiUrl}/api/users/${userId}?populate=*`;
+        const userEndpoint = `/api/users?userId=${userId}`;
         const userResponse = await fetch(userEndpoint, {
           headers: {
             "Content-Type": "application/json",
