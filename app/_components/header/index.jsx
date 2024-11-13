@@ -44,6 +44,7 @@ const Header = () => {
             const role = user.role?.name;
             if (role === "Admin") {
               setIsAdmin(true);
+              setLogoPath("/images/logos/logo.jpg");
             } else if (role === "Student") {
               const response = await fetch(
                 `${strapiApiUrl}/api/students?filters[user_name][$eq]=${username}&populate=*`
@@ -148,10 +149,10 @@ const Header = () => {
             <option value="/list/test">Test List</option>
             <option value="/assign/test">Assign Test</option>
             <option value="/list/assigned-test">Assigned Test List</option>
-            <option value="/result">Test Results</option>
+            {/* <option value="/result">Test Results</option>
             <option value="/reports/Aprameya">
               Student wise reports for APRAMEYA AR
-            </option>
+            </option> */}
           </select>
         )}
         {!loading && pathname !== "/test" && userData && (
