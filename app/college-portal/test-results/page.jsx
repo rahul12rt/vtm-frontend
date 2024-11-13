@@ -26,7 +26,7 @@ function Results() {
         }
 
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-
+        console.log(collegeUsername);
         // Fetch results from API
         const resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=1&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&populate[create_test][populate]=academic_year`;
         const response = await fetch(resultsEndpoint);

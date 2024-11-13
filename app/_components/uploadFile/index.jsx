@@ -4,7 +4,7 @@ import { FaFileUpload } from "react-icons/fa";
 import { toast, Toaster } from "react-hot-toast";
 import styles from "./UploadFile.module.css";
 
-const CollegePortalExcelUpload = () => {
+const CollegePortalExcelUpload = ({ collegeId, classId }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [columnData, setColumnData] = useState([]);
   const [secondRowFirstColValue, setSecondRowFirstColValue] = useState(null);
@@ -115,7 +115,7 @@ const CollegePortalExcelUpload = () => {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch data");
+      throw new Error("Test not found");
     }
 
     const data = await response.json();
@@ -134,12 +134,13 @@ const CollegePortalExcelUpload = () => {
       if (!isNaN(numericRollNumber)) {
         try {
           const studentResponse = await fetch(
-            `${strapiApiUrl}/api/students?filters[roll_number][$eq]=${numericRollNumber}`
+            `${strapiApiUrl}/api/students?populate[college]=*&filters[college][id][$eq]=${collegeId}&populate[class]=*&filters[class][id][$eq]=${classId}&filters[roll_number][$eq]=${numericRollNumber}`
           );
 
           if (studentResponse.ok) {
             const studentDataResponse = await studentResponse.json();
             const studentId = studentDataResponse.data[0].id;
+            console.log(numericRollNumber, studentId);
             await submitResults(studentId, testValue, testId);
           } else {
             console.error(

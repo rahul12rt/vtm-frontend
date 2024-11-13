@@ -5,7 +5,7 @@ import styles from "./index.module.css";
 
 const TestResults = ({ data }) => {
   if (!data || data.length === 0) {
-    return <div>No results available</div>;
+    return <div className="container">No results available</div>;
   }
 
   const testInfo = data[0].attributes.create_test.data.attributes;

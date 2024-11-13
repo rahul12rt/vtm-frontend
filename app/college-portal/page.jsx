@@ -57,10 +57,12 @@ const CollegePortal = () => {
     },
     [router]
   );
-
   return (
     <div className="container">
-      <div className="sectionHeader">College Information</div>
+      <div className="sectionHeader">
+        College Information - {studentData && studentData[0].attributes.name}
+      </div>
+      <p>Welcome to Academic progress portal</p>
       <div className={styles.cardContainer}>
         <div
           className={styles.card}
@@ -75,7 +77,7 @@ const CollegePortal = () => {
           Exam Results
         </div>
       </div>
-      <h1>Reports</h1>
+      {/* <h1>Reports</h1> */}
       <div className={styles.cardContainer}>
         {/* <div
           className={styles.card}
@@ -83,7 +85,7 @@ const CollegePortal = () => {
         >
           Student Wise
         </div> */}
-        <CollegePortalExcelUpload />
+        {/* <CollegePortalExcelUpload /> */}
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ const Header = () => {
         const username = decrypt(encryptedUser);
 
         // Set logo path based on username
-        if (username === "scpuc123") {
+        if (username === "scpuc123" || username === "sspuc1234") {
           setLogoPath("/images/logos/sadvidya-composite-puc.svg");
         } else if (username === "ssrpuc") {
           setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
@@ -52,7 +52,9 @@ const Header = () => {
               const data = await response.json();
               if (
                 data.data[0].attributes.college.data.attributes.user_name ==
-                "scpuc123"
+                  "scpuc123" ||
+                data.data[0].attributes.college.data.attributes.user_name ==
+                  "sspuc1234"
               ) {
                 setLogoPath("/images/logos/sadvidya-composite-puc.svg");
               } else if (
@@ -145,6 +147,7 @@ const Header = () => {
             <option value="/manage/create-test">Create Test</option>
             <option value="/list/test">Test List</option>
             <option value="/assign/test">Assign Test</option>
+            <option value="/list/assigned-test">Assigned Test List</option>
             <option value="/result">Test Results</option>
             <option value="/reports/Aprameya">
               Student wise reports for APRAMEYA AR
