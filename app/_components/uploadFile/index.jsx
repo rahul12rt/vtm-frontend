@@ -140,7 +140,6 @@ const CollegePortalExcelUpload = ({ collegeId, classId }) => {
           if (studentResponse.ok) {
             const studentDataResponse = await studentResponse.json();
             const studentId = studentDataResponse.data[0].id;
-            console.log(numericRollNumber, studentId);
             await submitResults(studentId, testValue, testId);
           } else {
             console.error(

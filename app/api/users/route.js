@@ -12,7 +12,6 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
-    console.log(userId, "---req");
     const strapiEndpoint = `${strapiApiUrl}/api/users/${userId}?populate=*`;
     const response = await fetch(strapiEndpoint, {
       headers: {

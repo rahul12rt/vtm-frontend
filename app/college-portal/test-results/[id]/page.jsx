@@ -17,9 +17,6 @@ const Results = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return; // Don't fetch if id is not available yet
-
-      console.log(username);
-
       setIsLoading(true);
       try {
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;

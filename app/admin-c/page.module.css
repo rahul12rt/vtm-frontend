@@ -1,0 +1,27 @@
+.cardsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  margin-top: 20px;
+}
+
+
+.welcomeMessage {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f0f4ff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.welcomeMessage h1 {
+  font-size: 2rem;
+  color: #333;
+  margin: 0;
+}
+
+.welcomeMessage p {
+  font-size: 1rem;
+  color: #666;
+  margin: 0.5rem 0 0;
+}

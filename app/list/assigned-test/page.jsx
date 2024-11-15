@@ -24,8 +24,6 @@ function AssignTest() {
     fetchTests();
   }, []);
 
-  console.log(tests);
-
   // Function to create table rows for each college
   const createTableRows = () => {
     const rows = [];
@@ -39,7 +37,6 @@ function AssignTest() {
       // Create a row for each college
       testData.colleges.data.forEach((college) => {
         const collegeData = college.attributes;
-        console.log("College ID:", college.id, "Class ID:", classId);
 
         rows.push(
           <tr key={`${test.id}-${college.id}`} className="hover:bg-gray-50">

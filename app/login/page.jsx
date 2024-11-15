@@ -114,7 +114,7 @@ const Login = () => {
             expires: 7,
             secure: true,
           });
-          window.location.href = "/register/student";
+          window.location.href = "/admin-c";
         }
       } catch (error) {
         setDisable(false);
