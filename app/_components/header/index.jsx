@@ -27,9 +27,9 @@ const Header = () => {
 
         // Set logo path based on username using imported values
         if (username === "scpuc123" || username === "sspuc1234") {
-          setLogoPath(SadvidyaCompositePucLogo);
+          setLogoPath("/images/logos/sadvidya-composite-puc.svg");
         } else if (username === "ssrpuc") {
-          setLogoPath(SadvidyaSemiResidentialLogo);
+          setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
         }
 
         if (username) {
@@ -48,7 +48,7 @@ const Header = () => {
             const role = user.role?.name;
             if (role === "Admin") {
               setIsAdmin(true);
-              setLogoPath(DefaultLogo.src);
+              setLogoPath("/images/logos/logo.jpg");
             } else if (role === "Student") {
               const studentResponse = await fetch(
                 `${strapiApiUrl}/api/students?filters[user_name][$eq]=${username}&populate=*`
@@ -63,9 +63,9 @@ const Header = () => {
                 collegeUserName === "scpuc123" ||
                 collegeUserName === "sspuc1234"
               ) {
-                setLogoPath(SadvidyaCompositePucLogo.src);
+                setLogoPath("/images/logos/sadvidya-composite-puc.svg");
               } else if (collegeUserName === "ssrpuc") {
-                setLogoPath(SadvidyaSemiResidentialLogo.src);
+                setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
               }
             }
           }
