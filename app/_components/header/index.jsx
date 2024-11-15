@@ -5,10 +5,6 @@ import styles from "./index.module.css";
 import Cookies from "js-cookie";
 import { decrypt } from "@/app/_utils/encryptionUtils";
 
-import SadvidyaCompositePucLogo from "../../../public/images/logos/sadvidya-composite-puc.svg";
-import SadvidyaSemiResidentialLogo from "../../../public/images/logos/sadvidya-semi-residential.jpg";
-import DefaultLogo from "../../../public/images/logos/logo.jpg";
-
 const Header = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -26,7 +22,7 @@ const Header = () => {
         const username = decrypt(encryptedUser);
 
         // Set logo path based on username using imported values
-        if (username === "scpuc123" || username === "sspuc1234") {
+        if (username === "scpuc123" || username === "college1") {
           setLogoPath("/images/logos/sadvidya-composite-puc.svg");
         } else if (username === "ssrpuc") {
           setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
@@ -61,7 +57,7 @@ const Header = () => {
 
               if (
                 collegeUserName === "scpuc123" ||
-                collegeUserName === "sspuc1234"
+                collegeUserName === "college1"
               ) {
                 setLogoPath("/images/logos/sadvidya-composite-puc.svg");
               } else if (collegeUserName === "ssrpuc") {
