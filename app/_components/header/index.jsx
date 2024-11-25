@@ -22,10 +22,14 @@ const Header = () => {
         const username = decrypt(encryptedUser);
 
         // Set logo path based on username using imported values
-        if (username === "scpuc123" || username === "college1") {
-          setLogoPath("/images/logos/sadvidya-composite-puc.svg");
-        } else if (username === "ssrpuc") {
-          setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
+        if (username === "sadvidya") {
+          setLogoPath(
+            "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-composite-puc.svg"
+          );
+        } else if (username === "sadvidyasr") {
+          setLogoPath(
+            "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
+          );
         }
 
         if (username) {
@@ -44,7 +48,9 @@ const Header = () => {
             const role = user.role?.name;
             if (role === "Admin") {
               setIsAdmin(true);
-              setLogoPath("/images/logos/logo.jpg");
+              setLogoPath(
+                "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/logo.jpg"
+              );
             } else if (role === "Student") {
               const studentResponse = await fetch(
                 `${strapiApiUrl}/api/students?filters[user_name][$eq]=${username}&populate=*`
@@ -55,13 +61,14 @@ const Header = () => {
                 studentData.data[0].attributes.college.data.attributes
                   .user_name;
 
-              if (
-                collegeUserName === "scpuc123" ||
-                collegeUserName === "college1"
-              ) {
-                setLogoPath("/images/logos/sadvidya-composite-puc.svg");
-              } else if (collegeUserName === "ssrpuc") {
-                setLogoPath("/images/logos/sadvidya-semi-residential.jpg");
+              if (collegeUserName === "sadvidya") {
+                setLogoPath(
+                  "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-composite-puc.svg"
+                );
+              } else if (collegeUserName === "sadvidyasr") {
+                setLogoPath(
+                  "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
+                );
               }
             }
           }
