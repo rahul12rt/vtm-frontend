@@ -70,7 +70,7 @@ const ExamList = () => {
     const fetchAssignedTests = async (classId, academicYear, collegeId) => {
       try {
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&filters[create_test][exam_type][$eq]=2&filters[colleges][id][$eq]=${collegeId}&populate=create_test.class,create_test.academic_year,create_test.duration,create_test.subject,create_test.exam_type`;
+        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&filters[create_test][exam_type][$eq]=3&filters[colleges][id][$eq]=${collegeId}&populate=create_test.class,create_test.academic_year,create_test.duration,create_test.subject,create_test.exam_type`;
 
         const bearerToken = Cookies.get("token");
         const response = await fetch(testsEndpoint, {

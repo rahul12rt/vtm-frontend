@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styles from "../../styles/register.module.css";
 import toast, { Toaster } from "react-hot-toast";
+import * as XLSX from "xlsx";
 
 const AcademicYearEnum = {
   "2024-25": "2024-25",
@@ -31,6 +32,7 @@ const StudentRegister = () => {
   const [classes, setClasses] = useState([]);
   const [colleges, setColleges] = useState([]);
   const [streams, setStreams] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,6 +73,7 @@ const StudentRegister = () => {
     const selectedCollege = colleges.find(
       (college) => college.id === selectedCollegeId
     );
+    F;
 
     setFormData({
       ...formData,
@@ -237,6 +240,97 @@ const StudentRegister = () => {
 
     fetchData();
   }, []);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setIsProcessing(true);
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        // Process each student record
+        for (const student of jsonData) {
+          const registerPayload = {
+            username: student.user_name,
+            email: student.email || "",
+            password: student.password,
+          };
+
+          try {
+            // Register user
+            const userResponse = await fetch("/api/auth/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(registerPayload),
+            });
+
+            if (!userResponse.ok) {
+              throw new Error(`Failed to register user ${student.name}`);
+            }
+
+            const userData = await userResponse.json();
+
+            // Register student details
+            const studentPayload = {
+              data: {
+                name: student.name,
+                roll_number: student.roll_number.toString(),
+                email: student.email || "",
+                user_name: student.user_name,
+                password: student.password,
+                college: Number(student.college),
+                class: Number(student.class),
+                academic_year: student.academic_year,
+                contact_number: student.contact_number || "",
+                secoundary_number: student.secoundary_number || "",
+                stream: Number(student.stream),
+              },
+            };
+
+            const studentResponse = await fetch("/api/register/student", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(studentPayload),
+            });
+
+            if (!studentResponse.ok) {
+              throw new Error(
+                `Failed to register student details for ${student.name}`
+              );
+            }
+
+            // Update role
+            await fetch("/api/change-role", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: userData.user.id,
+                roleId: 3,
+              }),
+            });
+          } catch (error) {
+            toast.error(`Error processing ${student.name}: ${error.message}`);
+          }
+        }
+
+        toast.success("Excel upload processed successfully!");
+      };
+
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      toast.error("Error processing Excel file: " + error.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="container">
@@ -436,6 +530,20 @@ const StudentRegister = () => {
             onFocus={handleFocus}
             placeholder="Enter your contact number 2 (optional)"
           />
+        </div>
+        <div className="formGroup" style={{ marginBottom: "2rem" }}>
+          <label htmlFor="excelUpload" className="uploadLabel">
+            Upload Excel File
+            <input
+              type="file"
+              id="excelUpload"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              disabled={isProcessing}
+              style={{ marginTop: "0.5rem" }}
+            />
+          </label>
+          {isProcessing && <p>Processing Excel file...</p>}
         </div>
       </form>
       <button

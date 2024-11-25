@@ -19,7 +19,7 @@ function ExamResults() {
           return;
         }
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=1&filters[student][user_name][$eq]=${username}&populate[create_test][populate]=class,academic_year,subject,topics,exam_name,exam_type,college&populate=student`;
+        const resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][user_name][$eq]=${username}&populate[create_test][populate]=class,academic_year,subject,topics,exam_name,exam_type,college&populate=student`;
 
         const response = await fetch(resultsEndpoint);
         if (!response.ok) {
