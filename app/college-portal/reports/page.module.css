@@ -1,0 +1,118 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.pageTitle {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #333;
+  font-weight: bold;
+}
+
+.studentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.studentCard {
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.studentCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cardHeader {
+  background-color: #f0f4f8;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.studentName {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2d3748;
+}
+
+.rollNumber {
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.cardBody {
+  padding: 15px;
+}
+
+.cardBody p {
+  margin-bottom: 10px;
+  color: #4a5568;
+}
+
+.cardFooter {
+  padding: 15px;
+  background-color: #f7fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+}
+
+.viewReportsBtn {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+}
+
+.viewReportsBtn:hover {
+  background-color: #2c5282;
+}
+
+.loading, .error, .noStudents {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 50px;
+  color: #718096;
+}
+
+.error {
+  color: #e53e3e;
+}
+
+.activeFilter {
+  background-color: #007bff;
+  color: white;
+}
+.streamFilterContainer {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.streamFilterBtn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background-color: #f4f4f4;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+}
+
+.streamFilterBtn.activeFilter {
+  background-color: #007bff;
+  color: white;
+}

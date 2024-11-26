@@ -77,14 +77,14 @@ const CollegePortal = () => {
           Exam Results
         </div>
       </div>
-      {/* <h1>Reports</h1> */}
+      <h1>Reports</h1>
       <div className={styles.cardContainer}>
-        {/* <div
+        <div
           className={styles.card}
-          onClick={() => handleNavigation("/college-portal/test-results")}
+          onClick={() => handleNavigation("/college-portal/reports")}
         >
           Student Wise
-        </div> */}
+        </div>
         {/* <CollegePortalExcelUpload /> */}
       </div>
     </div>
