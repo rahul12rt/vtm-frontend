@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -10,13 +11,11 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import SearchableSingleSelect from "../../../_components/searchAbleDropDown";
-import { useParams } from "next/navigation";
-import styles from "./page.module.css";
-import Cookies from "js-cookie";
 import { decrypt } from "@/app/_utils/encryptionUtils";
+import styles from "./page.module.css";
+import { useParams } from "next/navigation";
 
-// Register the required components from Chart.js
+// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -26,107 +25,38 @@ ChartJS.register(
   Legend
 );
 
-const StudentReport = () => {
-  const [students, setStudents] = useState([]);
+function StudentReport() {
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedSubject, setSelectedSubject] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const studentId = useParams();
 
-  // Prepare subject options and subject data dynamically
-  const prepareSubjectData = (results) => {
-    const subjectData = {};
-
-    // Assuming each result is for a different subject
-    results.forEach((result, index) => {
-      const subjectName = `Subject ${index + 1}`; // You might want to map this to actual subject names
-      subjectData[subjectName] = [
-        {
-          name: "Total Marks",
-          marks: result.attributes.obtained,
-          rank: null,
-          classAverage: result.attributes.total,
-        },
-      ];
-    });
-
-    return subjectData;
-  };
-
-  // Dynamic subject options
-  const subjectOptions =
-    students.length > 0
-      ? Object.keys(prepareSubjectData(students)).map((subject) => ({
-          id: subject,
-          name: subject,
-        }))
-      : [];
-
-  // Prepare data for the selected subject
-  const selectedSubjectData =
-    selectedSubject && students.length > 0
-      ? prepareSubjectData(students)[selectedSubject] || []
-      : [];
-
-  const getChartData = (data) => ({
-    labels: data.map((chapter) => chapter.name),
-    datasets: [
-      {
-        label: "Obtained Marks",
-        data: data.map((chapter) => chapter.marks),
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-      },
-      {
-        label: "Total Marks",
-        data: data.map((chapter) => chapter.classAverage),
-        backgroundColor: "rgba(255, 159, 64, 0.6)",
-      },
-    ],
-  });
-
-  const getChartOptions = () => ({
-    scales: {
-      y: {
-        beginAtZero: true,
-        suggestedMax:
-          Math.max(...selectedSubjectData.map((d) => d.classAverage)) * 1.2,
-      },
-    },
-  });
-
-  const handleSubjectChange = (value) => {
-    setSelectedSubject(value);
-  };
-
   useEffect(() => {
-    const fetchStudents = async () => {
+    const fetchResults = async () => {
       if (!studentId.id) {
-        console.log("Student ID not yet available");
         setLoading(false);
         return;
       }
 
       try {
         const encryptedUser = Cookies.get("user");
-        const collegeUsername = decrypt(encryptedUser || "");
-        if (!collegeUsername) {
-          console.error("No college username found in cookies");
-          setLoading(false);
-          return;
+        const username = decrypt(encryptedUser);
+
+        if (!username) {
+          throw new Error("No username found in cookies");
         }
 
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const studentsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&populate[student][populate]=class&populate[student][populate]=college&filters[student][id][$eq]=${studentId.id}&filters[student][college][user_name][$eq]=${collegeUsername}`;
+        const resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][id][$eq]=${studentId.id}&filters[student][college][user_name][$eq]=${username}&populate[create_test][populate]=class,academic_year,subject,topics,exam_name,exam_type,college&populate=student`;
 
-        const response = await fetch(studentsEndpoint);
+        const response = await fetch(resultsEndpoint);
         if (!response.ok) {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
 
         const data = await response.json();
-
-        console.log(data);
-        setStudents(data.data);
+        setResults(data.data);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -134,121 +64,200 @@ const StudentReport = () => {
       }
     };
 
-    fetchStudents();
+    fetchResults();
   }, [studentId]);
 
-  // Loading state handling
-  if (loading) {
-    return <div className={styles.loadingContainer}>Loading...</div>;
-  }
+  // Group results by subject
+  const groupedResults = results.reduce((acc, result) => {
+    const subject =
+      result.attributes.create_test.data.attributes.subject.data.attributes
+        .name;
+    if (!acc[subject]) {
+      acc[subject] = [];
+    }
+    acc[subject].push(result);
+    return acc;
+  }, {});
 
-  // Error state handling
-  if (error) {
-    return <div className={styles.errorContainer}>Error: {error}</div>;
-  }
+  // Filter subjects based on search term
+  const filteredGroupedResults = Object.fromEntries(
+    Object.entries(groupedResults).filter(([subject]) =>
+      subject.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
 
-  // No data state
-  if (students.length === 0) {
-    return <div className={styles.noDataContainer}>No student data found</div>;
-  }
+  // Prepare bar chart data for a specific test
+  const prepareChartData = (result) => {
+    const testInfo = result.attributes;
+    const createTest = result.attributes.create_test.data.attributes;
 
-  // Student details from the first result (assuming consistent data)
-  console.log(students);
-  const studentDetails = students[0].attributes.student.data.attributes;
+    return {
+      labels: ["Obtained Marks", "Total Marks"],
+      datasets: [
+        {
+          label: createTest.name,
+          data: [testInfo.obtained, testInfo.total],
+          backgroundColor: [
+            getMarkColor(testInfo.obtained, testInfo.total),
+            "rgba(54, 162, 235, 0.6)",
+          ],
+          borderColor: [
+            getMarkColor(testInfo.obtained, testInfo.total, true),
+            "rgba(54, 162, 235, 1)",
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
+  // Determine color based on performance
+  const getMarkColor = (obtained, total, isBorder = false) => {
+    const percentage = (obtained / total) * 100;
+    const baseColors = {
+      success: isBorder ? "rgba(75, 192, 192, 1)" : "rgba(75, 192, 192, 0.6)",
+      warning: isBorder ? "rgba(255, 206, 86, 1)" : "rgba(255, 206, 86, 0.6)",
+      danger: isBorder ? "rgba(255, 99, 132, 1)" : "rgba(255, 99, 132, 0.6)",
+    };
+
+    if (percentage >= 75) return baseColors.success;
+    if (percentage >= 50) return baseColors.warning;
+    return baseColors.danger;
+  };
+
+  // Chart options
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      title: {
+        display: true,
+        text: "Test Performance",
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Marks",
+        },
+      },
+    },
+  };
+
+  if (loading) return <div className={styles.loading}>Loading results...</div>;
+  if (error) return <div className={styles.error}>Error: {error}</div>;
+  if (results.length === 0)
+    return <div className={styles.noResults}>No test results found.</div>;
+
+  // Student details from the first result
+  const studentDetails = results[0].attributes.student.data.attributes;
 
   return (
     <div className="container">
+      {/* Student Details Header */}
       <div className={styles.heading}>
-        <h2>{studentDetails.college.data.attributes.name}</h2>
-        <p>
+        {/* <h2>{studentDetails.college.data.attributes.name}</h2> */}
+        {/* <p>
           STD: <span>{studentDetails.class.data.attributes.name}</span>
           Name of the Student: <span>{studentDetails.name}</span>
           Roll Number: <span>{studentDetails.roll_number}</span>
-        </p>
+        </p> */}
       </div>
 
-      <div className="formGroup">
-        <label>Select Subject:</label>
-        <SearchableSingleSelect
-          options={subjectOptions}
-          selectedValue={selectedSubject || ""}
-          onChange={handleSubjectChange}
-          placeholder="Select subject"
+      {/* Search Input */}
+      <div className={styles.searchContainer}>
+        <input
+          type="text"
+          placeholder="Search subjects..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className={styles.searchInput}
         />
       </div>
 
-      {selectedSubject === "" ? (
-        // Display data for all subjects
-        subjectOptions.length > 0 ? (
-          subjectOptions.map((subject) => {
-            const data = prepareSubjectData(students)[subject.name];
-            return (
-              <div key={subject.id} className={styles.subjectSection}>
-                <h3>Subject: {subject.name}</h3>
-                <table className={styles.studentReportTable}>
-                  <thead>
-                    <tr>
-                      <th>Marks Details</th>
-                      <th>Marks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((detail) => (
-                      <tr key={detail.name}>
-                        <td>{detail.name}</td>
-                        <td>
-                          {detail.marks} / {detail.classAverage}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      <div className="sectionHeader">Test Results</div>
 
-                <div className={styles.studentReportChart}>
-                  <h4>{subject.name} Marks Distribution</h4>
-                  <Bar data={getChartData(data)} options={getChartOptions()} />
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <p>No subjects available.</p>
-        )
-      ) : selectedSubjectData.length > 0 ? (
-        <>
-          <h3>{selectedSubject}</h3>
-          <table className={styles.studentReportTable}>
-            <thead>
-              <tr>
-                <th>Marks Details</th>
-                <th>Marks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedSubjectData.map((detail) => (
-                <tr key={detail.name}>
-                  <td>{detail.name}</td>
-                  <td>
-                    {detail.marks} / {detail.classAverage}
-                  </td>
+      {Object.entries(filteredGroupedResults).map(
+        ([subject, subjectResults]) => (
+          <div key={subject} className={styles.subjectSection}>
+            <h2 className={styles.subjectTitle}>{subject}</h2>
+
+            {/* Table for subject results */}
+            <table className={styles.resultsTable}>
+              <thead>
+                <tr>
+                  <th>Test Name</th>
+                  <th>Date</th>
+                  <th>Obtained Marks</th>
+                  <th>Total Marks</th>
+                  <th>Percentage</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {subjectResults.map((result) => {
+                  const testInfo = result.attributes;
+                  const createTest =
+                    result.attributes.create_test.data.attributes;
+                  const percentage = (
+                    (testInfo.obtained / testInfo.total) *
+                    100
+                  ).toFixed(2);
 
-          <div className={styles.studentReportChart}>
-            <h4>{selectedSubject} Marks Distribution</h4>
-            <Bar
-              data={getChartData(selectedSubjectData)}
-              options={getChartOptions()}
-            />
+                  return (
+                    <tr key={result.id}>
+                      <td>{createTest.name}</td>
+                      <td>{createTest.date}</td>
+                      <td>{testInfo.obtained}</td>
+                      <td>{testInfo.total}</td>
+                      <td>
+                        <span
+                          className={
+                            percentage >= 75
+                              ? styles.bgSuccess
+                              : percentage >= 50
+                              ? styles.bgWarning
+                              : styles.bgDanger
+                          }
+                        >
+                          {percentage}%
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Bar Charts for Individual Tests */}
+            <div className={styles.testChartsContainer}>
+              {subjectResults.map((result) => (
+                <div key={result.id} className={styles.singleTestChart}>
+                  <Bar
+                    data={prepareChartData(result)}
+                    options={{
+                      ...chartOptions,
+                      plugins: {
+                        ...chartOptions.plugins,
+                        title: {
+                          ...chartOptions.plugins.title,
+                          text: result.attributes.create_test.data.attributes
+                            .name,
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </>
-      ) : (
-        <p>No data available.</p>
+        )
       )}
     </div>
   );
-};
+}
 
 export default StudentReport;
