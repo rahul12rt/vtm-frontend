@@ -13,6 +13,7 @@ const Header = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [logoPath, setLogoPath] = useState(""); // Default logo
+  const [collegeDetails, setCollegeDetails] = useState(null);
   const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 
   useEffect(() => {
@@ -21,15 +22,25 @@ const Header = () => {
         const encryptedUser = Cookies.get("user");
         const username = decrypt(encryptedUser);
 
-        // Set logo path based on username using imported values
+        // Set logo path and college details based on username
         if (username === "sadvidya") {
           setLogoPath(
             "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-composite-puc.svg"
           );
+          setCollegeDetails({
+            name: "Sadvidya Composite PU College",
+            address:
+              "Sadvidya Educational Institutions - #7, Narayana Sastry Road, Subbarayanakere, Chamrajpura, Mysore - 570024",
+          });
         } else if (username === "sadvidyasr") {
           setLogoPath(
             "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
           );
+          setCollegeDetails({
+            name: "Sadvidya Semi Residential PU College",
+            address:
+              "Sadvidya Semi Residential PU College - CA19, Damodaram Sanjeeviah Road, 2nd Stage, Vijayanagar, Mysuru - 570017",
+          });
         }
 
         if (username) {
@@ -51,6 +62,7 @@ const Header = () => {
               setLogoPath(
                 "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/logo.jpg"
               );
+              setCollegeDetails(null); // Clear college details for admin
             } else if (role === "Student") {
               const studentResponse = await fetch(
                 `${strapiApiUrl}/api/students?filters[user_name][$eq]=${username}&populate=*`
@@ -65,10 +77,20 @@ const Header = () => {
                 setLogoPath(
                   "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-composite-puc.svg"
                 );
+                setCollegeDetails({
+                  name: "Sadvidya Composite PU College",
+                  address:
+                    "Sadvidya Educational Institutions - #7, Narayana Sastry Road, Subbarayanakere, Chamrajpura, Mysore - 570024",
+                });
               } else if (collegeUserName === "sadvidyasr") {
                 setLogoPath(
                   "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
                 );
+                setCollegeDetails({
+                  name: "Sadvidya Semi Residential PU College",
+                  address:
+                    "Sadvidya Semi Residential PU College - CA19, Damodaram Sanjeeviah Road, 2nd Stage, Vijayanagar, Mysuru - 570017",
+                });
               }
             }
           }
@@ -101,9 +123,17 @@ const Header = () => {
       <div className={styles.wrap}>
         <div className={styles.logoWrap}>
           {pathname !== "/login" && logoPath && (
-            <>
-              <img src={logoPath} alt="Logo" className={styles.logo} />
-            </>
+            <div className={styles.left}>
+              <div className={styles.logoCont}>
+                <img src={logoPath} alt="Logo" className={styles.logo} />
+              </div>
+              {collegeDetails && (
+                <div className={styles.collegeDetails}>
+                  <h2>{collegeDetails.name}</h2>
+                  <p>{collegeDetails.address}</p>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

@@ -59,10 +59,8 @@ const CollegePortal = () => {
   );
   return (
     <div className="container">
-      <div className="sectionHeader">
-        College Information - {studentData && studentData[0].attributes.name}
-      </div>
-      <p>Welcome to Academic progress portal</p>
+      <div className="sectionHeader">Vidvat - Knowledge Hub</div>
+      <h1 style={{ textAlign: "center" }}>Reports</h1>
       <div className={styles.cardContainer}>
         <div
           className={styles.card}
@@ -77,7 +75,7 @@ const CollegePortal = () => {
           Exam Results
         </div>
       </div>
-      <h1>Reports</h1>
+
       <div className={styles.cardContainer}>
         <div
           className={styles.card}
