@@ -1,0 +1,82 @@
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 20px;
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.leftSection p{
+    font-size: 14px;
+}
+
+.leftSection div{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.testName {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 8px 0px;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+}
+
+.viewResultButton {
+  padding: 10px 20px;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.viewResultButton:hover {
+  background-color: #005bb5;
+}
+
+.filterContainer {
+  display: flex;
+  align-items: self-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+
+}
+
+.filterContainer label{
+  font-size: 14px;
+
+}
+
+.tabs {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+.tabButton {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+.active {
+  border-color: #007bff;
+  background-color: #007bff;
+  color: white;
+}
+.tabButton:hover {
+  background-color: #007bff;
+  color: white;
+}
