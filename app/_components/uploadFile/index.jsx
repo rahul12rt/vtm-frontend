@@ -4,7 +4,7 @@ import { FaFileUpload } from "react-icons/fa";
 import { toast, Toaster } from "react-hot-toast";
 import styles from "./UploadFile.module.css";
 
-const CollegePortalExcelUpload = ({ collegeId, classId }) => {
+const CollegePortalExcelUpload = ({ collegeId, classId, disabled }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [columnData, setColumnData] = useState([]);
   const [secondRowFirstColValue, setSecondRowFirstColValue] = useState(null);
@@ -185,20 +185,22 @@ const CollegePortalExcelUpload = ({ collegeId, classId }) => {
     }
   };
 
+  console.log(disabled)
+
   return (
     <div
-      className={`${styles.uploadCard} ${isProcessing ? styles.disabled : ""}`}
+      className={`${styles.uploadCard} ${disabled ? styles.disabled : ""}`}
     >
       <Toaster position="top-right" reverseOrder={false} />
       <label className={styles.uploadLabel}>
         <FaFileUpload className={styles.uploadIcon} />
-        {isProcessing ? "Processing..." : "Upload Excel File"}
+        {disabled ? "Excel Uploaded" : "Upload Excel File"}
         <input
           type="file"
           id="fileUpload"
           accept=".xlsx, .xls"
           className={styles.uploadInput}
-          disabled={isProcessing}
+          disabled={disabled}
           onChange={handleFileUpload}
         />
       </label>

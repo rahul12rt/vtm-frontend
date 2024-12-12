@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import MultiSelectDropDown from "../../_components/multiSelectDropDown2";
+import styles from './page.module.css'
 
 const AssignTest = () => {
   const [filters, setFilters] = useState({
@@ -21,6 +22,9 @@ const AssignTest = () => {
     assessments: [],
     colleges: [],
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [loading, setLoading] = useState(false);
   const [dropdownLoading, setDropdownLoading] = useState({
@@ -205,9 +209,35 @@ const AssignTest = () => {
     (chapter) => chapter.subjectId === Number(filters.subject)
   );
 
-  const filteredAssessments = data.assessments.filter((assessment) =>
+  const paginationOptions = [10, 20, 30, 40];
+
+  // Filtered and Paginated Assessments
+  const filteredAssessments = data.assessments
+  .filter((assessment) =>
     assessment.name.toLowerCase().includes(filters.question.toLowerCase())
-  );
+  )
+  // Sort in descending order based on ID
+  .sort((a, b) => b.id - a.id);
+
+    // Pagination Calculations
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentAssessments = filteredAssessments.slice(
+      indexOfFirstItem,
+      indexOfLastItem
+    );
+  
+    // Total Pages Calculation
+    const totalPages = Math.ceil(filteredAssessments.length / itemsPerPage);
+
+    const handlePageChange = (pageNumber) => {
+      setCurrentPage(pageNumber);
+    };
+  
+    const handleItemsPerPageChange = (value) => {
+      setItemsPerPage(Number(value));
+      setCurrentPage(1); // Reset to first page when changing items per page
+    };
 
   const assignTest = async (
     assessmentId,
@@ -361,92 +391,131 @@ const AssignTest = () => {
     setSelectedColleges(initialSelectedColleges);
   }, [assignedTests]);
 
+    // Render Pagination Controls
+    const renderPaginationControls = () => {
+      return (
+        <>
+ 
+        <div className={styles.paginationContainer} style={{margin:"30px 0px 10px 0px"}}>
+          
+
+      
+    
+          <div className={styles.pageNavigation} >
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`${styles.pageButton} ${currentPage === 1 ? styles.disabled : ''}`}
+            >
+              Previous
+            </button>
+    
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index}
+                onClick={() => handlePageChange(index + 1)}
+                className={`${styles.pageButton} ${
+                  currentPage === index + 1 ? styles.active : ''
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+    
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`${styles.pageButton} ${currentPage === totalPages ? styles.disabled : ''}`}
+            >
+              Next
+            </button>
+          </div>
+          <div className={styles.itemsPerPage}>
+           
+            <select 
+              value={itemsPerPage} 
+              onChange={(e) => handleItemsPerPageChange(e.target.value)}
+            >
+              {paginationOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            
+          </div>
+       
+        </div>
+        <div className={styles.paginationInfo} style={{margin:"10px 0px 50px 0px"}}>
+            Showing {indexOfFirstItem + 1} to{' '}
+            {Math.min(indexOfLastItem, filteredAssessments.length)} of{' '}
+            {filteredAssessments.length} entries
+          </div>  
+        </>
+      );
+    };
+
   return (
     <div className="container">
       <div className="sectionHeader">List of Tests</div>
-      {/* <div className="inputContainer">
-        <div className="formGroup">
-          <select
-            value={filters.subject}
-            onChange={(e) => handleFilterChange("subject", e.target.value)}
-          >
-            <option value="">Select Subject</option>
-            {data.subjects.map((subject) => (
-              <option key={subject.id} value={subject.id}>
-                {subject.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="formGroup">
-          <MultiSelectDropDown
-            options={filteredChapters}
-            selectedValues={filters.chapter}
-            onChange={(values) => handleFilterChange("chapter", values)}
-            placeholder="Select Chapters"
-          />
-        </div>
-        <div className="formGroup">
-          <input
-            type="text"
-            placeholder="Search Question"
-            value={filters.question}
-            onChange={(e) => handleFilterChange("question", e.target.value)}
-          />
-        </div>
-      </div> */}
+      
       {errorMessage && <div className="errorText">{errorMessage}</div>}
+      
       <div className="table">
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th style={{ width: "30%" }}>Assessment</th>
-                <th style={{ width: "10%" }}>Subject</th>
-                <th style={{ width: "10%" }}>Name</th>
-                <th style={{ width: "10%" }}>Academic Year</th>
-                <th style={{ width: "30%" }}>College</th>
-                <th style={{ width: "10%" }}>Assign</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredAssessments.map((assessment) => (
-                <tr key={assessment.id}>
-                  <td>{assessment.name}</td>
-                  <td>{assessment.subject}</td>
-                  <td>{assessment.exam_name}</td>
-                  <td>{assessment.academicYear}</td>
-                  <td>
-                    <MultiSelectDropDown
-                      options={data.colleges}
-                      selectedValues={selectedColleges[assessment.id] || []}
-                      onChange={(values) =>
-                        handleCollegeChange(assessment.id, values)
-                      }
-                      placeholder="Select Colleges"
-                    />
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => handleAssignClick(assessment.id)}
-                      className={
-                        assignedTests[assessment.id]?.assigned
-                          ? "editButton"
-                          : "submitButton"
-                      }
-                    >
-                      {assignedTests[assessment.id]?.assigned
-                        ? "Unassign"
-                        : "Assign"}
-                    </button>
-                  </td>
+          <>
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: "30%" }}>Assessment</th>
+                  <th style={{ width: "10%" }}>Subject</th>
+                  <th style={{ width: "10%" }}>Name</th>
+                  <th style={{ width: "10%" }}>Academic Year</th>
+                  <th style={{ width: "30%" }}>College</th>
+                  <th style={{ width: "10%" }}>Assign</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {currentAssessments.map((assessment) => (
+                  <tr key={assessment.id}>
+                    <td>{assessment.name}</td>
+                    <td>{assessment.subject}</td>
+                    <td>{assessment.exam_name}</td>
+                    <td>{assessment.academicYear}</td>
+                    <td>
+                      <MultiSelectDropDown
+                        options={data.colleges}
+                        selectedValues={selectedColleges[assessment.id] || []}
+                        onChange={(values) =>
+                          handleCollegeChange(assessment.id, values)
+                        }
+                        placeholder="Select Colleges"
+                      />
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => handleAssignClick(assessment.id)}
+                        className={
+                          assignedTests[assessment.id]?.assigned
+                            ? "editButton"
+                            : "submitButton"
+                        }
+                      >
+                        {assignedTests[assessment.id]?.assigned
+                          ? "Unassign"
+                          : "Assign"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {renderPaginationControls()}
+          </>
         )}
       </div>
     </div>

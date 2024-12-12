@@ -23,26 +23,31 @@ function Results() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const capitalizedSubject = subject ? capitalizeFirstLetter(subject) : "";
+        const capitalizedSubject = subject
+          ? capitalizeFirstLetter(subject)
+          : "";
         const encryptedUser = Cookies.get("user");
         const collegeUsername = decrypt(encryptedUser);
         if (!collegeUsername) {
           console.error("No college username found in cookies");
           return;
         }
-
+    
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        console.log(collegeUsername);
-        // Fetch results from API
-        const resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&populate[create_test][populate]=academic_year&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}&filters[create_test][subject][name][$eq]=${capitalizedSubject}&populate=student&filters[create_test][subject][class][id][$eq]=${activeClass}`;
+    
+        let resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&populate[create_test][populate]=academic_year&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}&populate=student&filters[create_test][subject][class][id][$eq]=${activeClass}`;
+    
+        if (capitalizedSubject !== "All") {
+          resultsEndpoint += `&filters[create_test][subject][name][$eq]=${capitalizedSubject}`;
+        }
+    
         const response = await fetch(resultsEndpoint);
         if (!response.ok) {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
-
+    
         const data = await response.json();
-
-        // Remove duplicates based on unique attributes (e.g., exam name, date, subject)
+    
         const uniqueResults = Array.from(
           new Map(
             data.data.map((item) => {
@@ -52,22 +57,21 @@ function Results() {
               const subject =
                 item.attributes.create_test.data.attributes.subject.data
                   .attributes.name;
-
-              // Create a unique key based on the combination of the exam name, date, and subject
+    
               return [`${examName}-${date}-${subject}`, item];
             })
           ).values()
         );
-
+    
         setResults(uniqueResults);
-        setFilteredResults(uniqueResults); // Set initial filtered results
+        setFilteredResults(uniqueResults);
       } catch (error) {
         setError(error.message);
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchResults();
   }, [activeClass, stream, subject]);
 
@@ -144,7 +148,7 @@ function Results() {
 
   return (
     <div className="container">
-      <div className="sectionHeader">Test Results</div>
+      <div className="sectionHeader">VES – Knowledge Hub</div>
 
       {/* Filter Dropdowns */}
       {/* <div className={styles.filterContainer}>

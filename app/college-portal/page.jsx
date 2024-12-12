@@ -1,6 +1,7 @@
 "use client";
 import React, { useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { FaGraduationCap, FaBook, FaChartBar } from "react-icons/fa";
 import styles from "./CollegePortal.module.css";
 
 const CollegePortal = () => {
@@ -15,166 +16,47 @@ const CollegePortal = () => {
 
   return (
     <div className="container">
-      {/* Header Section */}
-      <header className={styles.header}>
-        <h1>Welcome to Vidvat - Knowledge Hub</h1>
-      </header>
+
+        <div className="sectionHeader">Welcome to VES – Knowledge Hub</div>
+  
+
       {/* Dashboard Cards */}
       <div className={styles.cardGrid}>
-        {/* Card: Consolidated Test Results */}
-        <div className={styles.card}>
-          <h2>Consolidated Test Results</h2>
-          <div className={styles.buttonGrid}>
-            <button
-              className={styles.button}
-              onClick={() => handleNavigation("/college-portal/consolidated-test/jee")}
-            >
-              <i className="fas fa-chart-bar"></i> JEE
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => handleNavigation("/college-portal/consolidated-test/neet")}
-            >
-              <i className="fas fa-chart-bar"></i> NEET
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => handleNavigation("/college-portal/consolidated-test/cet")}
-            >
-              <i className="fas fa-chart-bar"></i> CET
-            </button>
-            {/* <button
-              className={styles.button}
-              onClick={() => handleNavigation("/college-portal/consolidated-test/all")}
-            >
-              <i className="fas fa-chart-bar"></i> ALL
-            </button> */}
-          </div>
+        <div
+          className={styles.dcard}
+          onClick={() => handleNavigation("/college-portal/test-result")}
+        >
+          <FaGraduationCap className={styles.dicon} />
+          <h3>Test Results</h3>
         </div>
 
-        {/* Card: Date and Section Wise Results */}
-        <div className={styles.card}>
-          <h2>Date and Section Wise Test Results</h2>
-          <div className={styles.buttonGrid}>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section-test/jee")
-              }
-            >
-              <i className="fas fa-calendar-alt"></i> JEE
-            </button>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section-test/neet")
-              }
-            >
-              <i className="fas fa-calendar-alt"></i> NEET
-            </button>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section-test/cet")
-              }
-            >
-              <i className="fas fa-calendar-alt"></i> CET
-            </button>
-            {/* <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section/all")
-              }
-            >
-              <i className="fas fa-calendar-alt"></i> ALL
-            </button> */}
-          </div>
+        <div
+          className={styles.dcard}
+          onClick={() => handleNavigation("/college-portal/exam-result")}
+        >
+          <FaBook className={styles.dicon} />
+          <h3>Exam Results</h3>
         </div>
 
-        {/* Card: Consolidated Exam Results */}
-        <div className={styles.card}>
-          <h2>Consolidated Exam Results</h2>
-          <div className={styles.buttonGrid}>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/consolidated-exam/jee")
-              }
-            >
-              <i className="fas fa-file-alt"></i> JEE
-            </button>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/consolidated-exam/neet")
-              }
-            >
-              <i className="fas fa-file-alt"></i> NEET
-            </button>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/consolidated-exam/cet")
-              }
-            >
-              <i className="fas fa-file-alt"></i> CET
-            </button>
-            {/* <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/consolidated-exam/all")
-              }
-            >
-              <i className="fas fa-file-alt"></i> ALL
-            </button> */}
-          </div>
-        </div>
-
-        {/* Card: Date and Section Wise Exam Results */}
-        <div className={styles.card}>
-          <h2>Date and Section Wise Exam Results</h2>
-          <div className={styles.buttonGrid}>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section-exam/jee")
-              }
-            >
-              <i className="fas fa-calendar-check"></i> JEE
-            </button>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section-exam/neet")
-              }
-            >
-              <i className="fas fa-calendar-check"></i> NEET
-            </button>
-            <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section-exam/cet")
-              }
-            >
-              <i className="fas fa-calendar-check"></i> CET
-            </button>
-            {/* <button
-              className={styles.button}
-              onClick={() =>
-                handleNavigation("/college-portal/date-section-exam/all")
-              }
-            >
-              <i className="fas fa-calendar-check"></i> ALL
-            </button> */}
-          </div>
-        </div>
-
+     
       </div>
-
-          <p onClick={() =>
-                handleNavigation("/college-portal/reports")
-              } className={styles.view}>View student wise data</p>
-    
+      <div className={styles.cardGrid}>
+      <div
+          className={styles.dcard}
+          onClick={() => handleNavigation("/college-portal/reports")}
+        >
+          <FaChartBar className={styles.dicon} />
+          <h3>View Student Data</h3>
+        </div>
+        <div
+          className={styles.dcard}
+          onClick={() => handleNavigation("/college-portal/reports")}
+          style={{visibility:"hidden"}}
+        >
+          <FaChartBar className={styles.dicon} />
+          <h3>View Student Data</h3>
+        </div>
+        </div>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import styles from "./TestList.module.css";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import Item from "antd/es/list/Item";
+import { stream } from "xlsx";
 
 const TestList = () => {
   const [studentData, setStudentData] = useState([]);
@@ -46,13 +47,16 @@ const TestList = () => {
 
           await Promise.all(
             data.data.map(async (student) => {
+              console.log(student)
               const classInfo = student.attributes.class.data;
               const academicYear = student.attributes.academic_year;
               const collegeId = student.attributes.college.data.id;
+              const streams = student.attributes.stream.data.attributes.name
 
+              console.log(streams)
               if (classInfo && academicYear) {
                 await Promise.all([
-                  fetchAssignedTests(classInfo.id, academicYear, collegeId),
+                  fetchAssignedTests(classInfo.id, academicYear, collegeId, streams),
                   fetchCompletedTests(student.id),
                 ]);
               }
@@ -67,10 +71,10 @@ const TestList = () => {
       }
     };
 
-    const fetchAssignedTests = async (classId, academicYear, collegeId) => {
+    const fetchAssignedTests = async (classId, academicYear, collegeId, streams) => {
       try {
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&filters[create_test][exam_type][$eq]=2&filters[colleges][id][$eq]=${collegeId}&populate=create_test.class,create_test.academic_year,create_test.duration,create_test.subject,create_test.exam_type`;
+        const testsEndpoint = `${strapiApiUrl}/api/assign-tests?filters[Assign][$eq]=true&filters[create_test][class][id][$eq]=${classId}&filters[create_test][academic_year][year][$eq]=${academicYear}&filters[create_test][exam_type][$eq]=2&filters[create_test][exam_name][$eq]=${streams}&filters[colleges][id][$eq]=${collegeId}&populate=create_test.class,create_test.academic_year,create_test.duration,create_test.subject,create_test.exam_type`;
 
         const bearerToken = Cookies.get("token");
         const response = await fetch(testsEndpoint, {

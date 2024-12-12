@@ -14,6 +14,7 @@ const Header = () => {
   const [loading, setLoading] = useState(true);
   const [logoPath, setLogoPath] = useState(""); // Default logo
   const [collegeDetails, setCollegeDetails] = useState(null);
+  const [url, setUrl] = useState("/admin-c")
   const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 
   useEffect(() => {
@@ -32,6 +33,7 @@ const Header = () => {
             address:
               "Sadvidya Educational Institutions - #7, Narayana Sastry Road, Subbarayanakere, Chamrajpura, Mysore - 570024",
           });
+          setUrl("/college-portal")
         } else if (username === "sadvidyasr") {
           setLogoPath(
             "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
@@ -41,6 +43,7 @@ const Header = () => {
             address:
               "Sadvidya Semi Residential PU College - CA19, Damodaram Sanjeeviah Road, 2nd Stage, Vijayanagar, Mysuru - 570017",
           });
+          setUrl("/college-portal")
         }
 
         if (username) {
@@ -63,6 +66,7 @@ const Header = () => {
                 "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/logo.jpg"
               );
               setCollegeDetails(null); // Clear college details for admin
+              setUrl("/admin-c")
             } else if (role === "Student") {
               const studentResponse = await fetch(
                 `${strapiApiUrl}/api/students?filters[user_name][$eq]=${username}&populate=*`
@@ -82,6 +86,7 @@ const Header = () => {
                   address:
                     "Sadvidya Educational Institutions - #7, Narayana Sastry Road, Subbarayanakere, Chamrajpura, Mysore - 570024",
                 });
+                setUrl("/college-portal")
               } else if (collegeUserName === "sadvidyasr") {
                 setLogoPath(
                   "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
@@ -91,7 +96,9 @@ const Header = () => {
                   address:
                     "Sadvidya Semi Residential PU College - CA19, Damodaram Sanjeeviah Road, 2nd Stage, Vijayanagar, Mysuru - 570017",
                 });
+                setUrl("/college-portal")
               }
+              setUrl("/student-portal")
             }
           }
         }
@@ -143,6 +150,7 @@ const Header = () => {
           </button>
         )}
       </div>
+      <a href={url} style={{paddingBottom:10}}>Home</a>
     </div>
   );
 };

@@ -38,7 +38,7 @@ const Results = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, username]);
 
   if (isLoading) return <div className="container">Loading...</div>;
   if (error) return <div className="container">Error: {error}</div>;

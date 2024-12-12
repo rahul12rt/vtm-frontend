@@ -56,7 +56,7 @@ const TestResults = ({ data }) => {
         </button>
       </div>
       <div id="pdfContent">
-        <div className="sectionHeader">College Name - {collegeInfo.name}</div>
+        <div className="sectionHeader">VES – Knowledge Hub</div>
         <div className={styles.infoSection}>
           <h2 className={styles.infoTitle}>
             {testInfo.subject.data.attributes.class.data.attributes.name}{" "}

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { decrypt } from "@/app/_utils/encryptionUtils";
 import { useParams, useRouter } from "next/navigation";
-import styles from "./pages.module.css"; 
+import styles from "./pages.module.css";
 
 const JeeResults = () => {
   const [results, setResults] = useState([]);
@@ -45,11 +45,16 @@ const JeeResults = () => {
   if (error) return <h1 className="container">Error: {error}</h1>;
   // Extract unique subjects
   const subjects = results
-    .map((result) => result.attributes.create_test?.data?.attributes.subject?.data?.attributes.name)
+    .map(
+      (result) =>
+        result.attributes.create_test?.data?.attributes.subject?.data
+          ?.attributes.name
+    )
     .filter((value, index, self) => value && self.indexOf(value) === index); // Filter out duplicates
 
   return (
-    <div className={styles.container}>
+    <div className="container">
+      <div className="sectionHeader">VES – Knowledge Hub</div>
       <h1>{stream.toUpperCase()} Results</h1>
       <div className={styles.cardContainer}>
         {subjects.length > 0 ? (
@@ -57,7 +62,11 @@ const JeeResults = () => {
             <div
               key={index}
               className={styles.card}
-              onClick={() => router.push(`/college-portal/consolidated-test/${stream}/${subject.toLowerCase()}`)}
+              onClick={() =>
+                router.push(
+                  `/college-portal/consolidated-test/${stream}/${subject.toLowerCase()}`
+                )
+              }
             >
               <h3>{subject}</h3>
             </div>
@@ -65,6 +74,15 @@ const JeeResults = () => {
         ) : (
           <p>No subjects available</p>
         )}
+
+        <div
+          className={styles.card}
+          onClick={() =>
+            router.push(`/college-portal/consolidated-test/${stream}/all`)
+          }
+        >
+          <h3>All</h3>
+        </div>
       </div>
     </div>
   );

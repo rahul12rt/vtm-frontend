@@ -4,25 +4,50 @@ import CollegePortalExcelUpload from "../../_components/uploadFile";
 
 function AssignTest() {
   const [tests, setTests] = useState([]);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   useEffect(() => {
-    const fetchTests = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(
+        // Fetch Assign Tests
+        const assignTestsResponse = await fetch(
           `${strapiApiUrl}/api/assign-tests?populate[create_test][populate]=class&populate=colleges`
         );
-        const data = await response.json();
-        setTests(data.data);
+        const assignTestsData = await assignTestsResponse.json();
+
+        // Fetch Results
+        const resultsResponse = await fetch(
+          `${strapiApiUrl}/api/results?populate=*`
+        );
+        const resultsData = await resultsResponse.json();
+
+        // Sort tests in descending order based on ID
+        const sortedTests = assignTestsData.data.sort((a, b) => b.id - a.id);
+
+        setTests(sortedTests);
+        setResults(resultsData.data);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching tests:", error);
+        console.error("Error fetching data:", error);
         setLoading(false);
       }
     };
 
-    fetchTests();
+    fetchData();
   }, []);
+
+  // Function to check if upload should be disabled
+  const shouldDisableUpload = (testId) => {
+    return results.some(
+      (result) => result.attributes.create_test.data.id == testId
+    );
+  };
 
   // Function to create table rows for each college
   const createTableRows = () => {
@@ -33,8 +58,8 @@ function AssignTest() {
       const createTest = testData.create_test.data.attributes;
       const className = createTest.class.data.attributes.name;
       const classId = createTest.class.data.id;
+      const testId = testData.create_test.data.id;
 
-      // Create a row for each college
       testData.colleges.data.forEach((college) => {
         const collegeData = college.attributes;
 
@@ -47,6 +72,7 @@ function AssignTest() {
               <CollegePortalExcelUpload
                 collegeId={college.id}
                 classId={classId}
+                disabled={shouldDisableUpload(testId)}
               />
             </td>
           </tr>
@@ -55,6 +81,24 @@ function AssignTest() {
     });
 
     return rows;
+  };
+
+  // Pagination calculations
+  const tableRows = createTableRows();
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = tableRows.slice(indexOfFirstRow, indexOfLastRow);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(tableRows.length / rowsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Rows per page handler
+  const handleRowsPerPageChange = (e) => {
+    setRowsPerPage(Number(e.target.value));
+    setCurrentPage(1);
   };
 
   if (loading) {
@@ -82,9 +126,50 @@ function AssignTest() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {createTableRows()}
+            {currentRows}
           </tbody>
         </table>
+
+        {/* Pagination Controls */}
+        <div style={{display:"flex", justifyContent:"space-between", margin:"30px 0px"}}>
+          {/* Rows per page selector,  */}
+     
+
+          {/* Pagination Buttons */}
+          <div >
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+           style={{marginRight:10}}
+            >
+              Previous
+            </button>
+            <span className="self-center text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              style={{marginLeft:10}}
+            >
+              Next
+            </button>
+          </div>
+          <div className="flex items-center space-x-2">
+       
+       <select 
+         value={rowsPerPage} 
+         onChange={handleRowsPerPageChange}
+         className="border rounded px-2 py-1"
+       >
+         {[5, 10, 15, 20, 25].map((pageSize) => (
+           <option key={pageSize} value={pageSize}>
+             {pageSize}
+           </option>
+         ))}
+       </select>
+     </div>
+        </div>
       </div>
     </div>
   );

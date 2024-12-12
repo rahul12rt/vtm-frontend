@@ -49,8 +49,9 @@ const JeeResults = () => {
     .filter((value, index, self) => value && self.indexOf(value) === index); // Filter out duplicates
 
   return (
-    <div className={styles.container}>
-      <h1>{stream.toUpperCase()} Results</h1>
+    <div className="container">
+      <div className="sectionHeader">VES – Knowledge Hub</div>
+   <h1 style={{textAlign:"center"}}>{stream.toUpperCase()} Results</h1>
       <div className={styles.cardContainer}>
         {subjects.length > 0 ? (
           subjects.map((subject, index) => (
@@ -65,6 +66,14 @@ const JeeResults = () => {
         ) : (
           <p>No subjects available</p>
         )}
+         <div
+          className={styles.card}
+          onClick={() =>
+            router.push(`/college-portal/date-section-test/${stream}/all`)
+          }
+        >
+          <h3>All</h3>
+        </div>
       </div>
     </div>
   );
