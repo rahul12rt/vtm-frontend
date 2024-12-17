@@ -64,7 +64,7 @@ const JeeResults = () => {
               className={styles.card}
               onClick={() =>
                 router.push(
-                  `/college-portal/consolidated-test/${stream}/${subject.toLowerCase()}`
+                  `/college-portal/consolidated-exam/${stream}/${subject.toLowerCase()}`
                 )
               }
             >
@@ -78,7 +78,7 @@ const JeeResults = () => {
         <div
           className={styles.card}
           onClick={() =>
-            router.push(`/college-portal/consolidated-test/${stream}/all`)
+            router.push(`/college-portal/consolidated-exam/${stream}/all`)
           }
         >
           <h3>All</h3>
