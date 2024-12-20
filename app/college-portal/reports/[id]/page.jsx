@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { Bar } from "react-chartjs-2";
@@ -30,6 +30,7 @@ function StudentReport() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("Test"); // Default to Test
   const studentId = useParams();
 
   useEffect(() => {
@@ -47,8 +48,9 @@ function StudentReport() {
           throw new Error("No username found in cookies");
         }
 
+        const examType = activeTab === "Test" ? 2 : 3; // Change exam type based on active tab
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][id][$eq]=${studentId.id}&filters[student][college][user_name][$eq]=${username}&populate[create_test][populate]=class,academic_year,subject,topics,exam_name,exam_type,college&populate=student`;
+        const resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=${examType}&filters[student][id][$eq]=${studentId.id}&filters[student][college][user_name][$eq]=${username}&populate[create_test][populate]=class,academic_year,subject,topics,exam_name,exam_type,college&populate=student`;
 
         const response = await fetch(resultsEndpoint);
         if (!response.ok) {
@@ -65,9 +67,9 @@ function StudentReport() {
     };
 
     fetchResults();
-  }, [studentId]);
+  }, [studentId, activeTab]); // Added activeTab as dependency
 
-  // Group results by subject
+  // Rest of the existing functions...
   const groupedResults = results.reduce((acc, result) => {
     const subject =
       result.attributes.create_test.data.attributes.subject.data.attributes
@@ -79,14 +81,12 @@ function StudentReport() {
     return acc;
   }, {});
 
-  // Filter subjects based on search term
   const filteredGroupedResults = Object.fromEntries(
     Object.entries(groupedResults).filter(([subject]) =>
       subject.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
-  // Prepare bar chart data for a specific test
   const prepareChartData = (result) => {
     const testInfo = result.attributes;
     const createTest = result.attributes.create_test.data.attributes;
@@ -111,7 +111,6 @@ function StudentReport() {
     };
   };
 
-  // Determine color based on performance
   const getMarkColor = (obtained, total, isBorder = false) => {
     const percentage = (obtained / total) * 100;
     const baseColors = {
@@ -125,7 +124,6 @@ function StudentReport() {
     return baseColors.danger;
   };
 
-  // Chart options
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -150,22 +148,23 @@ function StudentReport() {
 
   if (loading) return <div className={styles.loading}>Loading results...</div>;
   if (error) return <div className={styles.error}>Error: {error}</div>;
-  if (results.length === 0)
-    return <div className={styles.noResults}>No test results found.</div>;
-
-  // Student details from the first result
-  const studentDetails = results[0].attributes.student.data.attributes;
 
   return (
     <div className="container">
-      {/* Student Details Header */}
-      <div className={styles.heading}>
-        {/* <h2>{studentDetails.college.data.attributes.name}</h2> */}
-        {/* <p>
-          STD: <span>{studentDetails.class.data.attributes.name}</span>
-          Name of the Student: <span>{studentDetails.name}</span>
-          Roll Number: <span>{studentDetails.roll_number}</span>
-        </p> */}
+      {/* Tabs */}
+      <div className={styles.streamFilterContainer}>
+        <button
+          className={activeTab === "Test" ? styles.activeFilter : styles.streamFilterBtn}
+          onClick={() => setActiveTab("Test")}
+        >
+          Test
+        </button>
+        <button
+          className={activeTab === "Exam" ? styles.activeFilter : styles.streamFilterBtn}
+          onClick={() => setActiveTab("Exam")}
+        >
+          Exam
+        </button>
       </div>
 
       {/* Search Input */}
@@ -179,82 +178,88 @@ function StudentReport() {
         />
       </div>
 
-      <div className="sectionHeader">Test Results</div>
+      {results.length === 0 ? (
+        <div className={styles.noResults}>No test results found for {activeTab}.</div>
+      ) : (
+        <>
+          <div className="sectionHeader">Test Results - {activeTab}</div>
 
-      {Object.entries(filteredGroupedResults).map(
-        ([subject, subjectResults]) => (
-          <div key={subject} className={styles.subjectSection}>
-            <h2 className={styles.subjectTitle}>{subject}</h2>
+          {Object.entries(filteredGroupedResults).map(
+            ([subject, subjectResults]) => (
+              <div key={subject} className={styles.subjectSection}>
+                <h2 className={styles.subjectTitle}>{subject}</h2>
 
-            {/* Table for subject results */}
-            <table className={styles.resultsTable}>
-              <thead>
-                <tr>
-                  <th>Test Name</th>
-                  <th>Date</th>
-                  <th>Obtained Marks</th>
-                  <th>Total Marks</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subjectResults.map((result) => {
-                  const testInfo = result.attributes;
-                  const createTest =
-                    result.attributes.create_test.data.attributes;
-                  const percentage = (
-                    (testInfo.obtained / testInfo.total) *
-                    100
-                  ).toFixed(2);
-
-                  return (
-                    <tr key={result.id}>
-                      <td>{createTest.name}</td>
-                      <td>{createTest.date}</td>
-                      <td>{testInfo.obtained}</td>
-                      <td>{testInfo.total}</td>
-                      <td>
-                        <span
-                          className={
-                            percentage >= 75
-                              ? styles.bgSuccess
-                              : percentage >= 50
-                              ? styles.bgWarning
-                              : styles.bgDanger
-                          }
-                        >
-                          {percentage}%
-                        </span>
-                      </td>
+                {/* Table for subject results */}
+                <table className={styles.resultsTable}>
+                  <thead>
+                    <tr>
+                      <th>Test Name</th>
+                      <th>Date</th>
+                      <th>Obtained Marks</th>
+                      <th>Total Marks</th>
+                      <th>Percentage</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {subjectResults.map((result) => {
+                      const testInfo = result.attributes;
+                      const createTest =
+                        result.attributes.create_test.data.attributes;
+                      const percentage = (
+                        (testInfo.obtained / testInfo.total) *
+                        100
+                      ).toFixed(2);
 
-            {/* Bar Charts for Individual Tests */}
-            <div className={styles.testChartsContainer}>
-              {subjectResults.map((result) => (
-                <div key={result.id} className={styles.singleTestChart}>
-                  <Bar
-                    data={prepareChartData(result)}
-                    options={{
-                      ...chartOptions,
-                      plugins: {
-                        ...chartOptions.plugins,
-                        title: {
-                          ...chartOptions.plugins.title,
-                          text: result.attributes.create_test.data.attributes
-                            .name,
-                        },
-                      },
-                    }}
-                  />
+                      return (
+                        <tr key={result.id}>
+                          <td>{createTest.name}</td>
+                          <td>{createTest.date}</td>
+                          <td>{testInfo.obtained}</td>
+                          <td>{testInfo.total}</td>
+                          <td>
+                            <span
+                              className={
+                                percentage >= 75
+                                  ? styles.bgSuccess
+                                  : percentage >= 50
+                                  ? styles.bgWarning
+                                  : styles.bgDanger
+                              }
+                            >
+                              {percentage}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Bar Charts for Individual Tests */}
+                <div className={styles.testChartsContainer}>
+                  {subjectResults.map((result) => (
+                    <div key={result.id} className={styles.singleTestChart}>
+                      <Bar
+                        data={prepareChartData(result)}
+                        options={{
+                          ...chartOptions,
+                          plugins: {
+                            ...chartOptions.plugins,
+                            title: {
+                              ...chartOptions.plugins.title,
+                              text: result.attributes.create_test.data.attributes
+                                .name,
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        )
+              </div>
+            )
+          )}
+        </>
       )}
     </div>
   );
