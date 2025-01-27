@@ -63,7 +63,7 @@ const Header = () => {
             if (role === "Admin") {
               setIsAdmin(true);
               setLogoPath(
-                "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/logo.jpg"
+                "https://vtm-db.s3.ap-south-1.amazonaws.com/vidvat+logo.svg"
               );
               setCollegeDetails(null); // Clear college details for admin
               setUrl("/admin-c")
