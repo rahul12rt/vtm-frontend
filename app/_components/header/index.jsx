@@ -26,7 +26,7 @@ const Header = () => {
         // Set logo path and college details based on username
         if (username === "sadvidya") {
           setLogoPath(
-            "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-composite-puc.svg"
+            "https://vtm-db.s3.ap-south-1.amazonaws.com/Sadvidya+Composite+Logo-cropped.svg"
           );
           setCollegeDetails({
             name: "Sadvidya Composite PU College",
@@ -36,7 +36,7 @@ const Header = () => {
           setUrl("/college-portal")
         } else if (username === "sadvidyasr") {
           setLogoPath(
-            "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
+            "https://vtm-db.s3.ap-south-1.amazonaws.com/Sadvidya+Semi+Residential.jpg"
           );
           setCollegeDetails({
             name: "Sadvidya Semi Residential PU College",
@@ -79,7 +79,7 @@ const Header = () => {
 
               if (collegeUserName === "sadvidya") {
                 setLogoPath(
-                  "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-composite-puc.svg"
+                  "https://vtm-db.s3.ap-south-1.amazonaws.com/Sadvidya+Composite+Logo-cropped.svg"
                 );
                 setCollegeDetails({
                   name: "Sadvidya Composite PU College",
@@ -89,7 +89,7 @@ const Header = () => {
                 setUrl("/college-portal")
               } else if (collegeUserName === "sadvidyasr") {
                 setLogoPath(
-                  "https://vtm-cms-aws-s3-images-bucket.s3.ap-south-1.amazonaws.com/logos/sadvidya-semi-residential.jpg"
+                  "https://vtm-db.s3.ap-south-1.amazonaws.com/Sadvidya+Semi+Residential.jpg"
                 );
                 setCollegeDetails({
                   name: "Sadvidya Semi Residential PU College",
