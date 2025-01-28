@@ -24,7 +24,7 @@ const Students = () => {
         }
 
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-        const studentsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][college][user_name][$eq]=${collegeUsername}&populate[student][populate]=class&filters[student][class][id][$eq]=${selectedClass}&filters[student][stream][id][$eq]=${selectedStream}`;
+        const studentsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=1&filters[student][college][user_name][$eq]=${collegeUsername}&populate[student][populate]=class&filters[student][class][id][$eq]=${selectedClass}&filters[student][stream][id][$eq]=${selectedStream}`;
 
         const response = await fetch(studentsEndpoint);
         if (!response.ok) {

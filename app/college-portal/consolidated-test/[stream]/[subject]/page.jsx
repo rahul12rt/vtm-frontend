@@ -45,7 +45,7 @@ const Subject = () => {
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
   
         // Construct API URL dynamically
-        let apiUrl = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}&populate=student&filters[create_test][subject][class][id][$eq]=${activeClass}`;
+        let apiUrl = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=1&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}&populate=student&filters[create_test][subject][class][id][$eq]=${activeClass}`;
   
         // Add subject filter only if capitalizedSubject is not "All"
         if (capitalizedSubject !== "All") {

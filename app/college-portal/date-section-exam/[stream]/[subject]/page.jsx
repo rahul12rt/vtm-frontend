@@ -35,7 +35,7 @@ function Results() {
     
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
     
-        let resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=3&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&populate[create_test][populate]=academic_year&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}&populate=student&filters[create_test][subject][class][id][$eq]=${activeClass}`;
+        let resultsEndpoint = `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&populate[create_test][populate]=academic_year&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}&populate=student&filters[create_test][subject][class][id][$eq]=${activeClass}`;
     
         if (capitalizedSubject !== "All") {
           resultsEndpoint += `&filters[create_test][subject][name][$eq]=${capitalizedSubject}`;

@@ -22,7 +22,7 @@ const JeeResults = () => {
         const collegeUsername = decrypt(encryptedUser);
         const strapiApiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
         const response = await fetch(
-          `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=2&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}`
+          `${strapiApiUrl}/api/results?filters[create_test][exam_type][$eq]=1&filters[student][college][user_name][$eq]=${collegeUsername}&populate[create_test][populate][subject][populate]=class&filters[create_test][exam_name][$eq]=${stream.toUpperCase()}`
         );
 
         if (!response.ok) {

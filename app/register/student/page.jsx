@@ -143,6 +143,7 @@ const StudentRegister = () => {
           return response.json();
         })
         .then(async (data) => {
+          console.log("--");
           const studentPayload = {
             data: {
               name: formData.name,
@@ -159,6 +160,8 @@ const StudentRegister = () => {
             },
           };
 
+      
+
           const studentResponse = await fetch("/api/register/student", {
             method: "POST",
             headers: {
@@ -166,7 +169,7 @@ const StudentRegister = () => {
             },
             body: JSON.stringify(studentPayload),
           });
-
+console.log(studentResponse.json(), studentPayload);
           if (!studentResponse.ok) {
             const errorData = await studentResponse.json();
             throw new Error(
